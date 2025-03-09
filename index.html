@@ -183,6 +183,15 @@
           },
         ];
 
+        const colors = [
+          "#EACA2A",
+          "#EB579B",
+          "#F77B29",
+          "#FF3755",
+          "#5EA0C6",
+          "#92ED00",
+        ];
+
         // Function to update video and message
         function updateContent(index) {
           videoElement.src = friends[index].video;
@@ -220,12 +229,16 @@
             storiesElement.style.display = "none";
           });
 
-        // Add click event listeners to story buttons
+        // Add click event listeners to story buttons and assign random border colors
         const storyButtons = document.querySelectorAll(".story-button");
         storyButtons.forEach((button, index) => {
           button.addEventListener("click", () => {
             updateContent(index);
           });
+
+          // Assign a random border color
+          const randomColor = colors[Math.floor(Math.random() * colors.length)];
+          button.style.border = `3px solid ${randomColor}`;
         });
       });
     </script>
