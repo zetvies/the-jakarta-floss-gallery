@@ -155,40 +155,79 @@
       let videoElement = document.getElementById("arsa-video");
       let pauseTimeout;
 
-      document
-        .querySelector("a-marker")
-        .addEventListener("markerFound", function () {
-          console.log("Marker is found");
+      document.addEventListener("DOMContentLoaded", function () {
+        const storiesElement = document.getElementById("stories");
+        const messageElement = document.createElement("div");
+        messageElement.style.position = "fixed";
+        messageElement.style.bottom = "10px";
+        messageElement.style.left = "50%";
+        messageElement.style.transform = "translateX(-50%)";
+        messageElement.style.color = "white";
+        messageElement.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
+        messageElement.style.padding = "10px";
+        messageElement.style.borderRadius = "5px";
+        document.body.appendChild(messageElement);
+
+        const friends = [
+          {
+            name: "Arsa",
+            message:
+              "Hi all! \n\nI hope this message finds you well. I wanted to take a moment to sincerely apologize for any misunderstandings or inconveniences I may have caused. Your friendship means the world to me, and I truly appreciate your kindness and support. Thank you for being such a wonderful friend.\n\nWarm regards,\n[Your Name]",
+            video: "./assets/videos/arsa.mp4",
+          },
+          {
+            name: "Kojo",
+            message:
+              "Hi all!\n\nI hope you're doing great. I am writing to express my heartfelt apologies for any mistakes I might have made. Your friendship is incredibly valuable to me, and I am grateful for your patience and understanding. Thank you for being an amazing friend.\n\nBest wishes,\n[Your Name]",
+            video: "./assets/videos/kojo.mp4",
+          },
+        ];
+
+        // Function to update video and message
+        function updateContent(index) {
+          videoElement.src = friends[index].video;
+          messageElement.textContent = friends[index].message;
           videoElement.play();
-          if (pauseTimeout) {
-            clearTimeout(pauseTimeout);
-          }
-        });
+        }
 
-      document
-        .querySelector("a-marker")
-        .addEventListener("markerLost", function () {
-          console.log("Marker is lost");
-          pauseTimeout = setTimeout(() => {
-            videoElement.pause();
-            console.log("Video paused due to marker loss");
-          }, 500); // Pause after 3 seconds
-        });
+        // Initially hide the stories
+        storiesElement.style.display = "none";
 
-      const friends = [
-        {
-          name: "Arsa",
-          message:
-            "Hi all! \n\nI hope this message finds you well. I wanted to take a moment to sincerely apologize for any misunderstandings or inconveniences I may have caused. Your friendship means the world to me, and I truly appreciate your kindness and support. Thank you for being such a wonderful friend.\n\nWarm regards,\n[Your Name]",
-          video: "./videos/arsa.mp4",
-        },
-        {
-          name: "Kojo",
-          message:
-            "Hi all!\n\nI hope you're doing great. I am writing to express my heartfelt apologies for any mistakes I might have made. Your friendship is incredibly valuable to me, and I am grateful for your patience and understanding. Thank you for being an amazing friend.\n\nBest wishes,\n[Your Name]",
-          video: "./videos/kojo.mp4",
-        },
-      ];
+        // Set default video and message
+        updateContent(0);
+
+        document
+          .querySelector("a-marker")
+          .addEventListener("markerFound", function () {
+            console.log("Marker is found");
+            videoElement.play();
+            if (pauseTimeout) {
+              clearTimeout(pauseTimeout);
+            }
+            // Show the stories when the marker is found
+            storiesElement.style.display = "flex";
+          });
+
+        document
+          .querySelector("a-marker")
+          .addEventListener("markerLost", function () {
+            console.log("Marker is lost");
+            pauseTimeout = setTimeout(() => {
+              videoElement.pause();
+              console.log("Video paused due to marker loss");
+            }, 500); // Pause after 3 seconds
+            // Hide the stories when the marker is lost
+            storiesElement.style.display = "none";
+          });
+
+        // Add click event listeners to story buttons
+        const storyButtons = document.querySelectorAll(".story-button");
+        storyButtons.forEach((button, index) => {
+          button.addEventListener("click", () => {
+            updateContent(index);
+          });
+        });
+      });
     </script>
   </body>
 </html>
