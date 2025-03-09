@@ -6,7 +6,7 @@
     <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
   </head>
   <body style="margin: 0; overflow: hidden">
-    <a-scene embedded arjs="debugUIEnabled: false" vr-mode-ui="enabled: false">
+    <a-scene embedded vr-mode-ui="enabled: false">
       <!-- Define a marker using the Hiro pattern -->
       <a-marker preset="hiro">
         <!-- Add a white plane as a container for the video -->
@@ -25,6 +25,64 @@
           position="0 0.05 0"
           rotation="-90 0 0"
         ></a-video>
+        <!-- Overlay images in front of the video -->
+        <a-image
+          src="./assets/images/bedug.png"
+          width="0.5"
+          height="0.5"
+          position="-1 0.5 0.1"
+          rotation="-90 0 0"
+        ></a-image>
+        <a-image
+          src="./assets/images/star.png"
+          width="0.5"
+          height="0.5"
+          position="-1 0.5 0.1"
+          rotation="-90 0 0"
+        ></a-image>
+        <a-image
+          src="./assets/images/mosque.png"
+          width="0.5"
+          height="0.5"
+          position="-1 0.5 0.1"
+          rotation="-90 0 0"
+        ></a-image>
+        <a-image
+          src="./assets/images/ketupat.png"
+          width="0.3"
+          height="0.3"
+          position="-0.5 0.3 0.5"
+          rotation="-90 0 0"
+        ></a-image>
+        <a-image
+          src="./assets/images/love.png"
+          width="0.5"
+          height="0.5"
+          position="1 0.5 0.1"
+          rotation="-90 0 0"
+        ></a-image>
+
+        <a-image
+          src="./assets/images/star.png"
+          width="0.5"
+          height="0.5"
+          position="1 0.5 0.1"
+          rotation="-90 0 0"
+        ></a-image>
+        <a-image
+          src="./assets/images/sparkle.png"
+          width="0.5"
+          height="0.5"
+          position="1 0.5 0.1"
+          rotation="-90 0 0"
+        ></a-image>
+        <a-image
+          src="./assets/images/moon.png"
+          width="0.5"
+          height="0.5"
+          position="1 0.5 0.1"
+          rotation="-90 0 0"
+        ></a-image>
       </a-marker>
       <!-- Add a camera -->
       <a-entity camera></a-entity>
@@ -56,7 +114,7 @@
           pauseTimeout = setTimeout(() => {
             videoElement.pause();
             console.log("Video paused due to marker loss");
-          }, 1000); // Pause after 3 seconds
+          }, 3000); // Pause after 3 seconds
         });
     </script>
   </body>
