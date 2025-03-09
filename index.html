@@ -266,6 +266,35 @@
         </div>
       </div>
     </div>
+    <div
+      id="recordButton"
+      style="
+        position: fixed;
+        bottom: 5svh;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 50px;
+        height: 50px;
+        background-color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        z-index: 20;
+      "
+    >
+      <div
+        id="recordInner"
+        style="
+          width: 30px;
+          height: 30px;
+          background-color: #92ed00;
+          border-radius: 50%;
+          transition: all 0.3s ease;
+        "
+      ></div>
+    </div>
     <script>
       let videoElement = document.getElementById("arsa-video");
       let pauseTimeout;
@@ -389,6 +418,23 @@
         closeModalButton.addEventListener("click", () => {
           messageModal.style.display = "none";
         });
+      });
+
+      const recordButton = document.getElementById("recordButton");
+      const recordInner = document.getElementById("recordInner");
+      let isRecording = false;
+
+      recordButton.addEventListener("click", () => {
+        isRecording = !isRecording;
+        if (isRecording) {
+          recordInner.style.borderRadius = "0";
+          recordInner.style.width = "20px";
+          recordInner.style.height = "20px";
+        } else {
+          recordInner.style.borderRadius = "50%";
+          recordInner.style.width = "30px";
+          recordInner.style.height = "30px";
+        }
       });
     </script>
   </body>
