@@ -157,7 +157,7 @@
       style="
         background-color: white;
         border-radius: 30px;
-        display: flex;
+        display: none;
         align-items: center;
         justify-content: center;
         gap: 8px;
@@ -323,6 +323,9 @@
             }
             // Show the stories when the marker is found
             storiesElement.style.display = "flex";
+
+            // Show the showMessageButton when the marker is found
+            showMessageButton.style.display = "flex";
           });
 
         document
@@ -335,6 +338,9 @@
             }, 500); // Pause after 3 seconds
             // Hide the stories when the marker is lost
             storiesElement.style.display = "none";
+
+            // Hide the showMessageButton when the marker is lost
+            showMessageButton.style.display = "none";
           });
 
         // Add click event listeners to story buttons and assign random border colors
