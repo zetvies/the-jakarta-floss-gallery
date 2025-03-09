@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AR.js with A-Frame</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden">
+    <a-scene embedded arjs="debugUIEnabled: false" vr-mode-ui="enabled: false">
+      <!-- Define a marker using the Hiro pattern -->
+      <a-marker preset="hiro">
+        <!-- Add a white plane as a container for the video -->
+        <a-plane
+          color="white"
+          width="1.1"
+          height="2"
+          position="0 0 0.075"
+          rotation="-90 0 0"
+        ></a-plane>
+        <!-- Play a video on a plane with cropping effect -->
+        <a-video
+          src="#arsa-video"
+          width=".9"
+          height="1.6"
+          position="0 0.05 0"
+          rotation="-90 0 0"
+        ></a-video>
+      </a-marker>
+      <!-- Add a camera -->
+      <a-entity camera></a-entity>
+    </a-scene>
+    <video
+      id="arsa-video"
+      src="./assets/videos/arsa.mp4"
+      loop="true"
+      style="display: none"
+    ></video>
+    <script>
+      let videoElement = document.getElementById("arsa-video");
+      let pauseTimeout;
+
+      document
+        .querySelector("a-marker")
+        .addEventListener("markerFound", function () {
+          console.log("Marker is found");
+          videoElement.play();
+          if (pauseTimeout) {
+            clearTimeout(pauseTimeout);
+          }
+        });
+
+      document
+        .querySelector("a-marker")
+        .addEventListener("markerLost", function () {
+          console.log("Marker is lost");
+          pauseTimeout = setTimeout(() => {
+            videoElement.pause();
+            console.log("Video paused due to marker loss");
+          }, 1000); // Pause after 3 seconds
+        });
+    </script>
+  </body>
+</html>
