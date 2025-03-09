@@ -22,3 +22,15 @@
 body {
   font-family: "OtherHand", "Inter", sans-serif;
 }
+
+.story-button {
+  height: 60px;
+  width: 60px;
+  border-radius: 50%;
+  overflow: hidden;
+  transition: transform 0.3s ease; /* Smooth transition */
+}
+
+.story-button.active {
+  transform: scale(1.1); /* Scale up the active button */
+}

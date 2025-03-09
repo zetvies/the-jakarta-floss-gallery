@@ -97,13 +97,14 @@
       id="stories"
       style="
         display: flex;
+        align-items: center;
         position: fixed;
         top: 4vh;
         left: 50%;
         transform: translateX(-50%);
         z-index: 10;
         width: auto;
-        gap: 10px;
+        gap: 16px;
       "
     >
       <div
@@ -234,12 +235,21 @@
         storyButtons.forEach((button, index) => {
           button.addEventListener("click", () => {
             updateContent(index);
+
+            // Remove active class from all buttons
+            storyButtons.forEach((btn) => btn.classList.remove("active"));
+
+            // Add active class to the clicked button
+            button.classList.add("active");
           });
 
           // Assign a random border color
           const randomColor = colors[Math.floor(Math.random() * colors.length)];
           button.style.border = `3px solid ${randomColor}`;
         });
+
+        // Set the first story as active by default
+        storyButtons[0].classList.add("active");
       });
     </script>
   </body>
