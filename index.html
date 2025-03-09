@@ -6,15 +6,15 @@
     <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
   </head>
   <body style="margin: 0; overflow: hidden">
-    <a-scene embedded vr-mode-ui="enabled: false">
+    <a-scene embedded arjs="debugUIEnabled: false" vr-mode-ui="enabled: false">
       <!-- Define a marker using the Hiro pattern -->
       <a-marker preset="hiro">
         <!-- Add a white plane as a container for the video -->
         <a-plane
           color="white"
           width="1.1"
-          height="2"
-          position="0 0 0.075"
+          height="2.1"
+          position="0 0 0.1"
           rotation="-90 0 0"
         ></a-plane>
         <!-- Play a video on a plane with cropping effect -->
@@ -28,59 +28,52 @@
         <!-- Overlay images in front of the video -->
         <a-image
           src="./assets/images/bedug.png"
-          width="0.5"
-          height="0.5"
-          position="-1 0.5 0.1"
-          rotation="-90 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/star.png"
-          width="0.5"
-          height="0.5"
-          position="-1 0.5 0.1"
+          width="0.7"
+          height="0.7"
+          position="-8 0.5 -0.8"
           rotation="-90 0 0"
         ></a-image>
         <a-image
           src="./assets/images/mosque.png"
-          width="0.5"
-          height="0.5"
-          position="-1 0.5 0.1"
+          width="0.7"
+          height="0.7"
+          position=".7 0.4 0.7"
           rotation="-90 0 0"
         ></a-image>
         <a-image
           src="./assets/images/ketupat.png"
-          width="0.3"
-          height="0.3"
-          position="-0.5 0.3 0.5"
+          width="0.4"
+          height="0.4"
+          position="-0.6 0.2 0.9"
           rotation="-90 0 0"
         ></a-image>
         <a-image
           src="./assets/images/love.png"
-          width="0.5"
-          height="0.5"
-          position="1 0.5 0.1"
+          width="0.7"
+          height="0.7"
+          position=".7 0.6 -.7"
           rotation="-90 0 0"
         ></a-image>
 
         <a-image
           src="./assets/images/star.png"
-          width="0.5"
-          height="0.5"
-          position="1 0.5 0.1"
+          width="0.6"
+          height="0.6"
+          position="-.8 0.5 0.2"
           rotation="-90 0 0"
         ></a-image>
         <a-image
           src="./assets/images/sparkle.png"
-          width="0.5"
-          height="0.5"
-          position="1 0.5 0.1"
+          width="0.4"
+          height="0.4"
+          position=".6 0.2 0"
           rotation="-90 0 0"
         ></a-image>
         <a-image
           src="./assets/images/moon.png"
           width="0.5"
           height="0.5"
-          position="1 0.5 0.1"
+          position="-.5 0.3 -0.5"
           rotation="-90 0 0"
         ></a-image>
       </a-marker>
@@ -114,7 +107,7 @@
           pauseTimeout = setTimeout(() => {
             videoElement.pause();
             console.log("Video paused due to marker loss");
-          }, 3000); // Pause after 3 seconds
+          }, 500); // Pause after 3 seconds
         });
     </script>
   </body>
