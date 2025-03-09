@@ -152,34 +152,138 @@
       loop="true"
       style="display: none"
     ></video>
+    <div
+      id="showMessageButton"
+      style="
+        background-color: white;
+        border-radius: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0px 16px;
+        color: #046511;
+        position: fixed;
+        bottom: 17svh;
+        left: 50%;
+        font-family: Inter;
+        transform: translateX(-50%);
+        z-index: 20;
+      "
+    >
+      <p>Buka Pesan</p>
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6ZM20 6L12 10.99L4 6H20ZM20 18H4V8L12 13L20 8V18Z"
+          fill="#046511"
+        />
+      </svg>
+    </div>
+
+    <div
+      id="messageModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 30;
+        justify-content: center;
+        align-items: center;
+      "
+    >
+      <div
+        style="
+          position: relative;
+          background-color: white;
+          color: #046511;
+          font-size: 1.4em;
+          padding: 16px;
+          max-width: 80%;
+          max-height: 90svh;
+          overflow-y: auto;
+          text-align: left;
+        "
+      >
+        <button
+          id="closeModalButton"
+          style="
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #92ed00;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+          "
+        >
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 12 12"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11.25 1.8075L10.1925 0.75L6 4.9425L1.8075 0.75L0.75 1.8075L4.9425 6L0.75 10.1925L1.8075 11.25L6 7.0575L10.1925 11.25L11.25 10.1925L7.0575 6L11.25 1.8075Z"
+              fill="#046511"
+            />
+          </svg>
+        </button>
+        <p id="modalMessage"></p>
+        <div
+          style="
+            display: flex;
+            gap: 16px;
+            align-items: end;
+            justify-content: space-between;
+          "
+        >
+          <img
+            src="./assets/images/signature.png"
+            alt="Signature"
+            style="height: 8svh"
+          />
+          <img
+            src="./assets/images/highfive.png"
+            alt="High Five"
+            style="height: 6svh"
+          />
+        </div>
+      </div>
+    </div>
     <script>
       let videoElement = document.getElementById("arsa-video");
       let pauseTimeout;
 
       document.addEventListener("DOMContentLoaded", function () {
         const storiesElement = document.getElementById("stories");
-        const messageElement = document.createElement("div");
-        messageElement.style.position = "fixed";
-        messageElement.style.bottom = "10px";
-        messageElement.style.left = "50%";
-        messageElement.style.transform = "translateX(-50%)";
-        messageElement.style.color = "white";
-        messageElement.style.backgroundColor = "rgba(0, 0, 0, 0.5)";
-        messageElement.style.padding = "10px";
-        messageElement.style.borderRadius = "5px";
-        document.body.appendChild(messageElement);
 
         const friends = [
           {
             name: "Arsa",
             message:
-              "Hi all! \n\nI hope this message finds you well. I wanted to take a moment to sincerely apologize for any misunderstandings or inconveniences I may have caused. Your friendship means the world to me, and I truly appreciate your kindness and support. Thank you for being such a wonderful friend.\n\nWarm regards,\n[Your Name]",
+              "Hi all! \n\nI hope this message finds you well. I wanted to take a moment to sincerely apologize for any misunderstandings or inconveniences I may have caused. Your friendship means the world to me, and I truly appreciate your kindness and support. Thank you for being such a wonderful friend.\n\nWarm regards,\nArsa",
             video: "./assets/videos/arsa.mp4",
           },
           {
             name: "Kojo",
             message:
-              "Hi all!\n\nI hope you're doing great. I am writing to express my heartfelt apologies for any mistakes I might have made. Your friendship is incredibly valuable to me, and I am grateful for your patience and understanding. Thank you for being an amazing friend.\n\nBest wishes,\n[Your Name]",
+              "Hi all!\n\nI hope you're doing great. I am writing to express my heartfelt apologies for any mistakes I might have made. Your friendship is incredibly valuable to me, and I am grateful for your patience and understanding. Thank you for being an amazing friend.\n\nBest wishes,\nKojo",
             video: "./assets/videos/kojo.mp4",
           },
         ];
@@ -193,10 +297,13 @@
           "#92ED00",
         ];
 
+        const showMessageButton = document.getElementById("showMessageButton");
+        const messageModal = document.getElementById("messageModal");
+        const modalMessage = document.getElementById("modalMessage");
+
         // Function to update video and message
         function updateContent(index) {
           videoElement.src = friends[index].video;
-          messageElement.textContent = friends[index].message;
           videoElement.play();
         }
 
@@ -250,6 +357,32 @@
 
         // Set the first story as active by default
         storyButtons[0].classList.add("active");
+
+        // Show message modal if the active story is clicked
+        showMessageButton.addEventListener("click", () => {
+          const activeButton = document.querySelector(".story-button.active");
+          if (activeButton) {
+            const activeIndex = Array.from(storyButtons).indexOf(activeButton);
+            modalMessage.innerHTML = friends[activeIndex].message.replace(
+              /\n/g,
+              "<br>"
+            );
+            messageModal.style.display = "flex";
+          }
+        });
+
+        // Add event listener to close the modal when clicking on the overlay
+        messageModal.addEventListener("click", (event) => {
+          if (event.target === messageModal) {
+            messageModal.style.display = "none";
+          }
+        });
+
+        // Ensure the close button functionality remains
+        const closeModalButton = document.getElementById("closeModalButton");
+        closeModalButton.addEventListener("click", () => {
+          messageModal.style.display = "none";
+        });
       });
     </script>
   </body>
