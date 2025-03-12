@@ -410,13 +410,14 @@
         // Function to update video and message
         function updateContent(index) {
           videoElement.src = friends[index].video;
+          videoElement.play();
         }
 
         // Initially hide the stories
         storiesElement.style.display = "none";
 
         // Set default video and message
-        updateContent(0);
+        videoElement.src = friends[0].video;
 
         document
           .querySelector("a-marker")
