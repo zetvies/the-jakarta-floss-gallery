@@ -590,15 +590,80 @@
 
         // Function to get available video input devices
         async function getVideoDevices() {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          videoDevices = devices.filter(
-            (device) => device.kind === "videoinput"
-          );
-          console.log("Available video devices:", videoDevices);
-          if (videoDevices.length > 1) {
-            swapCameraButton.style.display = "flex"; // Show the button if more than one camera
-          } else {
-            swapCameraButton.style.display = "none"; // Hide the button if only one camera
+          try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+
+            // Arrays to store our filtered cameras
+            let standardBackCamera = null;
+            let standardFrontCamera = null;
+
+            // First pass: filter all video devices
+            const allVideoDevices = devices.filter(
+              (device) => device.kind === "videoinput"
+            );
+            console.log("All available video devices:", allVideoDevices);
+
+            // Second pass: identify standard cameras
+            allVideoDevices.forEach((device) => {
+              const label = device.label.toLowerCase();
+
+              // Check for back camera (usually primary/main/rear/back)
+              if (
+                (label.includes("back") ||
+                  label.includes("rear") ||
+                  label.includes("main")) &&
+                !label.includes("wide") &&
+                !label.includes("ultra") &&
+                !label.includes("zoom") &&
+                !label.includes("tele")
+              ) {
+                standardBackCamera = device;
+              }
+
+              // Check for front camera (usually front/selfie/user)
+              if (
+                (label.includes("front") ||
+                  label.includes("selfie") ||
+                  label.includes("user")) &&
+                !label.includes("wide") &&
+                !label.includes("ultra") &&
+                !label.includes("zoom")
+              ) {
+                standardFrontCamera = device;
+              }
+            });
+
+            // Combine the results
+            videoDevices = [];
+            if (standardBackCamera) videoDevices.push(standardBackCamera);
+            if (standardFrontCamera) videoDevices.push(standardFrontCamera);
+
+            // Fallback: If no standard cameras found, use first of each type
+            if (videoDevices.length === 0) {
+              const backCameras = allVideoDevices.filter(
+                (d) =>
+                  d.label.toLowerCase().includes("back") ||
+                  d.label.toLowerCase().includes("rear")
+              );
+
+              const frontCameras = allVideoDevices.filter(
+                (d) =>
+                  d.label.toLowerCase().includes("front") ||
+                  d.label.toLowerCase().includes("selfie")
+              );
+
+              if (backCameras.length > 0) videoDevices.push(backCameras[0]);
+              if (frontCameras.length > 0) videoDevices.push(frontCameras[0]);
+            }
+
+            console.log("Filtered standard cameras:", videoDevices);
+            if (videoDevices.length > 1) {
+              swapCameraButton.style.display = "flex"; // Show the button if more than one camera
+            } else {
+              swapCameraButton.style.display = "none"; // Hide the button if only one camera
+            }
+          } catch (error) {
+            console.error("Error accessing media devices:", error);
           }
         }
 
