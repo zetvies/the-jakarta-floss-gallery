@@ -565,6 +565,59 @@
         closeModalButton.addEventListener("click", () => {
           messageModal.style.display = "none";
         });
+
+        const swapCameraButton = document.getElementById("swapCameraButton");
+        let currentStream;
+        let videoDevices = [];
+        let currentDeviceIndex = 0;
+
+        // Function to get available video input devices
+        async function getVideoDevices() {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          videoDevices = devices.filter(
+            (device) => device.kind === "videoinput"
+          );
+          console.log("Available video devices:", videoDevices);
+          if (videoDevices.length > 1) {
+            swapCameraButton.style.display = "flex"; // Show the button if more than one camera
+          } else {
+            swapCameraButton.style.display = "none"; // Hide the button if only one camera
+          }
+        }
+
+        // Function to switch camera
+        async function switchCamera() {
+          if (videoDevices.length > 1) {
+            currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+            const deviceId = videoDevices[currentDeviceIndex].deviceId;
+            console.log(
+              "Switched to camera:",
+              videoDevices[currentDeviceIndex]
+            );
+            const constraints = {
+              video: { deviceId: { exact: deviceId } },
+            };
+            if (currentStream) {
+              currentStream.getTracks().forEach((track) => track.stop());
+            }
+            try {
+              currentStream = await navigator.mediaDevices.getUserMedia(
+                constraints
+              );
+              const aframeCamera = document.querySelector("a-entity[camera]");
+              aframeCamera.setAttribute("camera", "active", false); // Deactivate current camera
+              aframeCamera.setAttribute("camera", "active", true); // Reactivate with new stream
+              aframeCamera.components.camera.camera.srcObject = currentStream; // Set new stream
+              console.log;
+            } catch (error) {
+              console.error("Error switching camera:", error);
+            }
+          }
+        }
+
+        // Initialize video devices and add event listener for the button
+        getVideoDevices();
+        swapCameraButton.addEventListener("click", switchCamera);
       });
 
       const recordButton = document.getElementById("recordButton");
