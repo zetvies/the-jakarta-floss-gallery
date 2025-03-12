@@ -263,11 +263,11 @@
       id="recordButton"
       style="
         position: fixed;
-        bottom: 5svh;
+        bottom: 4svh;
         left: 50%;
         transform: translateX(-50%);
-        width: 50px;
-        height: 50px;
+        width: 7svh;
+        height: 7svh;
         background-color: white;
         border-radius: 50%;
         display: flex;
@@ -280,8 +280,8 @@
       <div
         id="recordInner"
         style="
-          width: 30px;
-          height: 30px;
+          width: 5.2svh;
+          height: 5.2svh;
           background-color: #92ed00;
           border-radius: 50%;
           transition: all 0.3s ease;
@@ -292,11 +292,11 @@
       id="galleryButton"
       style="
         position: fixed;
-        bottom: 5svh;
+        bottom: 4.5svh;
         left: calc(50% - 80px);
         transform: translateX(-50%);
-        width: 50px;
-        height: 50px;
+        width: 6svh;
+        height: 6svh;
         background-color: white;
         border-radius: 50%;
         display: flex;
@@ -353,15 +353,15 @@
       >
         <img
           src="./assets/images/line-decoration-left.png"
-          style="width: 15svh; height: auto"
+          style="width: 10svh; max-width: 15vw; height: auto"
         />
         <img
           src="./pattern-sparkle-white.png"
-          style="width: 24svh; height: 24svh"
+          style="width: 24svh; max-width: 40vw; height: auto"
         />
         <img
           src="./assets/images/line-decoration-right.png"
-          style="width: 15svh; height: auto"
+          style="width: 10svh; max-width: 15vw; height: auto"
         />
       </div>
     </div>
@@ -375,8 +375,10 @@
       let currentStream;
 
       document.addEventListener("DOMContentLoaded", function () {
-        const storiesElement = document.getElementById("stories");
+        // Ensure the video is paused initially
+        videoElement.pause();
 
+        const storiesElement = document.getElementById("stories");
         const friends = [
           {
             name: "Arsa",
@@ -534,11 +536,11 @@
         const muteButton = document.createElement("div");
         muteButton.id = "muteButton";
         muteButton.style.position = "fixed";
-        muteButton.style.bottom = "5svh";
+        muteButton.style.bottom = "4.5svh";
         muteButton.style.left = "calc(50% + 80px)";
         muteButton.style.transform = "translateX(-50%)";
-        muteButton.style.width = "50px";
-        muteButton.style.height = "50px";
+        muteButton.style.width = "6svh";
+        muteButton.style.height = "6svh";
         muteButton.style.backgroundColor = "white";
         muteButton.style.borderRadius = "50%";
         muteButton.style.display = "flex";
@@ -602,6 +604,13 @@
         galleryButton.addEventListener("click", () => {
           window.location.href = "/gallery.html";
         });
+      });
+
+      window.addEventListener("beforeunload", () => {
+        const videoElement = document.getElementById("arsa-video");
+        if (videoElement) {
+          videoElement.pause();
+        }
       });
     </script>
   </body>

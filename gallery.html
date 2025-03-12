@@ -3,29 +3,92 @@
   <head>
     <title>Gallery | Moon Muffin</title>
     <link rel="stylesheet" href="/styles.css" />
+    <style>
+      body {
+        font-size: 2svh;
+      }
+      h1 {
+        font-size: 3svh;
+      }
+      #video-gallery {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: center;
+      }
+      @media (max-width: 768px) {
+        #video-gallery {
+          flex-direction: column;
+          align-items: center;
+        }
+      }
+      #modal-content {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 2svh;
+        width: fit-content;
+      }
+      #modal-content > div {
+        width: 20svh;
+        padding: 2svh;
+        background-color: white;
+        overflow: visible;
+        box-shadow: 0 0.4svh 0.8svh rgba(0, 0, 0, 0.1);
+        transform: rotate(-3deg);
+        position: relative;
+      }
+      #modal-video {
+        width: 20svh;
+        height: 30svh;
+        object-fit: cover;
+      }
+      #modal-message {
+        font-size: 1.5svh;
+        color: #046511;
+      }
+      @media (max-width: 768px) {
+        #modal-content {
+          flex-direction: column;
+          width: 100%;
+        }
+        #modal-content > div {
+          width: 100%;
+        }
+      }
+      button {
+        width: 4svh;
+        height: 4svh;
+      }
+      #prevButton,
+      #nextButton {
+        width: 4svh;
+        height: 4svh;
+      }
+    </style>
   </head>
-  <body style="background-color: #edf0e7; padding: 4svh 8svh">
+  <body style="background-color: #edf0e7; padding: 8vh 5vw">
     <div style="display: flex; flex-direction: column; align-items: center">
       <div
         onclick="window.location.href='/index.html'"
         style="
           position: fixed;
-          top: 24px;
-          left: 24px;
-          width: 50px;
-          height: 50px;
+          top: 2svh;
+          left: 2svh;
+          width: 5svh;
+          height: 5svh;
           background-color: white;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           cursor: pointer;
-          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+          box-shadow: 0 0.4svh 0.8svh rgba(0, 0, 0, 0.1);
         "
       >
         <svg
-          width="28"
-          height="28"
+          width="3svh"
+          height="3svh"
           viewBox="0 0 28 28"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -40,7 +103,7 @@
         style="
           font-family: Inter;
           color: #046511;
-          font-size: 2rem;
+          font-size: 3svh;
           font-weight: 500;
         "
       >
@@ -49,7 +112,7 @@
           style="
             color: #ff3755;
             font-family: OtherHand;
-            font-size: 2.4rem;
+            font-size: 3.2svh;
             font-weight: 600;
           "
           ;
@@ -80,19 +143,20 @@
         id="modal-content"
         style="
           display: flex;
+          flex-direction: column;
           justify-content: center;
           align-items: center;
-          gap: 20px;
+          gap: 2svh;
           width: fit-content;
         "
       >
         <div
           style="
-            width: 200px;
-            padding: 2vh;
+            width: fit-content;
+            padding: 1.8svh;
             background-color: white;
             overflow: visible;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 0.4svh 0.8svh rgba(0, 0, 0, 0.1);
             transform: rotate(-3deg);
             position: relative;
           "
@@ -100,13 +164,13 @@
           <button
             style="
               position: absolute;
-              top: -12px;
-              left: -12px;
+              top: -1.2svh;
+              left: -1.2svh;
               background-color: #92ed00;
               border: none;
               border-radius: 50%;
-              width: 24px;
-              height: 24px;
+              width: 4svh;
+              height: 4svh;
               display: flex;
               justify-content: center;
               align-items: center;
@@ -116,8 +180,8 @@
             onclick="document.getElementById('modal').style.display = 'none'; document.getElementById('modal-video').pause();"
           >
             <svg
-              width="12"
-              height="12"
+              width="2svh"
+              height="2svh"
               viewBox="0 0 12 12"
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
@@ -130,7 +194,7 @@
           </button>
           <video
             id="modal-video"
-            style="width: 200px; height: 300px; object-fit: cover"
+            style="width: 25vh; height: 30vh; object-fit: cover"
             autoplay
             loop
           ></video>
@@ -143,11 +207,11 @@
           >
             <div
               id="modal-name"
-              style="margin-top: 2svh; font-size: 1.5rem; flex: 1"
+              style="margin-top: 2svh; font-size: 3svh; flex: 1"
             ></div>
             <img
               src="./assets/images/highfive.png"
-              style="height: 24px; width: auto; transform: translateY(5px)"
+              style="height: 3svh; width: auto; transform: translateY(0.5svh)"
             />
           </div>
         </div>
@@ -155,23 +219,24 @@
           id="prevButton"
           style="
             position: absolute;
-            left: 8svh;
-            top: 50%;
+            left: 3svh;
+            top: 40%;
             transform: translateY(-50%);
             background-color: #92ed00;
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 6svh;
+            height: 6svh;
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
+            z-index: 30;
           "
         >
           <svg
-            width="24"
-            height="24"
+            width="4svh"
+            height="4svh"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -186,23 +251,24 @@
           id="nextButton"
           style="
             position: absolute;
-            right: 8svh;
-            top: 50%;
+            right: 3svh;
+            top: 40%;
             transform: translateY(-50%);
             background-color: #92ed00;
             border: none;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
+            width: 6svh;
+            height: 6svh;
             display: flex;
             justify-content: center;
             align-items: center;
             cursor: pointer;
+            z-index: 30;
           "
         >
           <svg
-            width="24"
-            height="24"
+            width="4svh"
+            height="4svh"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -215,34 +281,35 @@
         </button>
         <div
           style="
-            padding: 20px;
-            width: 30%;
+            padding: 1.2svh;
+            width: 80%;
             background-color: white;
             transform: rotate(3deg);
           "
         >
-          <p id="modal-message" style="font-size: 1.2rem; color: #046511"></p>
+          <p id="modal-message" style="font-size: 2.4svh; color: #046511"></p>
         </div>
       </div>
       <button
         style="
           background-color: #92ed00;
           border: none;
-          padding: 10px 20px;
-          border-radius: 5px;
+          width: fit-content;
+          padding: 1svh 2svh;
+          border-radius: 0.8svh;
           cursor: pointer;
-          margin-top: 20px;
+          margin-top: 2svh;
           display: flex;
           align-items: center;
-          gap: 10px;
-          font-size: 1.2rem;
+          gap: 1svh;
+          font-size: 2.2svh;
           color: #046511;
         "
       >
         Download & Share
         <svg
-          width="24"
-          height="24"
+          width="2.4svh"
+          height="2.4svh"
           viewBox="0 0 24 24"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -312,7 +379,7 @@
 
       friends.forEach((friend, index) => {
         const card = document.createElement("div");
-        card.style.width = "200px";
+        card.style.width = "20svh";
         card.style.border = "2vh solid white";
         card.style.backgroundColor = "white";
         card.style.overflow = "hidden";
@@ -326,26 +393,27 @@
         video.muted = true;
         video.autoplay = true;
         video.loop = true;
-        video.style.width = "200px";
-        video.style.height = "250px";
+        video.style.width = "20svh";
+        video.style.height = "25svh";
         video.style.objectFit = "cover";
 
         const nameContainer = document.createElement("div");
         nameContainer.style.display = "flex";
         nameContainer.style.justifyContent = "space-between";
         nameContainer.style.alignItems = "center";
+        nameContainer.style.padding = "1svh";
 
         const name = document.createElement("div");
-        name.style.marginTop = "2svh";
+        name.style.marginTop = "1svh";
         name.textContent = friend.name;
-        name.style.fontSize = "1.5rem";
+        name.style.fontSize = "3svh";
         name.style.flex = "1";
 
         const highfiveImg = document.createElement("img");
         highfiveImg.src = "./assets/images/highfive.png";
-        highfiveImg.style.height = "24px";
+        highfiveImg.style.height = "3svh";
         highfiveImg.style.width = "auto";
-        highfiveImg.style.transform = "translateY(5px)";
+        highfiveImg.style.transform = "translateY(0.5svh)";
 
         nameContainer.appendChild(name);
         nameContainer.appendChild(highfiveImg);
@@ -375,12 +443,12 @@
       const signatureImg = document.createElement("img");
       signatureImg.src = "./assets/images/signature.png";
       signatureImg.alt = "Signature";
-      signatureImg.style.height = "8svh";
+      signatureImg.style.height = "6svh";
 
       const highfiveImg = document.createElement("img");
       highfiveImg.src = "./assets/images/highfive.png";
       highfiveImg.alt = "High Five";
-      highfiveImg.style.height = "6svh";
+      highfiveImg.style.height = "4svh";
 
       const stickerContainer = document.createElement("div");
       stickerContainer.style.display = "flex";
