@@ -14,7 +14,7 @@
       vr-mode-ui="enabled: false"
     >
       <!-- Define a marker using the Hiro pattern -->
-      <a-marker type="pattern" url="pattern-highfive-black.patt">
+      <a-marker type="pattern" url="pattern-sparkle-black.patt">
         <!-- Add a white plane as a container for the video -->
         <a-plane
           color="white"
@@ -413,7 +413,7 @@
           style="width: 15svh; height: auto"
         />
         <img
-          src="./pattern-highfive-white.png"
+          src="./pattern-sparkle-white.png"
           style="width: 24svh; height: 24svh"
         />
         <img
@@ -573,15 +573,19 @@
 
         // Function to get available video input devices
         async function getVideoDevices() {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          videoDevices = devices.filter(
-            (device) => device.kind === "videoinput"
-          );
-          console.log("Available video devices:", videoDevices);
-          if (videoDevices.length > 1) {
-            swapCameraButton.style.display = "flex"; // Show the button if more than one camera
-          } else {
-            swapCameraButton.style.display = "none"; // Hide the button if only one camera
+          try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            videoDevices = devices.filter(
+              (device) => device.kind === "videoinput"
+            );
+            console.log("Available video devices:", videoDevices);
+            if (videoDevices.length > 1) {
+              swapCameraButton.style.display = "flex"; // Show the button if more than one camera
+            } else {
+              swapCameraButton.style.display = "none"; // Hide the button if only one camera
+            }
+          } catch (error) {
+            console.error("Error accessing media devices:", error);
           }
         }
 
@@ -608,7 +612,6 @@
               aframeCamera.setAttribute("camera", "active", false); // Deactivate current camera
               aframeCamera.setAttribute("camera", "active", true); // Reactivate with new stream
               aframeCamera.components.camera.camera.srcObject = currentStream; // Set new stream
-              console.log;
             } catch (error) {
               console.error("Error switching camera:", error);
             }
