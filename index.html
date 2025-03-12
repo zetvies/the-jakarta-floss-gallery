@@ -316,65 +316,14 @@
       <svg
         width="28"
         height="28"
-        viewBox="0 0 28 28"
+        viewBox="0 0 18 18"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
       >
         <path
-          d="M14.0003 9.33268C15.2837 9.33268 16.3337 8.28268 16.3337 6.99935C16.3337 5.71602 15.2837 4.66602 14.0003 4.66602C12.717 4.66602 11.667 5.71602 11.667 6.99935C11.667 8.28268 12.717 9.33268 14.0003 9.33268ZM14.0003 11.666C12.717 11.666 11.667 12.716 11.667 13.9993C11.667 15.2827 12.717 16.3327 14.0003 16.3327C15.2837 16.3327 16.3337 15.2827 16.3337 13.9993C16.3337 12.716 15.2837 11.666 14.0003 11.666ZM14.0003 18.666C12.717 18.666 11.667 19.716 11.667 20.9994C11.667 22.2827 12.717 23.3327 14.0003 23.3327C15.2837 23.3327 16.3337 22.2827 16.3337 20.9994C16.3337 19.716 15.2837 18.666 14.0003 18.666Z"
+          d="M14.25 2.25H3.75C2.925 2.25 2.25 2.925 2.25 3.75V14.25C2.25 15.075 2.925 15.75 3.75 15.75H14.25C15.075 15.75 15.75 15.075 15.75 14.25V3.75C15.75 2.925 15.075 2.25 14.25 2.25ZM14.25 14.25H3.75V3.75H14.25V14.25ZM10.47 9.2175L8.4075 11.8725L6.9375 10.1025L4.875 12.75H13.125L10.47 9.2175Z"
           fill="#046511"
         />
-      </svg>
-    </div>
-
-    <div
-      id="swapCameraButton"
-      style="
-        position: fixed;
-        bottom: 5svh;
-        left: calc(50% + 80px);
-        transform: translateX(-50%);
-        width: 50px;
-        height: 50px;
-        background-color: white;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        z-index: 20;
-      "
-    >
-      <svg
-        width="28"
-        height="28"
-        viewBox="0 0 28 28"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <g clip-path="url(#clip0_2207_3859)">
-          <path
-            d="M18.6667 8.16605H17.5L16.3333 6.99939H11.6667L10.5 8.16605H9.33333C8.05 8.16605 7 9.21605 7 10.4994V17.4994C7 18.7827 8.05 19.8327 9.33333 19.8327H18.6667C19.95 19.8327 21 18.7827 21 17.4994V10.4994C21 9.21605 19.95 8.16605 18.6667 8.16605ZM18.6667 17.4994H9.33333V10.4994H11.4683L12.635 9.33272H15.365L16.5317 10.4994H18.6667V17.4994Z"
-            fill="#046511"
-          />
-          <path
-            d="M14 16.3327C15.2887 16.3327 16.3333 15.2881 16.3333 13.9994C16.3333 12.7107 15.2887 11.6661 14 11.6661C12.7113 11.6661 11.6667 12.7107 11.6667 13.9994C11.6667 15.2881 12.7113 16.3327 14 16.3327Z"
-            fill="#046511"
-          />
-          <path
-            d="M9.99833 0.606054L15.225 5.83272L16.87 4.18772L15.0733 2.39105C20.65 2.86939 25.1183 7.27939 25.6667 12.8327H28C27.2533 3.84939 18.4217 -1.94895 9.99833 0.606054Z"
-            fill="#046511"
-          />
-          <path
-            d="M11.13 23.8111L12.9267 25.6077C7.35 25.1294 2.88167 20.7194 2.33333 15.1661H0C0.746667 24.1494 9.57833 29.9477 18.0017 27.3927L12.775 22.1661L11.13 23.8111Z"
-            fill="#046511"
-          />
-        </g>
-        <defs>
-          <clipPath id="clip0_2207_3859">
-            <rect width="28" height="28" fill="white" />
-          </clipPath>
-        </defs>
       </svg>
     </div>
 
@@ -429,7 +378,7 @@
       let markerDetectedOnce = false;
       let currentDeviceIndex = 0;
       let videoDevices = [];
-      const swapCameraButton = document.getElementById("swapCameraButton");
+      const muteButton = document.getElementById("muteButton");
       let currentStream;
 
       document.addEventListener("DOMContentLoaded", function () {
@@ -522,27 +471,6 @@
 
             // Hide the showMessageButton when the marker is lost
             showMessageButton.style.display = "none";
-
-            // Create and display a modal in the top right corner listing all video input labels
-            const videoLabels = videoDevices
-              .map((device) => device.label)
-              .join("<br>");
-            let videoLabelModal = document.getElementById("videoLabelModal");
-            if (!videoLabelModal) {
-              videoLabelModal = document.createElement("div");
-              videoLabelModal.id = "videoLabelModal";
-              videoLabelModal.style.position = "fixed";
-              videoLabelModal.style.top = "10px";
-              videoLabelModal.style.right = "10px";
-              videoLabelModal.style.backgroundColor =
-                "rgba(255, 255, 255, 0.9)";
-              videoLabelModal.style.padding = "10px";
-              videoLabelModal.style.borderRadius = "8px";
-              videoLabelModal.style.zIndex = "40";
-              videoLabelModal.style.maxWidth = "200px";
-              document.body.appendChild(videoLabelModal);
-            }
-            videoLabelModal.innerHTML = `<strong>Available Cameras:</strong><br>${videoLabels}`;
           });
 
         // Add click event listeners to story buttons and assign random border colors
@@ -609,70 +537,73 @@
           }
         });
 
-        // Function to get available video input devices
-        async function getVideoDevices() {
-          const devices = await navigator.mediaDevices.enumerateDevices();
-          videoDevices = devices.filter(
-            (device) => device.kind === "videoinput"
-          );
-          console.log("Available video devices:", videoDevices);
-          if (videoDevices.length > 1) {
-            swapCameraButton.style.display = "flex"; // Show the button if more than one camera
-          } else {
-            swapCameraButton.style.display = "none"; // Hide the button if only one camera
-          }
+        // Add the mute button to the right of the record button
+        const muteButton = document.createElement("div");
+        muteButton.id = "muteButton";
+        muteButton.style.position = "fixed";
+        muteButton.style.bottom = "5svh";
+        muteButton.style.left = "calc(50% + 80px)";
+        muteButton.style.transform = "translateX(-50%)";
+        muteButton.style.width = "50px";
+        muteButton.style.height = "50px";
+        muteButton.style.backgroundColor = "white";
+        muteButton.style.borderRadius = "50%";
+        muteButton.style.display = "flex";
+        muteButton.style.justifyContent = "center";
+        muteButton.style.alignItems = "center";
+        muteButton.style.cursor = "pointer";
+        muteButton.style.zIndex = "20";
+        muteButton.innerHTML = `
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 18 18"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
+              fill="#046511"
+            />
+          </svg>
+        `;
+        document.body.appendChild(muteButton);
 
-          // Create and display a modal in the top right corner listing all video input labels
-          const videoLabels = videoDevices
-            .map((device) => device.label)
-            .join("<br>");
-          let videoLabelModal = document.getElementById("videoLabelModal");
-          if (!videoLabelModal) {
-            videoLabelModal = document.createElement("div");
-            videoLabelModal.id = "videoLabelModal";
-            videoLabelModal.style.position = "fixed";
-            videoLabelModal.style.top = "10px";
-            videoLabelModal.style.right = "10px";
-            videoLabelModal.style.backgroundColor = "rgba(255, 255, 255, 0.9)";
-            videoLabelModal.style.padding = "10px";
-            videoLabelModal.style.borderRadius = "8px";
-            videoLabelModal.style.zIndex = "40";
-            videoLabelModal.style.maxWidth = "200px";
-            document.body.appendChild(videoLabelModal);
-          }
-          videoLabelModal.innerHTML = `<strong>Available Cameras:</strong><br>${videoLabels}`;
-        }
-
-        // Function to switch camera
-        async function switchCamera() {
-          if (videoDevices.length > 1) {
-            currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
-            const deviceId = videoDevices[currentDeviceIndex].deviceId;
-            console.log(
-              "Switched to camera:",
-              videoDevices[currentDeviceIndex].label
-            );
-            const constraints = {
-              video: { deviceId: { exact: deviceId } },
-            };
-            if (currentStream) {
-              currentStream.getTracks().forEach((track) => track.stop());
-            }
-            try {
-              currentStream = await navigator.mediaDevices.getUserMedia(
-                constraints
-              );
-              const arjsVideo = document.getElementById("arjs-video");
-              arjsVideo.srcObject = currentStream; // Set new stream
-            } catch (error) {
-              console.error("Error switching camera:", error);
-            }
-          }
-        }
-
-        // Initialize video devices and add event listener for the button
-        getVideoDevices();
-        swapCameraButton.addEventListener("click", switchCamera);
+        // Add functionality to toggle mute state
+        let isMuted = false;
+        muteButton.addEventListener("click", () => {
+          isMuted = !isMuted;
+          videoElement.muted = isMuted;
+          muteButton.innerHTML = isMuted
+            ? `
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 18 18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3.25477 2.20117L2.19727 3.25867L5.46727 6.52867L5.24977 6.75367H2.24977V11.2537H5.24977L8.99977 15.0037V10.0612L12.1348 13.1962C11.6473 13.5637 11.0998 13.8562 10.4998 14.0287V15.5737C11.5048 15.3487 12.4273 14.8837 13.2073 14.2612L14.7448 15.7987L15.8023 14.7412L3.25477 2.20117ZM7.49977 11.3812L5.87227 9.75367H3.74977V8.25367H5.87227L6.53227 7.59367L7.49977 8.56117V11.3812ZM14.2498 9.00367C14.2498 9.61867 14.1373 10.2112 13.9423 10.7587L15.0898 11.9062C15.5098 11.0287 15.7498 10.0462 15.7498 9.00367C15.7498 5.79367 13.5073 3.10867 10.4998 2.42617V3.97117C12.6673 4.61617 14.2498 6.62617 14.2498 9.00367ZM8.99977 3.00367L7.58977 4.41367L8.99977 5.82367V3.00367ZM12.3748 9.00367C12.3748 7.67617 11.6098 6.53617 10.4998 5.98117V7.32367L12.3598 9.18367C12.3673 9.12367 12.3748 9.06367 12.3748 9.00367Z"
+                fill="#046511"
+              />
+            </svg>
+          `
+            : `
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 18 18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
+                fill="#046511"
+              />
+            </svg>
+          `;
+        });
       });
     </script>
   </body>
