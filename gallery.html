@@ -4,7 +4,59 @@
     <title>Gallery | Moon Muffin</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
-  <body>
+  <body style="background-color: #edf0e7; padding: 4svh 8svh">
+    <div style="display: flex; flex-direction: column; align-items: center">
+      <div
+        onclick="window.location.href='/index.html'"
+        style="
+          position: fixed;
+          top: 24px;
+          left: 24px;
+          width: 50px;
+          height: 50px;
+          background-color: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        "
+      >
+        <svg
+          width="28"
+          height="28"
+          viewBox="0 0 28 28"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M18.3227 8.645L16.6777 7L9.67773 14L16.6777 21L18.3227 19.355L12.9794 14L18.3227 8.645Z"
+            fill="#046511"
+          />
+        </svg>
+      </div>
+      <h1
+        style="
+          font-family: Inter;
+          color: #046511;
+          font-size: 2rem;
+          font-weight: 500;
+        "
+      >
+        Maaf yang Udah
+        <span
+          style="
+            color: #ff3755;
+            font-family: OtherHand;
+            font-size: 2.4rem;
+            font-weight: 600;
+          "
+          ;
+          >Diterima</span
+        >
+      </h1>
+    </div>
     <div id="video-gallery" style="display: flex; flex-wrap: wrap; gap: 16px">
       <!-- Cards will be dynamically inserted here -->
     </div>
@@ -29,26 +81,46 @@
       friends.forEach((friend) => {
         const card = document.createElement("div");
         card.style.width = "200px";
-        card.style.border = "1px solid #ccc";
-        card.style.borderRadius = "8px";
+        card.style.border = "2vh solid white";
+        card.style.backgroundColor = "white";
         card.style.overflow = "hidden";
         card.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.1)";
+        card.style.cursor = "pointer";
+        // Random rotation between -5 and 5 degrees
+        const randomRotation = Math.random() * 10 - 3;
+        card.style.transform = `rotate(${randomRotation}deg)`;
 
         const video = document.createElement("video");
         video.src = friend.video;
         video.muted = true;
         video.autoplay = true;
         video.loop = true;
-        video.style.width = "100%";
-        video.style.height = "auto";
+        video.style.width = "200px"; // Fixed width
+        video.style.height = "250px"; // Fixed height to match width
+        video.style.objectFit = "cover"; // Maintain aspect ratio and cover container
 
-        const name = document.createElement("p");
+        const nameContainer = document.createElement("div");
+        nameContainer.style.display = "flex";
+        nameContainer.style.justifyContent = "space-between";
+        nameContainer.style.alignItems = "center";
+
+        const name = document.createElement("div");
+        name.style.marginTop = "2svh";
         name.textContent = friend.name;
-        name.style.textAlign = "center";
-        name.style.margin = "8px 0";
+        name.style.fontSize = "1.5rem";
+        name.style.flex = "1";
+
+        const highfiveImg = document.createElement("img");
+        highfiveImg.src = "./assets/images/highfive.png";
+        highfiveImg.style.height = "24px";
+        highfiveImg.style.width = "auto";
+        highfiveImg.style.transform = "translateY(5px)";
+
+        nameContainer.appendChild(name);
+        nameContainer.appendChild(highfiveImg);
 
         card.appendChild(video);
-        card.appendChild(name);
+        card.appendChild(nameContainer);
         gallery.appendChild(card);
       });
     </script>
