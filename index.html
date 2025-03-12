@@ -377,6 +377,7 @@
         </defs>
       </svg>
     </div>
+
     <div
       id="markerNotFoundOverlay"
       style="
@@ -566,78 +567,22 @@
           messageModal.style.display = "none";
         });
 
-        const swapCameraButton = document.getElementById("swapCameraButton");
-        let currentStream;
-        let videoDevices = [];
-        let currentDeviceIndex = 0;
+        const recordButton = document.getElementById("recordButton");
+        const recordInner = document.getElementById("recordInner");
+        let isRecording = false;
 
-        // Function to get available video input devices
-        async function getVideoDevices() {
-          try {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            videoDevices = devices.filter(
-              (device) => device.kind === "videoinput"
-            );
-            console.log("Available video devices:", videoDevices);
-            if (videoDevices.length > 1) {
-              swapCameraButton.style.display = "flex"; // Show the button if more than one camera
-            } else {
-              swapCameraButton.style.display = "none"; // Hide the button if only one camera
-            }
-          } catch (error) {
-            console.error("Error accessing media devices:", error);
+        recordButton.addEventListener("click", () => {
+          isRecording = !isRecording;
+          if (isRecording) {
+            recordInner.style.borderRadius = "0";
+            recordInner.style.width = "20px";
+            recordInner.style.height = "20px";
+          } else {
+            recordInner.style.borderRadius = "50%";
+            recordInner.style.width = "30px";
+            recordInner.style.height = "30px";
           }
-        }
-
-        // Function to switch camera
-        async function switchCamera() {
-          if (videoDevices.length > 1) {
-            currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
-            const deviceId = videoDevices[currentDeviceIndex].deviceId;
-            console.log(
-              "Switched to camera:",
-              videoDevices[currentDeviceIndex]
-            );
-            const constraints = {
-              video: { deviceId: { exact: deviceId } },
-            };
-            if (currentStream) {
-              currentStream.getTracks().forEach((track) => track.stop());
-            }
-            try {
-              currentStream = await navigator.mediaDevices.getUserMedia(
-                constraints
-              );
-              const aframeCamera = document.querySelector("a-entity[camera]");
-              aframeCamera.setAttribute("camera", "active", false); // Deactivate current camera
-              aframeCamera.setAttribute("camera", "active", true); // Reactivate with new stream
-              aframeCamera.components.camera.camera.srcObject = currentStream; // Set new stream
-            } catch (error) {
-              console.error("Error switching camera:", error);
-            }
-          }
-        }
-
-        // Initialize video devices and add event listener for the button
-        getVideoDevices();
-        swapCameraButton.addEventListener("click", switchCamera);
-      });
-
-      const recordButton = document.getElementById("recordButton");
-      const recordInner = document.getElementById("recordInner");
-      let isRecording = false;
-
-      recordButton.addEventListener("click", () => {
-        isRecording = !isRecording;
-        if (isRecording) {
-          recordInner.style.borderRadius = "0";
-          recordInner.style.width = "20px";
-          recordInner.style.height = "20px";
-        } else {
-          recordInner.style.borderRadius = "50%";
-          recordInner.style.width = "30px";
-          recordInner.style.height = "30px";
-        }
+        });
       });
     </script>
   </body>
