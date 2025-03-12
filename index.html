@@ -289,7 +289,7 @@
       ></div>
     </div>
     <div
-      id="menuButton"
+      id="galleryButton"
       style="
         position: fixed;
         bottom: 5svh;
@@ -596,6 +596,11 @@
               />
             </svg>
           `;
+        });
+
+        const galleryButton = document.getElementById("galleryButton");
+        galleryButton.addEventListener("click", () => {
+          window.location.href = "/gallery.html";
         });
       });
     </script>
