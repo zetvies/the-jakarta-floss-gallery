@@ -328,12 +328,14 @@
           message:
             "Hi all! \n\nI hope this message finds you well. I wanted to take a moment to sincerely apologize for any misunderstandings or inconveniences I may have caused. Your friendship means the world to me, and I truly appreciate your kindness and support. Thank you for being such a wonderful friend.\n\nWarm regards,\nArsa",
           video: "./assets/videos/arsa.mp4",
+          signature: "./assets/images/signature.png",
         },
         {
           name: "Kojo",
           message:
             "Hi all!\n\nI hope you're doing great. I am writing to express my heartfelt apologies for any mistakes I might have made. Your friendship is incredibly valuable to me, and I am grateful for your patience and understanding. Thank you for being an amazing friend.\n\nBest wishes,\nKojo",
           video: "./assets/videos/kojo.mp4",
+          signature: "./assets/images/signature.png",
         },
       ];
 
@@ -350,9 +352,17 @@
         modalMessage.innerHTML = friend.message.replace(/\n/g, "<br>");
         document.getElementById("modal-name").textContent = friend.name;
 
+        // Update the signature dynamically
+        const signatureImg = document
+          .querySelector("#modal-message")
+          .parentElement.querySelector("img[alt='Signature']");
+        if (signatureImg) {
+          signatureImg.src = friend.signature;
+        }
+
         // Apply random rotation to video and letter
-        const randomRotationVideo = Math.random() * 10 - 5; // Random rotation between -5 and 5 degrees
-        const randomRotationLetter = Math.random() * 10 - 5; // Random rotation between -5 and 5 degrees
+        const randomRotationVideo = Math.random() * 10 - 5;
+        const randomRotationLetter = Math.random() * 10 - 5;
         const videoContainer = document.querySelector(
           "#modal-content > div:first-child"
         );
