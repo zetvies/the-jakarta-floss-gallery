@@ -14,7 +14,7 @@
       vr-mode-ui="enabled: false"
     >
       <!-- Define a marker using the Hiro pattern -->
-      <a-marker type="pattern" url="pattern-sparkle-black.patt">
+      <a-marker type="pattern" url="pattern-highfive-black.patt">
         <!-- Add a white plane as a container for the video -->
         <a-plane
           color="white"
@@ -295,9 +295,55 @@
         "
       ></div>
     </div>
+    <div
+      id="markerNotFoundOverlay"
+      style="
+        font-family: Inter;
+        position: fixed;
+        height: 100svh;
+        width: 100svw;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.4);
+        color: white;
+        display: flex;
+        font-size: 1.3em;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        z-index: 2;
+        padding-bottom: 10svh;
+      "
+    >
+      <p>Arahkan kameramu ke<br />logo Moon Muffin:</p>
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
+        "
+      >
+        <img
+          src="./assets/images/line-decoration-left.png"
+          style="width: 15svh; height: auto"
+        />
+        <img
+          src="./pattern-highfive-white.png"
+          style="width: 24svh; height: 24svh"
+        />
+        <img
+          src="./assets/images/line-decoration-right.png"
+          style="width: 15svh; height: auto"
+        />
+      </div>
+    </div>
     <script>
       let videoElement = document.getElementById("arsa-video");
       let pauseTimeout;
+      let markerDetectedOnce = false;
 
       document.addEventListener("DOMContentLoaded", function () {
         const storiesElement = document.getElementById("stories");
@@ -355,6 +401,19 @@
 
             // Show the showMessageButton when the marker is found
             showMessageButton.style.display = "flex";
+
+            // Hide the overlay when the marker is found
+            const markerNotFoundOverlay = document.getElementById(
+              "markerNotFoundOverlay"
+            );
+            if (!markerDetectedOnce) {
+              markerNotFoundOverlay.style.transition = "opacity 0.5s ease";
+              markerNotFoundOverlay.style.opacity = "0";
+              setTimeout(() => {
+                markerNotFoundOverlay.style.display = "none";
+              }, 500); // Wait for the transition to complete
+              markerDetectedOnce = true;
+            }
           });
 
         document
@@ -367,6 +426,12 @@
             }, 500); // Pause after 3 seconds
             // Hide the stories when the marker is lost
             storiesElement.style.display = "none";
+
+            // Show the overlay when the marker is lost
+            const markerNotFoundOverlay = document.getElementById(
+              "markerNotFoundOverlay"
+            );
+            markerNotFoundOverlay.style.display = "block";
 
             // Hide the showMessageButton when the marker is lost
             showMessageButton.style.display = "none";
