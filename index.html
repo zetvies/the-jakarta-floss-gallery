@@ -609,7 +609,7 @@
             const deviceId = videoDevices[currentDeviceIndex].deviceId;
             console.log(
               "Switched to camera:",
-              videoDevices[currentDeviceIndex]
+              videoDevices[currentDeviceIndex].label
             );
             const constraints = {
               video: { deviceId: { exact: deviceId } },
@@ -621,11 +621,8 @@
               currentStream = await navigator.mediaDevices.getUserMedia(
                 constraints
               );
-              const aframeCamera = document.querySelector("a-entity[camera]");
-              aframeCamera.setAttribute("camera", "active", false); // Deactivate current camera
-              aframeCamera.setAttribute("camera", "active", true); // Reactivate with new stream
-              aframeCamera.components.camera.camera.srcObject = currentStream; // Set new stream
-              console.log;
+              const arjsVideo = document.getElementById("arjs-video");
+              arjsVideo.srcObject = currentStream; // Set new stream
             } catch (error) {
               console.error("Error switching camera:", error);
             }
