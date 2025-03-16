@@ -87,6 +87,13 @@
       <!-- Add a camera -->
       <a-entity camera></a-entity>
     </a-scene>
+
+    <video
+      id="arsa-video"
+      src="./assets/videos/arsa.mp4"
+      loop="true"
+      style="display: none; aspect-ratio: 1/1"
+    ></video>
     <div
       id="stories"
       style="
@@ -101,6 +108,25 @@
         gap: 16px;
       "
     >
+      <div
+        class="story-button"
+        style="
+          height: 60px;
+          width: 60px;
+          background-color: #000;
+          border-radius: 50%;
+          overflow: hidden;
+        "
+      >
+        <video
+          src="./assets/videos/rury.mp4"
+          loop
+          muted
+          autoplay
+          playsinline
+          style="width: 100%; height: 100%; object-fit: cover"
+        ></video>
+      </div>
       <div
         class="story-button"
         style="
@@ -140,12 +166,6 @@
         ></video>
       </div>
     </div>
-    <video
-      id="arsa-video"
-      src="./assets/videos/arsa.mp4"
-      loop="true"
-      style="display: none; aspect-ratio: 1/1"
-    ></video>
     <div
       id="showMessageButton"
       style="
@@ -158,7 +178,7 @@
         padding: 0px 16px;
         color: #046511;
         position: fixed;
-        bottom: 24.2svh;
+        bottom: 24.3svh;
         left: 50%;
         font-family: Inter;
         transform: translateX(-50%);
