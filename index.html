@@ -29,7 +29,7 @@
           src="#arsa-video"
           width="1.8"
           height="3.2"
-          position="0 0.2 -1.1"
+          position="0 0.2 -1.2"
           rotation="-80 0 0"
         ></a-video>
         <!-- Overlay images in front of the video -->
@@ -144,7 +144,7 @@
       id="arsa-video"
       src="./assets/videos/arsa.mp4"
       loop="true"
-      style="display: none"
+      style="display: none; aspect-ratio: 1/1"
     ></video>
     <div
       id="showMessageButton"
@@ -381,6 +381,13 @@
 
         const storiesElement = document.getElementById("stories");
         const friends = [
+          {
+            name: "Rury",
+            message:
+              "Hi all! \n\nI hope this message finds you well. I wanted to take a moment to sincerely apologize for any misunderstandings or inconveniences I may have caused. Your friendship means the world to me, and I truly appreciate your kindness and support. Thank you for being such a wonderful friend.\n\nWarm regards,\nRury",
+            video: "./assets/videos/rury.mp4",
+            signature: "./assets/images/signature.png",
+          },
           {
             name: "Arsa",
             message:
