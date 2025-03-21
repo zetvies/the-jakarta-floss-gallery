@@ -420,22 +420,35 @@
 
         const storiesElement = document.getElementById("stories");
         const orderID = getUrlParameter("orderID");
+        console.log("Fetching content for orderID:", orderID);
 
         // Fetch content from API
         fetch(`https://moonmuffin.byc.plus/api/gallery?order_id=${orderID}`)
-          .then((response) => response.json())
+          .then((response) => {
+            console.log("API Response status:", response.status);
+            return response.json();
+          })
           .then((data) => {
-            // Transform API data to match our friends array structure
-            const friends = data.map((item) => ({
+            console.log("API Response data:", data);
+            if (!data || data.length === 0) {
+              console.log("No data received, redirecting...");
+              window.location.href =
+                "https://moonmuffin.byc.plus/experience-app/ar";
+              return;
+            }
+
+            // Transform API data to match our stories structure
+            const stories = data.map((item) => ({
               name: item.name,
               message: item.message,
               video: item.video_url,
               signature: item.signature_url || "./assets/images/signature.png",
             }));
+            console.log("Transformed stories:", stories);
 
             // Update the stories UI
             storiesElement.innerHTML = ""; // Clear existing stories
-            friends.forEach((friend, index) => {
+            stories.forEach((story, index) => {
               const storyButton = document.createElement("div");
               storyButton.className = "story-button";
               storyButton.style.height = "60px";
@@ -445,7 +458,7 @@
               storyButton.style.overflow = "hidden";
 
               const video = document.createElement("video");
-              video.src = friend.video;
+              video.src = story.video;
               video.loop = true;
               video.muted = true;
               video.autoplay = true;
@@ -482,24 +495,15 @@
             }
 
             // Set initial video source
-            if (friends.length > 0) {
-              videoElement.src = friends[0].video;
+            if (stories.length > 0) {
+              videoElement.src = stories[0].video;
             }
           })
           .catch((error) => {
             console.error("Error fetching content:", error);
-            // Fallback to default content if API fails
-            const defaultFriends = [
-              {
-                name: "Rury",
-                message: "Hi all! \n\nI hope this message finds you well...",
-                video: "./assets/videos/rury.mp4",
-                signature: "./assets/images/signature.png",
-              },
-              // ... other default friends
-            ];
-            // Use default friends array
-            // ... rest of the default content setup
+            console.log("Redirecting due to error...");
+            window.location.href =
+              "https://moonmuffin.byc.plus/experience-app/ar";
           });
 
         const colors = [
@@ -585,15 +589,15 @@
 
         // Function to update video and message
         function updateContent(index) {
-          const friends = Array.from(
+          const stories = Array.from(
             document.querySelectorAll(".story-button")
           ).map((button) => ({
             video: button.querySelector("video").src,
             signature: "./assets/images/signature.png", // Default signature
           }));
 
-          if (friends[index]) {
-            videoElement.src = friends[index].video;
+          if (stories[index]) {
+            videoElement.src = stories[index].video;
             videoElement.play();
 
             // Update the signature dynamically
@@ -601,7 +605,7 @@
               "#messageModal img[alt='Signature']"
             );
             if (signatureImg) {
-              signatureImg.src = friends[index].signature;
+              signatureImg.src = stories[index].signature;
             }
           }
         }
@@ -609,8 +613,55 @@
         // Initially hide the stories
         storiesElement.style.display = "none";
 
-        // Set default video and message
-        videoElement.src = friends[0].video;
+        // Show message modal if the active story is clicked
+        showMessageButton.addEventListener("click", () => {
+          const activeButton = document.querySelector(".story-button.active");
+          if (activeButton) {
+            const activeIndex = Array.from(storiesElement.children).indexOf(
+              activeButton
+            );
+            modalMessage.innerHTML = stories[activeIndex].message.replace(
+              /\n/g,
+              "<br>"
+            );
+            messageModal.style.display = "flex";
+          }
+        });
+
+        // Add event listener to close the modal when clicking on the overlay
+        messageModal.addEventListener("click", (event) => {
+          if (event.target === messageModal) {
+            messageModal.style.display = "none";
+          }
+        });
+
+        // Ensure the close button functionality remains
+        const closeModalButton = document.getElementById("closeModalButton");
+        closeModalButton.addEventListener("click", () => {
+          messageModal.style.display = "none";
+        });
+
+        const recordButton = document.getElementById("recordButton");
+        const recordInner = document.getElementById("recordInner");
+        let isRecording = false;
+
+        recordButton.addEventListener("click", () => {
+          isRecording = !isRecording;
+          if (isRecording) {
+            recordInner.style.borderRadius = "0";
+            recordInner.style.width = "20px";
+            recordInner.style.height = "20px";
+          } else {
+            recordInner.style.borderRadius = "50%";
+            recordInner.style.width = "30px";
+            recordInner.style.height = "30px";
+          }
+        });
+
+        const galleryButton = document.getElementById("galleryButton");
+        galleryButton.addEventListener("click", () => {
+          window.location.href = "/gallery.html";
+        });
 
         document
           .querySelector("a-marker")
@@ -677,56 +728,6 @@
             // Hide the showMessageButton when the marker is lost
             showMessageButton.style.display = "none";
           });
-
-        // Show message modal if the active story is clicked
-        showMessageButton.addEventListener("click", () => {
-          const activeButton = document.querySelector(".story-button.active");
-          if (activeButton) {
-            const activeIndex = Array.from(storiesElement.children).indexOf(
-              activeButton
-            );
-            modalMessage.innerHTML = friends[activeIndex].message.replace(
-              /\n/g,
-              "<br>"
-            );
-            messageModal.style.display = "flex";
-          }
-        });
-
-        // Add event listener to close the modal when clicking on the overlay
-        messageModal.addEventListener("click", (event) => {
-          if (event.target === messageModal) {
-            messageModal.style.display = "none";
-          }
-        });
-
-        // Ensure the close button functionality remains
-        const closeModalButton = document.getElementById("closeModalButton");
-        closeModalButton.addEventListener("click", () => {
-          messageModal.style.display = "none";
-        });
-
-        const recordButton = document.getElementById("recordButton");
-        const recordInner = document.getElementById("recordInner");
-        let isRecording = false;
-
-        recordButton.addEventListener("click", () => {
-          isRecording = !isRecording;
-          if (isRecording) {
-            recordInner.style.borderRadius = "0";
-            recordInner.style.width = "20px";
-            recordInner.style.height = "20px";
-          } else {
-            recordInner.style.borderRadius = "50%";
-            recordInner.style.width = "30px";
-            recordInner.style.height = "30px";
-          }
-        });
-
-        const galleryButton = document.getElementById("galleryButton");
-        galleryButton.addEventListener("click", () => {
-          window.location.href = "/gallery.html";
-        });
       });
 
       window.addEventListener("beforeunload", () => {
