@@ -71,7 +71,7 @@
   <body style="background-color: #edf0e7; padding: 8vh 5vw">
     <div style="display: flex; flex-direction: column; align-items: center">
       <div
-        onclick="window.location.href='https://moonmuffin.byc.plus/experience-app/ar?orderId=' + getUrlParameter('orderId')"
+        onclick="window.location.href='/?orderID=' + getUrlParameter('orderID')"
         style="
           position: fixed;
           top: 2svh;
@@ -306,6 +306,7 @@
           font-size: 2.2svh;
           color: #046511;
         "
+        onclick="window.location.href='https://moonmuffin.byc.plus/experience-app/ar?orderID=' + getUrlParameter('orderID')"
       >
         Download & Share
         <svg
@@ -334,12 +335,12 @@
       }
 
       window.onload = function () {
-        console.log("Page loaded, checking orderId...");
-        const orderId = getUrlParameter("orderId");
-        console.log("Current orderId:", orderId);
+        console.log("Page loaded, checking orderID...");
+        const orderID = getUrlParameter("orderID");
+        console.log("Current orderID:", orderID);
 
-        if (!orderId) {
-          console.log("No orderId found, redirecting to base URL...");
+        if (!orderID) {
+          console.log("No orderID found, redirecting to base URL...");
           window.location.replace(
             "https://moonmuffin.byc.plus/experience-app/ar"
           );
@@ -347,7 +348,7 @@
         }
 
         // Fetch content from API
-        fetch(`https://moonmuffin.byc.plus/api/gallery?order_id=${orderId}`)
+        fetch(`https://moonmuffin.byc.plus/api/gallery?order_id=${orderID}`)
           .then((response) => {
             console.log("API Response status:", response.status);
             return response.json();
@@ -359,7 +360,7 @@
                 "No data received, redirecting to order-specific URL..."
               );
               window.location.replace(
-                `https://moonmuffin.byc.plus/experience-app/ar/${orderId}`
+                `https://moonmuffin.byc.plus/experience-app/ar/${orderID}`
               );
               return;
             }

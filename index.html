@@ -187,6 +187,7 @@
         font-family: Inter;
         transform: translateX(-50%);
         z-index: 20;
+        cursor: pointer;
       "
     >
       <p>Buka Pesan</p>
@@ -419,18 +420,18 @@
         });
 
         const storiesElement = document.getElementById("stories");
-        const orderId = getUrlParameter("orderId");
-        console.log("Fetching content for orderId:", orderId);
+        const orderID = getUrlParameter("orderID");
+        console.log("Fetching content for orderID:", orderID);
 
-        if (!orderId) {
-          console.log("No orderId found, redirecting to base URL...");
+        if (!orderID) {
+          console.log("No orderID found, redirecting to base URL...");
           window.location.href =
             "https://moonmuffin.byc.plus/experience-app/ar";
           return;
         }
 
         // Fetch content from API
-        fetch(`https://moonmuffin.byc.plus/api/gallery?order_id=${orderId}`)
+        fetch(`https://moonmuffin.byc.plus/api/gallery?order_id=${orderID}`)
           .then((response) => {
             console.log("API Response status:", response.status);
             return response.json();
@@ -441,7 +442,7 @@
               console.log(
                 "No data received, redirecting to order-specific URL..."
               );
-              window.location.href = `https://moonmuffin.byc.plus/experience-app/ar/${orderId}`;
+              window.location.href = `https://moonmuffin.byc.plus/experience-app/ar/${orderID}`;
               return;
             }
 
@@ -464,6 +465,10 @@
               storyButton.style.backgroundColor = "#000";
               storyButton.style.borderRadius = "50%";
               storyButton.style.overflow = "hidden";
+              // Store all story data
+              storyButton.dataset.message = story.message;
+              storyButton.dataset.video = story.video;
+              storyButton.dataset.signature = story.signature;
 
               const video = document.createElement("video");
               video.src = story.video;
@@ -597,23 +602,22 @@
 
         // Function to update video and message
         function updateContent(index) {
-          const stories = Array.from(
-            document.querySelectorAll(".story-button")
-          ).map((button) => ({
-            video: button.querySelector("video").src,
-            signature: "./assets/images/signature.png", // Default signature
-          }));
+          const activeButton = document.querySelector(".story-button.active");
+          if (activeButton) {
+            const video = activeButton.dataset.video;
+            const signature = activeButton.dataset.signature;
 
-          if (stories[index]) {
-            videoElement.src = stories[index].video;
-            videoElement.play();
+            if (video) {
+              videoElement.src = video;
+              videoElement.play();
+            }
 
             // Update the signature dynamically
             const signatureImg = document.querySelector(
               "#messageModal img[alt='Signature']"
             );
-            if (signatureImg) {
-              signatureImg.src = stories[index].signature;
+            if (signatureImg && signature) {
+              signatureImg.src = signature;
             }
           }
         }
@@ -625,14 +629,11 @@
         showMessageButton.addEventListener("click", () => {
           const activeButton = document.querySelector(".story-button.active");
           if (activeButton) {
-            const activeIndex = Array.from(storiesElement.children).indexOf(
-              activeButton
-            );
-            modalMessage.innerHTML = stories[activeIndex].message.replace(
-              /\n/g,
-              "<br>"
-            );
-            messageModal.style.display = "flex";
+            const message = activeButton.dataset.message;
+            if (message) {
+              modalMessage.innerHTML = message.replace(/\n/g, "<br>");
+              messageModal.style.display = "flex";
+            }
           }
         });
 
@@ -668,7 +669,7 @@
 
         const galleryButton = document.getElementById("galleryButton");
         galleryButton.addEventListener("click", () => {
-          window.location.href = `/gallery.html?orderId=${orderId}`;
+          window.location.href = `/gallery.html?orderID=${orderID}`;
         });
 
         document
