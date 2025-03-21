@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Gallery | Moon Muffin</title>
+    <link rel="icon" type="image/x-icon" href="/icon.ico" />
     <link rel="stylesheet" href="/styles.css" />
     <style>
       body {
@@ -70,7 +71,7 @@
   <body style="background-color: #edf0e7; padding: 8vh 5vw">
     <div style="display: flex; flex-direction: column; align-items: center">
       <div
-        onclick="window.location.href='/index.html'"
+        onclick="window.location.href='https://moonmuffin.byc.plus/experience-app/ar?orderId=' + getUrlParameter('orderId')"
         style="
           position: fixed;
           top: 2svh;
@@ -322,42 +323,137 @@
       </button>
     </div>
     <script>
-      const friends = [
-        {
-          name: "Arsa",
-          message:
-            "Hi all! \n\nI hope this message finds you well. I wanted to take a moment to sincerely apologize for any misunderstandings or inconveniences I may have caused. Your friendship means the world to me, and I truly appreciate your kindness and support. Thank you for being such a wonderful friend.\n\nWarm regards,\nArsa",
-          video: "./assets/videos/arsa.mp4",
-          signature: "./assets/images/signature.png",
-        },
-        {
-          name: "Kojo",
-          message:
-            "Hi all!\n\nI hope you're doing great. I am writing to express my heartfelt apologies for any mistakes I might have made. Your friendship is incredibly valuable to me, and I am grateful for your patience and understanding. Thank you for being an amazing friend.\n\nBest wishes,\nKojo",
-          video: "./assets/videos/kojo.mp4",
-          signature: "./assets/images/signature.png",
-        },
-      ];
+      // Function to get URL parameters
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+        var results = regex.exec(location.search);
+        return results === null
+          ? ""
+          : decodeURIComponent(results[1].replace(/\+/g, " "));
+      }
+
+      window.onload = function () {
+        console.log("Page loaded, checking orderId...");
+        const orderId = getUrlParameter("orderId");
+        console.log("Current orderId:", orderId);
+
+        if (!orderId) {
+          console.log("No orderId found, redirecting to base URL...");
+          window.location.replace(
+            "https://moonmuffin.byc.plus/experience-app/ar"
+          );
+          return;
+        }
+
+        // Fetch content from API
+        fetch(`https://moonmuffin.byc.plus/api/gallery?order_id=${orderId}`)
+          .then((response) => {
+            console.log("API Response status:", response.status);
+            return response.json();
+          })
+          .then((data) => {
+            console.log("API Response data:", data);
+            if (!data || data.length === 0) {
+              console.log(
+                "No data received, redirecting to order-specific URL..."
+              );
+              window.location.replace(
+                `https://moonmuffin.byc.plus/experience-app/ar/${orderId}`
+              );
+              return;
+            }
+
+            // Transform API data to match our stories structure
+            let stories = data.map((item) => ({
+              name: item.name,
+              message: item.message,
+              video: item.video_url,
+              signature: item.signature_url || "./assets/images/signature.png",
+            }));
+            console.log("Transformed stories:", stories);
+
+            // Update the gallery UI
+            stories.forEach((story, index) => {
+              const card = document.createElement("div");
+              card.style.width = "20svh";
+              card.style.border = "2vh solid white";
+              card.style.backgroundColor = "white";
+              card.style.overflow = "hidden";
+              card.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.1)";
+              card.style.cursor = "pointer";
+              const randomRotation = Math.random() * 10 - 3;
+              card.style.transform = `rotate(${randomRotation}deg)`;
+
+              const video = document.createElement("video");
+              video.src = story.video;
+              video.muted = true;
+              video.autoplay = true;
+              video.loop = true;
+              video.style.width = "20svh";
+              video.style.height = "25svh";
+              video.style.objectFit = "cover";
+
+              const nameContainer = document.createElement("div");
+              nameContainer.style.display = "flex";
+              nameContainer.style.justifyContent = "space-between";
+              nameContainer.style.alignItems = "center";
+              nameContainer.style.padding = "1svh";
+
+              const name = document.createElement("div");
+              name.style.marginTop = "1svh";
+              name.textContent = story.name;
+              name.style.fontSize = "3svh";
+              name.style.flex = "1";
+
+              const highfiveImg = document.createElement("img");
+              highfiveImg.src = "./assets/images/highfive.png";
+              highfiveImg.style.height = "3svh";
+              highfiveImg.style.width = "auto";
+              highfiveImg.style.transform = "translateY(0.5svh)";
+
+              nameContainer.appendChild(name);
+              nameContainer.appendChild(highfiveImg);
+
+              card.appendChild(video);
+              card.appendChild(nameContainer);
+              document.getElementById("video-gallery").appendChild(card);
+
+              card.addEventListener("click", () => {
+                currentIndex = index;
+                updateModalContent(currentIndex);
+                document.getElementById("modal").style.display = "flex";
+              });
+            });
+          })
+          .catch((error) => {
+            console.error("Error fetching content:", error);
+            console.log("Redirecting due to error...");
+            window.location.replace(
+              "https://moonmuffin.byc.plus/experience-app/ar"
+            );
+          });
+      };
 
       const gallery = document.getElementById("video-gallery");
       const modal = document.getElementById("modal");
       const modalVideo = document.getElementById("modal-video");
       const modalMessage = document.getElementById("modal-message");
-
       let currentIndex = 0;
+      let stories = [];
 
       function updateModalContent(index) {
-        const friend = friends[index];
-        modalVideo.src = friend.video;
-        modalMessage.innerHTML = friend.message.replace(/\n/g, "<br>");
-        document.getElementById("modal-name").textContent = friend.name;
+        const story = stories[index];
+        modalVideo.src = story.video;
+        modalMessage.innerHTML = story.message.replace(/\n/g, "<br>");
+        document.getElementById("modal-name").textContent = story.name;
 
         // Update the signature dynamically
         const signatureImg = document
           .querySelector("#modal-message")
           .parentElement.querySelector("img[alt='Signature']");
         if (signatureImg) {
-          signatureImg.src = friend.signature;
+          signatureImg.src = story.signature;
         }
 
         // Apply random rotation to video and letter
@@ -378,65 +474,13 @@
       }
 
       document.getElementById("prevButton").addEventListener("click", () => {
-        currentIndex = (currentIndex - 1 + friends.length) % friends.length;
+        currentIndex = (currentIndex - 1 + stories.length) % stories.length;
         updateModalContent(currentIndex);
       });
 
       document.getElementById("nextButton").addEventListener("click", () => {
-        currentIndex = (currentIndex + 1) % friends.length;
+        currentIndex = (currentIndex + 1) % stories.length;
         updateModalContent(currentIndex);
-      });
-
-      friends.forEach((friend, index) => {
-        const card = document.createElement("div");
-        card.style.width = "20svh";
-        card.style.border = "2vh solid white";
-        card.style.backgroundColor = "white";
-        card.style.overflow = "hidden";
-        card.style.boxShadow = "0 4px 8px rgba(0, 0, 0, 0.1)";
-        card.style.cursor = "pointer";
-        const randomRotation = Math.random() * 10 - 3;
-        card.style.transform = `rotate(${randomRotation}deg)`;
-
-        const video = document.createElement("video");
-        video.src = friend.video;
-        video.muted = true;
-        video.autoplay = true;
-        video.loop = true;
-        video.style.width = "20svh";
-        video.style.height = "25svh";
-        video.style.objectFit = "cover";
-
-        const nameContainer = document.createElement("div");
-        nameContainer.style.display = "flex";
-        nameContainer.style.justifyContent = "space-between";
-        nameContainer.style.alignItems = "center";
-        nameContainer.style.padding = "1svh";
-
-        const name = document.createElement("div");
-        name.style.marginTop = "1svh";
-        name.textContent = friend.name;
-        name.style.fontSize = "3svh";
-        name.style.flex = "1";
-
-        const highfiveImg = document.createElement("img");
-        highfiveImg.src = "./assets/images/highfive.png";
-        highfiveImg.style.height = "3svh";
-        highfiveImg.style.width = "auto";
-        highfiveImg.style.transform = "translateY(0.5svh)";
-
-        nameContainer.appendChild(name);
-        nameContainer.appendChild(highfiveImg);
-
-        card.appendChild(video);
-        card.appendChild(nameContainer);
-        gallery.appendChild(card);
-
-        card.addEventListener("click", () => {
-          currentIndex = index;
-          updateModalContent(currentIndex);
-          modal.style.display = "flex";
-        });
       });
 
       const modalContent = document.getElementById("modal-content");
