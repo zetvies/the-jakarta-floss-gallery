@@ -92,8 +92,9 @@
       id="arsa-video"
       src="./assets/videos/arsa.mp4"
       loop
-      autoplay
       playsinline
+      preload="auto"
+      muted
       style="display: none; aspect-ratio: 1/1"
     ></video>
     <div
@@ -398,8 +399,13 @@
       let currentStream;
 
       document.addEventListener("DOMContentLoaded", function () {
-        // Ensure the video is paused initially
-        videoElement.pause();
+        // Load the video but keep it paused
+        videoElement.load();
+
+        // Try to preload the video
+        videoElement.addEventListener("loadedmetadata", function () {
+          console.log("Video metadata loaded");
+        });
 
         const storiesElement = document.getElementById("stories");
         const friends = [
@@ -463,7 +469,24 @@
           .querySelector("a-marker")
           .addEventListener("markerFound", function () {
             console.log("Marker is found");
-            videoElement.play();
+            // Ensure video is loaded and play it
+            videoElement.load();
+            videoElement.muted = false; // Unmute when marker is detected
+            const playPromise = videoElement.play();
+            if (playPromise !== undefined) {
+              playPromise.catch((error) => {
+                console.log("Error playing video:", error);
+                // If autoplay with unmute fails, try playing muted
+                if (error.name === "NotAllowedError") {
+                  videoElement.muted = true;
+                  videoElement
+                    .play()
+                    .catch((e) =>
+                      console.log("Even muted autoplay failed:", e)
+                    );
+                }
+              });
+            }
             if (pauseTimeout) {
               clearTimeout(pauseTimeout);
             }
