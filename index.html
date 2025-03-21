@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>AR App | Moon Muffin</title>
+    <link rel="icon" type="image/x-icon" href="/icon.ico" />
     <link rel="stylesheet" href="/styles.css" />
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
@@ -514,6 +515,74 @@
         const messageModal = document.getElementById("messageModal");
         const modalMessage = document.getElementById("modalMessage");
 
+        // Add the mute button to the right of the record button
+        const muteButton = document.createElement("div");
+        muteButton.id = "muteButton";
+        muteButton.style.position = "fixed";
+        muteButton.style.bottom = "4.5svh";
+        muteButton.style.left = "calc(50% + 80px)";
+        muteButton.style.transform = "translateX(-50%)";
+        muteButton.style.width = "6svh";
+        muteButton.style.height = "6svh";
+        muteButton.style.backgroundColor = "white";
+        muteButton.style.borderRadius = "50%";
+        muteButton.style.display = "flex";
+        muteButton.style.justifyContent = "center";
+        muteButton.style.alignItems = "center";
+        muteButton.style.cursor = "pointer";
+        muteButton.style.zIndex = "20";
+        muteButton.innerHTML = `
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 18 18"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
+              fill="#046511"
+            />
+          </svg>
+        `;
+        document.body.appendChild(muteButton);
+
+        // Add functionality to toggle mute state
+        let isMuted = false;
+        muteButton.addEventListener("click", () => {
+          isMuted = !isMuted;
+          videoElement.muted = isMuted;
+          muteButton.innerHTML = isMuted
+            ? `
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 18 18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3.25477 2.20117L2.19727 3.25867L5.46727 6.52867L5.24977 6.75367H2.24977V11.2537H5.24977L8.99977 15.0037V10.0612L12.1348 13.1962C11.6473 13.5637 11.0998 13.8562 10.4998 14.0287V15.5737C11.5048 15.3487 12.4273 14.8837 13.2073 14.2612L14.7448 15.7987L15.8023 14.7412L3.25477 2.20117ZM7.49977 11.3812L5.87227 9.75367H3.74977V8.25367H5.87227L6.53227 7.59367L7.49977 8.56117V11.3812ZM14.2498 9.00367C14.2498 9.61867 14.1373 10.2112 13.9423 10.7587L15.0898 11.9062C15.5098 11.0287 15.7498 10.0462 15.7498 9.00367C15.7498 5.79367 13.5073 3.10867 10.4998 2.42617V3.97117C12.6673 4.61617 14.2498 6.62617 14.2498 9.00367ZM8.99977 3.00367L7.58977 4.41367L8.99977 5.82367V3.00367ZM12.3748 9.00367C12.3748 7.67617 11.6098 6.53617 10.4998 5.98117V7.32367L12.3598 9.18367C12.3673 9.12367 12.3748 9.06367 12.3748 9.00367Z"
+                fill="#046511"
+              />
+            </svg>
+          `
+            : `
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 18 18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
+                fill="#046511"
+              />
+            </svg>
+          `;
+        });
+
         // Function to update video and message
         function updateContent(index) {
           const friends = Array.from(
@@ -652,74 +721,6 @@
             recordInner.style.width = "30px";
             recordInner.style.height = "30px";
           }
-        });
-
-        // Add the mute button to the right of the record button
-        const muteButton = document.createElement("div");
-        muteButton.id = "muteButton";
-        muteButton.style.position = "fixed";
-        muteButton.style.bottom = "4.5svh";
-        muteButton.style.left = "calc(50% + 80px)";
-        muteButton.style.transform = "translateX(-50%)";
-        muteButton.style.width = "6svh";
-        muteButton.style.height = "6svh";
-        muteButton.style.backgroundColor = "white";
-        muteButton.style.borderRadius = "50%";
-        muteButton.style.display = "flex";
-        muteButton.style.justifyContent = "center";
-        muteButton.style.alignItems = "center";
-        muteButton.style.cursor = "pointer";
-        muteButton.style.zIndex = "20";
-        muteButton.innerHTML = `
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 18 18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
-              fill="#046511"
-            />
-          </svg>
-        `;
-        document.body.appendChild(muteButton);
-
-        // Add functionality to toggle mute state
-        let isMuted = false;
-        muteButton.addEventListener("click", () => {
-          isMuted = !isMuted;
-          videoElement.muted = isMuted;
-          muteButton.innerHTML = isMuted
-            ? `
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 18 18"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M3.25477 2.20117L2.19727 3.25867L5.46727 6.52867L5.24977 6.75367H2.24977V11.2537H5.24977L8.99977 15.0037V10.0612L12.1348 13.1962C11.6473 13.5637 11.0998 13.8562 10.4998 14.0287V15.5737C11.5048 15.3487 12.4273 14.8837 13.2073 14.2612L14.7448 15.7987L15.8023 14.7412L3.25477 2.20117ZM7.49977 11.3812L5.87227 9.75367H3.74977V8.25367H5.87227L6.53227 7.59367L7.49977 8.56117V11.3812ZM14.2498 9.00367C14.2498 9.61867 14.1373 10.2112 13.9423 10.7587L15.0898 11.9062C15.5098 11.0287 15.7498 10.0462 15.7498 9.00367C15.7498 5.79367 13.5073 3.10867 10.4998 2.42617V3.97117C12.6673 4.61617 14.2498 6.62617 14.2498 9.00367ZM8.99977 3.00367L7.58977 4.41367L8.99977 5.82367V3.00367ZM12.3748 9.00367C12.3748 7.67617 11.6098 6.53617 10.4998 5.98117V7.32367L12.3598 9.18367C12.3673 9.12367 12.3748 9.06367 12.3748 9.00367Z"
-                fill="#046511"
-              />
-            </svg>
-          `
-            : `
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 18 18"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
-                fill="#046511"
-              />
-            </svg>
-          `;
         });
 
         const galleryButton = document.getElementById("galleryButton");
