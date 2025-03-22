@@ -443,7 +443,7 @@
       </svg>
     </div>
 
-    <!-- <div
+    <div
       id="markerNotFoundOverlay"
       style="
         font-family: Inter;
@@ -487,7 +487,7 @@
           style="width: 10svh; max-width: 15vw; height: auto"
         />
       </div>
-    </div> -->
+    </div>
     <script>
       let videoElement = document.getElementById("arsa-video");
       let pauseTimeout;
@@ -629,9 +629,9 @@
           })
           .catch((error) => {
             console.error("Error fetching content:", error);
-            console.log("Redirecting due to error...");
-            window.location.href =
-              "https://moonmuffin.byc.plus/experience-app/ar";
+            // console.log("Redirecting due to error...");
+            // window.location.href =
+            //   "https://moonmuffin.byc.plus/experience-app/ar";
           });
 
         const colors = [
@@ -740,6 +740,9 @@
         // Initially hide the stories
         storiesElement.style.display = "none";
 
+        // Initially hide the showMessageButton
+        showMessageButton.style.display = "none";
+
         // Show message modal if the active story is clicked
         showMessageButton.addEventListener("click", () => {
           const activeButton = document.querySelector(".story-button.active");
@@ -787,9 +790,9 @@
           window.location.href = `/gallery.html?orderID=${orderID.toUpperCase()}`;
         });
 
-        document
-          .querySelector("a-marker")
-          .addEventListener("markerFound", function () {
+        // Add event listeners for both markers
+        document.querySelectorAll("a-marker").forEach((marker) => {
+          marker.addEventListener("markerFound", function () {
             console.log("Marker is found");
             // Ensure video is loaded and play it
             videoElement.load();
@@ -832,9 +835,7 @@
             }
           });
 
-        document
-          .querySelector("a-marker")
-          .addEventListener("markerLost", function () {
+          marker.addEventListener("markerLost", function () {
             console.log("Marker is lost");
             pauseTimeout = setTimeout(() => {
               videoElement.pause();
@@ -852,6 +853,7 @@
             // Hide the showMessageButton when the marker is lost
             showMessageButton.style.display = "none";
           });
+        });
       });
 
       window.addEventListener("beforeunload", () => {
@@ -863,3 +865,4 @@
     </script>
   </body>
 </html>
+-->
