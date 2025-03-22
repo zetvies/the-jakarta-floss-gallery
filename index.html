@@ -447,7 +447,7 @@
         var results = regex.exec(location.search);
         return results === null
           ? ""
-          : decodeURIComponent(results[1].replace(/\+/g, " "));
+          : decodeURIComponent(results[1].replace(/\+/g, " ")).toUpperCase();
       }
 
       document.addEventListener("DOMContentLoaded", function () {
