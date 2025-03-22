@@ -2,7 +2,6 @@
 <html>
   <head>
     <title>AR App | Moon Muffin</title>
-    <link rel="icon" type="image/x-icon" href="/icon.ico" />
     <link rel="stylesheet" href="/styles.css" />
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
@@ -29,7 +28,7 @@
         <a-video
           src="#arsa-video"
           width="1.8"
-          height="1.8"
+          height="3.2"
           position="0 0.2 -1.2"
           rotation="-80 0 0"
         ></a-video>
@@ -187,7 +186,6 @@
         font-family: Inter;
         transform: translateX(-50%);
         z-index: 20;
-        cursor: pointer;
       "
     >
       <p>Buka Pesan</p>
@@ -285,10 +283,39 @@
         </div>
       </div>
     </div>
-    <!-- <div
+
+    <div
+      style="
+        position: fixed;
+        bottom: 4.5svh;
+        padding: 1svh;
+        left: calc(50% - 9svh);
+
+        bottom: 3.5svh;
+        width: 14svh;
+        height: 6svh;
+        background-color: white;
+        border-radius: 4svh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        z-index: 20;
+        overflow: hidden;
+      "
+    >
+      <img
+        src="./moonmuffin_logo.png"
+        alt="Gallery"
+        style="width: 100%; height: 100%; object-fit: contain"
+      />
+    </div>
+    <div
       id="recordButton"
       style="
         position: fixed;
+        opacity: 0;
+        z-index: -1;
         bottom: 4svh;
         left: 50%;
         transform: translateX(-50%);
@@ -313,71 +340,14 @@
           transition: all 0.3s ease;
         "
       ></div>
-    </div> -->
-    <!-- <div
-      id="galleryButton"
-      style="
-        position: fixed;
-        bottom: 4.5svh;
-        left: calc(50% - 80px);
-        transform: translateX(-50%);
-        width: 6svh;
-        height: 6svh;
-        background-color: white;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        z-index: 20;
-      "
-    >
-      <svg
-        width="28"
-        height="28"
-        viewBox="0 0 18 18"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M14.25 2.25H3.75C2.925 2.25 2.25 2.925 2.25 3.75V14.25C2.25 15.075 2.925 15.75 3.75 15.75H14.25C15.075 15.75 15.75 15.075 15.75 14.25V3.75C15.75 2.925 15.075 2.25 14.25 2.25ZM14.25 14.25H3.75V3.75H14.25V14.25ZM10.47 9.2175L8.4075 11.8725L6.9375 10.1025L4.875 12.75H13.125L10.47 9.2175Z"
-          fill="#046511"
-        />
-      </svg>
-    </div> -->
-    <div
-      style="
-        position: fixed;
-        bottom: 4.5svh;
-        padding: 1svh;
-        left: calc(50% - 8svh);
-
-        bottom: 3.5svh;
-        width: 14svh;
-        height: 6svh;
-        background-color: white;
-        border-radius: 4svh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        z-index: 20;
-        overflow: hidden;
-      "
-    >
-      <img
-        src="./moonmuffin_logo.png"
-        alt="Gallery"
-        style="width: 100%; height: 100%; object-fit: contain"
-      />
     </div>
     <div
       id="galleryButton"
       style="
         position: fixed;
         bottom: 4.5svh;
-        left: calc(50% - 80px);
-        transform: translateX(-80%);
+        left: calc(50% - 15svh);
+        transform: translateX(-50%);
         width: 6svh;
         height: 6svh;
         background-color: white;
@@ -457,28 +427,6 @@
       const muteButton = document.getElementById("muteButton");
       let currentStream;
 
-      // Function to update video height based on aspect ratio
-      function updateVideoHeight() {
-        const videoPlane = document.querySelector("a-video");
-        if (videoPlane && videoElement.videoWidth && videoElement.videoHeight) {
-          const aspectRatio =
-            videoElement.videoHeight / videoElement.videoWidth;
-          const width = 1.8; // Keep width fixed
-          const height = width * aspectRatio;
-          videoPlane.setAttribute("height", height);
-        }
-      }
-
-      // Function to get URL parameters
-      function getUrlParameter(name) {
-        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
-        var results = regex.exec(location.search);
-        return results === null
-          ? ""
-          : decodeURIComponent(results[1].replace(/\+/g, " "));
-      }
-
       document.addEventListener("DOMContentLoaded", function () {
         // Load the video but keep it paused
         videoElement.load();
@@ -486,113 +434,32 @@
         // Try to preload the video
         videoElement.addEventListener("loadedmetadata", function () {
           console.log("Video metadata loaded");
-          updateVideoHeight();
-        });
-
-        // Update height when video source changes
-        videoElement.addEventListener("loadeddata", function () {
-          updateVideoHeight();
         });
 
         const storiesElement = document.getElementById("stories");
-        const orderID = getUrlParameter("orderID");
-        console.log("Fetching content for orderID:", orderID);
-
-        if (!orderID) {
-          console.log("No orderID found, redirecting to base URL...");
-          window.location.href =
-            "https://moonmuffin.byc.plus/experience-app/ar";
-          return;
-        }
-
-        // Fetch content from API
-        fetch(`https://moonmuffin.byc.plus/api/gallery?order_id=${orderID}`)
-          .then((response) => {
-            console.log("API Response status:", response.status);
-            return response.json();
-          })
-          .then((data) => {
-            console.log("API Response data:", data);
-            if (!data || data.length === 0) {
-              console.log(
-                "No data received, redirecting to order-specific URL..."
-              );
-              window.location.href = `https://moonmuffin.byc.plus/experience-app/ar/${orderID}`;
-              return;
-            }
-
-            // Transform API data to match our stories structure
-            const stories = data.map((item) => ({
-              name: item.name,
-              message: item.message,
-              video: item.video_url,
-              signature: item.signature_url || "./assets/images/signature.png",
-            }));
-            console.log("Transformed stories:", stories);
-
-            // Update the stories UI
-            storiesElement.innerHTML = ""; // Clear existing stories
-            stories.forEach((story, index) => {
-              const storyButton = document.createElement("div");
-              storyButton.className = "story-button";
-              storyButton.style.height = "60px";
-              storyButton.style.width = "60px";
-              storyButton.style.backgroundColor = "#000";
-              storyButton.style.borderRadius = "50%";
-              storyButton.style.overflow = "hidden";
-              // Store all story data
-              storyButton.dataset.message = story.message;
-              storyButton.dataset.video = story.video;
-              storyButton.dataset.signature = story.signature;
-
-              const video = document.createElement("video");
-              video.src = story.video;
-              video.loop = true;
-              video.muted = true;
-              video.autoplay = true;
-              video.playsinline = true;
-              video.style.width = "100%";
-              video.style.height = "100%";
-              video.style.objectFit = "cover";
-
-              storyButton.appendChild(video);
-              storiesElement.appendChild(storyButton);
-
-              // Add click event listener
-              storyButton.addEventListener("click", () => {
-                updateContent(index);
-                // Remove active class from all buttons
-                document
-                  .querySelectorAll(".story-button")
-                  .forEach((btn) => btn.classList.remove("active"));
-                // Add active class to clicked button
-                storyButton.classList.add("active");
-              });
-
-              // Assign random border color
-              const randomColor =
-                colors[Math.floor(Math.random() * colors.length)];
-              storyButton.style.border = `3px solid ${randomColor}`;
-            });
-
-            // Set first story as active by default
-            const firstStoryButton =
-              storiesElement.querySelector(".story-button");
-            if (firstStoryButton) {
-              firstStoryButton.classList.add("active");
-            }
-
-            // Set initial video source
-            if (stories.length > 0) {
-              videoElement.src = stories[0].video;
-            }
-          })
-          .catch((error) => {
-            console.error("Error fetching content:", error);
-            console.log("Redirecting due to error...");
-            window.location.href =
-              "https://moonmuffin.byc.plus/experience-app/ar";
-          });
+        const friends = [
+          {
+            name: "Rury",
+            message:
+              "Hi all! \n\nI hope this message finds you well. I wanted to take a moment to sincerely apologize for any misunderstandings or inconveniences I may have caused. Your friendship means the world to me, and I truly appreciate your kindness and support. Thank you for being such a wonderful friend.\n\nWarm regards,\nRury",
+            video: "./assets/videos/rury.mp4",
+            signature: "./assets/images/signature.png",
+          },
+          {
+            name: "Arsa",
+            message:
+              "Hi all! \n\nI hope this message finds you well. I wanted to take a moment to sincerely apologize for any misunderstandings or inconveniences I may have caused. Your friendship means the world to me, and I truly appreciate your kindness and support. Thank you for being such a wonderful friend.\n\nWarm regards,\nArsa",
+            video: "./assets/videos/arsa.mp4",
+            signature: "./assets/images/signature.png",
+          },
+          {
+            name: "Kojo",
+            message:
+              "Hi all!\n\nI hope you're doing great. I am writing to express my heartfelt apologies for any mistakes I might have made. Your friendship is incredibly valuable to me, and I am grateful for your patience and understanding. Thank you for being an amazing friend.\n\nBest wishes,\nKojo",
+            video: "./assets/videos/kojo.mp4",
+            signature: "./assets/images/signature.png",
+          },
+        ];
 
         const colors = [
           "#EACA2A",
@@ -607,13 +474,163 @@
         const messageModal = document.getElementById("messageModal");
         const modalMessage = document.getElementById("modalMessage");
 
+        // Function to update video and message
+        function updateContent(index) {
+          videoElement.src = friends[index].video;
+          videoElement.play();
+
+          // Update the signature dynamically
+          const signatureImg = document.querySelector(
+            "#messageModal img[alt='Signature']"
+          );
+          if (signatureImg) {
+            signatureImg.src = friends[index].signature;
+          }
+        }
+
+        // Initially hide the stories
+        storiesElement.style.display = "none";
+
+        // Set default video and message
+        videoElement.src = friends[0].video;
+
+        document
+          .querySelector("a-marker")
+          .addEventListener("markerFound", function () {
+            console.log("Marker is found");
+            // Ensure video is loaded and play it
+            videoElement.load();
+            videoElement.muted = false; // Unmute when marker is detected
+            const playPromise = videoElement.play();
+            if (playPromise !== undefined) {
+              playPromise.catch((error) => {
+                console.log("Error playing video:", error);
+                // If autoplay with unmute fails, try playing muted
+                if (error.name === "NotAllowedError") {
+                  videoElement.muted = true;
+                  videoElement
+                    .play()
+                    .catch((e) =>
+                      console.log("Even muted autoplay failed:", e)
+                    );
+                }
+              });
+            }
+            if (pauseTimeout) {
+              clearTimeout(pauseTimeout);
+            }
+            // Show the stories when the marker is found
+            storiesElement.style.display = "flex";
+
+            // Show the showMessageButton when the marker is found
+            showMessageButton.style.display = "flex";
+
+            // Hide the overlay when the marker is found
+            const markerNotFoundOverlay = document.getElementById(
+              "markerNotFoundOverlay"
+            );
+            if (!markerDetectedOnce) {
+              markerNotFoundOverlay.style.transition = "opacity 0.5s ease";
+              markerNotFoundOverlay.style.opacity = "0";
+              setTimeout(() => {
+                markerNotFoundOverlay.style.display = "none";
+              }, 500); // Wait for the transition to complete
+              markerDetectedOnce = true;
+            }
+          });
+
+        document
+          .querySelector("a-marker")
+          .addEventListener("markerLost", function () {
+            console.log("Marker is lost");
+            pauseTimeout = setTimeout(() => {
+              videoElement.pause();
+              console.log("Video paused due to marker loss");
+            }, 500); // Pause after 3 seconds
+            // Hide the stories when the marker is lost
+            storiesElement.style.display = "none";
+
+            // Show the overlay when the marker is lost
+            const markerNotFoundOverlay = document.getElementById(
+              "markerNotFoundOverlay"
+            );
+            markerNotFoundOverlay.style.display = "block";
+
+            // Hide the showMessageButton when the marker is lost
+            showMessageButton.style.display = "none";
+          });
+
+        // Add click event listeners to story buttons and assign random border colors
+        const storyButtons = document.querySelectorAll(".story-button");
+        storyButtons.forEach((button, index) => {
+          button.addEventListener("click", () => {
+            updateContent(index);
+
+            // Remove active class from all buttons
+            storyButtons.forEach((btn) => btn.classList.remove("active"));
+
+            // Add active class to the clicked button
+            button.classList.add("active");
+          });
+
+          // Assign a random border color
+          const randomColor = colors[Math.floor(Math.random() * colors.length)];
+          button.style.border = `3px solid ${randomColor}`;
+        });
+
+        // Set the first story as active by default
+        storyButtons[0].classList.add("active");
+
+        // Show message modal if the active story is clicked
+        showMessageButton.addEventListener("click", () => {
+          const activeButton = document.querySelector(".story-button.active");
+          if (activeButton) {
+            const activeIndex = Array.from(storyButtons).indexOf(activeButton);
+            modalMessage.innerHTML = friends[activeIndex].message.replace(
+              /\n/g,
+              "<br>"
+            );
+            messageModal.style.display = "flex";
+          }
+        });
+
+        // Add event listener to close the modal when clicking on the overlay
+        messageModal.addEventListener("click", (event) => {
+          if (event.target === messageModal) {
+            messageModal.style.display = "none";
+          }
+        });
+
+        // Ensure the close button functionality remains
+        const closeModalButton = document.getElementById("closeModalButton");
+        closeModalButton.addEventListener("click", () => {
+          messageModal.style.display = "none";
+        });
+
+        const recordButton = document.getElementById("recordButton");
+        const recordInner = document.getElementById("recordInner");
+        let isRecording = false;
+
+        recordButton.addEventListener("click", () => {
+          isRecording = !isRecording;
+          if (isRecording) {
+            recordInner.style.borderRadius = "0";
+            recordInner.style.width = "20px";
+            recordInner.style.height = "20px";
+          } else {
+            recordInner.style.borderRadius = "50%";
+            recordInner.style.width = "30px";
+            recordInner.style.height = "30px";
+          }
+        });
+
         // Add the mute button to the right of the record button
         const muteButton = document.createElement("div");
         muteButton.id = "muteButton";
         muteButton.style.position = "fixed";
         muteButton.style.bottom = "4.5svh";
-        muteButton.style.left = "calc(50% + 80px)";
-        muteButton.style.transform = "translateX(-20%)";
+        muteButton.style.left = "calc(50% + 13svh)";
+        muteButton.style.transform = "translateX(-50%)";
         muteButton.style.width = "6svh";
         muteButton.style.height = "6svh";
         muteButton.style.backgroundColor = "white";
@@ -675,151 +692,10 @@
           `;
         });
 
-        // Function to update video and message
-        function updateContent(index) {
-          const activeButton = document.querySelector(".story-button.active");
-          if (activeButton) {
-            const video = activeButton.dataset.video;
-            const signature = activeButton.dataset.signature;
-
-            if (video) {
-              videoElement.src = video;
-              videoElement.play();
-            }
-
-            // Update the signature dynamically
-            const signatureImg = document.querySelector(
-              "#messageModal img[alt='Signature']"
-            );
-            if (signatureImg && signature) {
-              signatureImg.src = signature;
-            }
-          }
-        }
-
-        // Initially hide the stories
-        storiesElement.style.display = "flex";
-
-        // Show message modal if the active story is clicked
-        showMessageButton.addEventListener("click", () => {
-          const activeButton = document.querySelector(".story-button.active");
-          if (activeButton) {
-            const message = activeButton.dataset.message;
-            if (message) {
-              modalMessage.innerHTML = message.replace(/\n/g, "<br>");
-              messageModal.style.display = "flex";
-            }
-          }
-        });
-
-        // Add event listener to close the modal when clicking on the overlay
-        messageModal.addEventListener("click", (event) => {
-          if (event.target === messageModal) {
-            messageModal.style.display = "none";
-          }
-        });
-
-        // Ensure the close button functionality remains
-        const closeModalButton = document.getElementById("closeModalButton");
-        closeModalButton.addEventListener("click", () => {
-          messageModal.style.display = "none";
-        });
-
-        const recordButton = document.getElementById("recordButton");
-        const recordInner = document.getElementById("recordInner");
-        let isRecording = false;
-
-        recordButton.addEventListener("click", () => {
-          isRecording = !isRecording;
-          if (isRecording) {
-            recordInner.style.borderRadius = "0";
-            recordInner.style.width = "20px";
-            recordInner.style.height = "20px";
-          } else {
-            recordInner.style.borderRadius = "50%";
-            recordInner.style.width = "30px";
-            recordInner.style.height = "30px";
-          }
-        });
-
         const galleryButton = document.getElementById("galleryButton");
         galleryButton.addEventListener("click", () => {
-          window.location.href = `/gallery.html?orderID=${orderID}`;
+          window.location.href = "/gallery.html";
         });
-
-        // Function to ensure video autoplay
-        function ensureVideoAutoplay(video) {
-          video.play().catch((error) => {
-            console.log("Autoplay failed:", error);
-            if (error.name === "NotAllowedError") {
-              video.muted = true;
-              video
-                .play()
-                .catch((e) => console.log("Even muted autoplay failed:", e));
-            }
-          });
-        }
-
-        // Initialize all videos to autoplay
-        document.querySelectorAll("video").forEach((video) => {
-          video.autoplay = true;
-          video.playsinline = true;
-          video.muted = true; // Start muted to ensure autoplay works
-          ensureVideoAutoplay(video);
-        });
-
-        document
-          .querySelector("a-marker")
-          .addEventListener("markerFound", function () {
-            console.log("Marker is found");
-            // Ensure video is loaded and play it
-            videoElement.load();
-            videoElement.muted = false; // Unmute when marker is detected
-            ensureVideoAutoplay(videoElement);
-
-            if (pauseTimeout) {
-              clearTimeout(pauseTimeout);
-            }
-            // Show the stories when the marker is found
-            storiesElement.style.display = "flex";
-
-            // Show the showMessageButton when the marker is found
-            showMessageButton.style.display = "flex";
-
-            // Hide the overlay when the marker is found
-            const markerNotFoundOverlay = document.getElementById(
-              "markerNotFoundOverlay"
-            );
-            if (!markerDetectedOnce) {
-              markerNotFoundOverlay.style.transition = "opacity 0.5s ease";
-              markerNotFoundOverlay.style.opacity = "0";
-              setTimeout(() => {
-                markerNotFoundOverlay.style.display = "none";
-              }, 500); // Wait for the transition to complete
-              markerDetectedOnce = true;
-            }
-          });
-
-        document
-          .querySelector("a-marker")
-          .addEventListener("markerLost", function () {
-            console.log("Marker is lost");
-            pauseTimeout = setTimeout(() => {
-              videoElement.pause();
-              console.log("Video paused due to marker loss");
-            }, 500); // Pause after 3 seconds
-            // Hide the stories when the marker is lost
-            storiesElement.style.display = "none";
-
-            // Show the overlay when the marker is lost
-            const markerNotFoundOverlay = document.getElementById(
-              "markerNotFoundOverlay"
-            );
-            markerNotFoundOverlay.style.display = "block";
-
-            // Hide the showMessageButton when the marker is lost
-            showMessageButton.style.display = "none";
-          });
       });
 
       window.addEventListener("beforeunload", () => {
