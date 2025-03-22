@@ -29,7 +29,7 @@
         <a-video
           src="#arsa-video"
           width="1.8"
-          height="3.2"
+          height="1.8"
           position="0 0.2 -1.2"
           rotation="-80 0 0"
         ></a-video>
@@ -400,6 +400,18 @@
       const muteButton = document.getElementById("muteButton");
       let currentStream;
 
+      // Function to update video height based on aspect ratio
+      function updateVideoHeight() {
+        const videoPlane = document.querySelector("a-video");
+        if (videoPlane && videoElement.videoWidth && videoElement.videoHeight) {
+          const aspectRatio =
+            videoElement.videoHeight / videoElement.videoWidth;
+          const width = 1.8; // Keep width fixed
+          const height = width * aspectRatio;
+          videoPlane.setAttribute("height", height);
+        }
+      }
+
       // Function to get URL parameters
       function getUrlParameter(name) {
         name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
@@ -417,6 +429,12 @@
         // Try to preload the video
         videoElement.addEventListener("loadedmetadata", function () {
           console.log("Video metadata loaded");
+          updateVideoHeight();
+        });
+
+        // Update height when video source changes
+        videoElement.addEventListener("loadeddata", function () {
+          updateVideoHeight();
         });
 
         const storiesElement = document.getElementById("stories");
