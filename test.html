@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>AR App | Moon Muffin</title>
+    <link rel="icon" type="image/x-icon" href="/icon.ico" />
+    <link rel="stylesheet" href="/styles.css" />
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
+  </head>
+  <body style="margin: 0; overflow: hidden; z-index: 0">
+    <a-scene
+      style="z-index: 1"
+      embedded
+      arjs="debugUIEnabled: false;"
+      device-orientation-permission-ui="enabled: false"
+      vr-mode-ui="enabled: false"
+    >
+      <!-- Define a marker using the Hiro pattern -->
+      <a-marker type="pattern" url="pattern-highfive-black.patt">
+        <!-- Add a white plane as a container for the video -->
+        <a-plane
+          color="white"
+          width="2.2"
+          height="4"
+          position="0 0 -1"
+          rotation="-80 0 0"
+        ></a-plane>
+        <!-- Play a video on a plane with cropping effect -->
+        <a-video
+          src="#arsa-video"
+          width="1.8"
+          height="1.8"
+          position="0 0.2 -1.2"
+          rotation="-80 0 0"
+        ></a-video>
+        <!-- Overlay images in front of the video -->
+        <a-image
+          src="./assets/images/mosque.png"
+          width="1.2"
+          height="1.2"
+          position="1.3 0.4 0.7"
+          rotation="-80 0 0"
+        ></a-image>
+        <a-image
+          src="./assets/images/ketupat.png"
+          width="0.8"
+          height="0.8"
+          position="-1.2 0.2 0.8"
+          rotation="-80 0 0"
+        ></a-image>
+        <a-image
+          src="./assets/images/love.png"
+          width="1"
+          height="1"
+          position="1.2 0.6 -2.1"
+          rotation="-80 0 0"
+        ></a-image>
+
+        <a-image
+          src="./assets/images/star.png"
+          width="1.2"
+          height="1.2"
+          position="-1.5 0.4 -.8"
+          rotation="-80 0 0"
+        ></a-image>
+        <a-image
+          src="./assets/images/sparkle.png"
+          width="0.7"
+          height="0.7"
+          position="1.3 0.4 -.7"
+          rotation="-80 0 0"
+        ></a-image>
+        <a-image
+          src="./assets/images/moon.png"
+          width=".7"
+          height=".7"
+          position="-1.2 0.5 -2.4"
+          rotation="-80 0 0"
+        ></a-image>
+        <a-image
+          src="./assets/images/moonmuffin.png"
+          width="1.2"
+          height="0.4"
+          position="0 0.1 .7"
+          rotation="-80 0 0"
+        ></a-image>
+      </a-marker>
+      <!-- Add a camera -->
+      <a-entity camera></a-entity>
+    </a-scene>
+
+    <video
+      id="arsa-video"
+      src="./assets/videos/arsa.mp4"
+      loop
+      playsinline
+      preload="auto"
+      muted
+      style="display: none; aspect-ratio: 1/1"
+    ></video>
+    <div
+      id="stories"
+      style="
+        display: flex;
+        align-items: center;
+        position: fixed;
+        bottom: 13.3svh;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        width: auto;
+        gap: 16px;
+      "
+    >
+      <div
+        class="story-button"
+        style="
+          height: 60px;
+          width: 60px;
+          background-color: #000;
+          border-radius: 50%;
+          overflow: hidden;
+        "
+      >
+        <video
+          src="./assets/videos/rury.mp4"
+          loop
+          muted
+          autoplay
+          playsinline
+          style="width: 100%; height: 100%; object-fit: cover"
+        ></video>
+      </div>
+      <div
+        class="story-button"
+        style="
+          height: 60px;
+          width: 60px;
+          background-color: #000;
+          border-radius: 50%;
+          overflow: hidden;
+        "
+      >
+        <video
+          src="./assets/videos/arsa.mp4"
+          loop
+          muted
+          autoplay
+          playsinline
+          style="width: 100%; height: 100%; object-fit: cover"
+        ></video>
+      </div>
+      <div
+        class="story-button"
+        style="
+          height: 60px;
+          width: 60px;
+          background-color: #000;
+          border-radius: 50%;
+          overflow: hidden;
+        "
+      >
+        <video
+          src="./assets/videos/kojo.mp4"
+          loop
+          muted
+          autoplay
+          playsinline
+          style="width: 100%; height: 100%; object-fit: cover"
+        ></video>
+      </div>
+    </div>
+    <div
+      id="showMessageButton"
+      style="
+        background-color: white;
+        border-radius: 30px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0px 16px;
+        color: #046511;
+        position: fixed;
+        bottom: 24.3svh;
+        left: 50%;
+        font-family: Inter;
+        transform: translateX(-50%);
+        z-index: 20;
+        cursor: pointer;
+      "
+    >
+      <p>Buka Pesan</p>
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6ZM20 6L12 10.99L4 6H20ZM20 18H4V8L12 13L20 8V18Z"
+          fill="#046511"
+        />
+      </svg>
+    </div>
+
+    <div
+      id="messageModal"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 30;
+        justify-content: center;
+        align-items: center;
+      "
+    >
+      <div
+        style="
+          position: relative;
+          background-color: white;
+          color: #046511;
+          font-size: 1.4em;
+          padding: 16px;
+          max-width: 80%;
+          max-height: 90svh;
+          overflow-y: auto;
+          text-align: left;
+        "
+      >
+        <button
+          id="closeModalButton"
+          style="
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #92ed00;
+            border: none;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+          "
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 12 12"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M11.25 1.8075L10.1925 0.75L6 4.9425L1.8075 0.75L0.75 1.8075L4.9425 6L0.75 10.1925L1.8075 11.25L6 7.0575L10.1925 11.25L11.25 10.1925L7.0575 6L11.25 1.8075Z"
+              fill="#046511"
+            />
+          </svg>
+        </button>
+        <p id="modalMessage"></p>
+        <div
+          style="
+            display: flex;
+            gap: 16px;
+            align-items: end;
+            justify-content: space-between;
+          "
+        >
+          <img
+            src="./assets/images/signature.png"
+            alt="Signature"
+            style="height: 8svh"
+          />
+          <img
+            src="./assets/images/highfive.png"
+            alt="High Five"
+            style="height: 6svh"
+          />
+        </div>
+      </div>
+    </div>
+    <div
+      id="recordButton"
+      style="
+        position: fixed;
+        bottom: 4svh;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 7svh;
+        height: 7svh;
+        background-color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        z-index: 20;
+      "
+    >
+      <div
+        id="recordInner"
+        style="
+          width: 5.2svh;
+          height: 5.2svh;
+          background-color: #92ed00;
+          border-radius: 50%;
+          transition: all 0.3s ease;
+        "
+      ></div>
+    </div>
+    <div
+      id="galleryButton"
+      style="
+        position: fixed;
+        bottom: 4.5svh;
+        left: calc(50% - 80px);
+        transform: translateX(-50%);
+        width: 6svh;
+        height: 6svh;
+        background-color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        z-index: 20;
+      "
+    >
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 18 18"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M14.25 2.25H3.75C2.925 2.25 2.25 2.925 2.25 3.75V14.25C2.25 15.075 2.925 15.75 3.75 15.75H14.25C15.075 15.75 15.75 15.075 15.75 14.25V3.75C15.75 2.925 15.075 2.25 14.25 2.25ZM14.25 14.25H3.75V3.75H14.25V14.25ZM10.47 9.2175L8.4075 11.8725L6.9375 10.1025L4.875 12.75H13.125L10.47 9.2175Z"
+          fill="#046511"
+        />
+      </svg>
+    </div>
+
+    <div
+      id="markerNotFoundOverlay"
+      style="
+        font-family: Inter;
+        position: fixed;
+        height: 100svh;
+        width: 100svw;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background-color: rgba(0, 0, 0, 0.4);
+        color: white;
+        display: flex;
+        font-size: 1.3em;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        z-index: 2;
+        padding-bottom: 10svh;
+      "
+    >
+      <p>Arahkan kameramu ke<br />logo Moon Muffin:</p>
+      <div
+        style="
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 16px;
+        "
+      >
+        <img
+          src="./assets/images/line-decoration-left.png"
+          style="width: 10svh; max-width: 15vw; height: auto"
+        />
+        <img
+          src="./pattern-highfive-white.png"
+          style="width: 24svh; max-width: 40vw; height: auto"
+        />
+        <img
+          src="./assets/images/line-decoration-right.png"
+          style="width: 10svh; max-width: 15vw; height: auto"
+        />
+      </div>
+    </div>
+    <script>
+      let videoElement = document.getElementById("arsa-video");
+      let pauseTimeout;
+      let markerDetectedOnce = false;
+      let currentDeviceIndex = 0;
+      let videoDevices = [];
+      const muteButton = document.getElementById("muteButton");
+      let currentStream;
+
+      // Function to update video height based on aspect ratio
+      function updateVideoHeight() {
+        const videoPlane = document.querySelector("a-video");
+        if (videoPlane && videoElement.videoWidth && videoElement.videoHeight) {
+          const aspectRatio =
+            videoElement.videoHeight / videoElement.videoWidth;
+          const width = 1.8; // Keep width fixed
+          const height = width * aspectRatio;
+          videoPlane.setAttribute("height", height);
+        }
+      }
+
+      // Function to get URL parameters
+      function getUrlParameter(name) {
+        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+        var results = regex.exec(location.search);
+        return results === null
+          ? ""
+          : decodeURIComponent(results[1].replace(/\+/g, " "));
+      }
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // Load the video but keep it paused
+        videoElement.load();
+
+        // Try to preload the video
+        videoElement.addEventListener("loadedmetadata", function () {
+          console.log("Video metadata loaded");
+          updateVideoHeight();
+        });
+
+        // Update height when video source changes
+        videoElement.addEventListener("loadeddata", function () {
+          updateVideoHeight();
+        });
+
+        const storiesElement = document.getElementById("stories");
+        const orderID = getUrlParameter("orderID");
+        console.log("Fetching content for orderID:", orderID);
+
+        if (!orderID) {
+          console.log("No orderID found, redirecting to base URL...");
+          window.location.href =
+            "https://moonmuffin.byc.plus/experience-app/ar";
+          return;
+        }
+
+        // Fetch content from API
+        fetch(`https://moonmuffin.byc.plus/api/gallery?order_id=${orderID}`)
+          .then((response) => {
+            console.log("API Response status:", response.status);
+            return response.json();
+          })
+          .then((data) => {
+            console.log("API Response data:", data);
+            if (!data || data.length === 0) {
+              console.log(
+                "No data received, redirecting to order-specific URL..."
+              );
+              window.location.href = `https://moonmuffin.byc.plus/experience-app/ar/${orderID}`;
+              return;
+            }
+
+            // Transform API data to match our stories structure
+            const stories = data.map((item) => ({
+              name: item.name,
+              message: item.message,
+              video: item.video_url,
+              signature: item.signature_url || "./assets/images/signature.png",
+            }));
+            console.log("Transformed stories:", stories);
+
+            // Update the stories UI
+            storiesElement.innerHTML = ""; // Clear existing stories
+            stories.forEach((story, index) => {
+              const storyButton = document.createElement("div");
+              storyButton.className = "story-button";
+              storyButton.style.height = "60px";
+              storyButton.style.width = "60px";
+              storyButton.style.backgroundColor = "#000";
+              storyButton.style.borderRadius = "50%";
+              storyButton.style.overflow = "hidden";
+              // Store all story data
+              storyButton.dataset.message = story.message;
+              storyButton.dataset.video = story.video;
+              storyButton.dataset.signature = story.signature;
+
+              const video = document.createElement("video");
+              video.src = story.video;
+              video.loop = true;
+              video.muted = true;
+              video.autoplay = true;
+              video.playsinline = true;
+              video.style.width = "100%";
+              video.style.height = "100%";
+              video.style.objectFit = "cover";
+
+              storyButton.appendChild(video);
+              storiesElement.appendChild(storyButton);
+
+              // Add click event listener
+              storyButton.addEventListener("click", () => {
+                updateContent(index);
+                // Remove active class from all buttons
+                document
+                  .querySelectorAll(".story-button")
+                  .forEach((btn) => btn.classList.remove("active"));
+                // Add active class to clicked button
+                storyButton.classList.add("active");
+              });
+
+              // Assign random border color
+              const randomColor =
+                colors[Math.floor(Math.random() * colors.length)];
+              storyButton.style.border = `3px solid ${randomColor}`;
+            });
+
+            // Set first story as active by default
+            const firstStoryButton =
+              storiesElement.querySelector(".story-button");
+            if (firstStoryButton) {
+              firstStoryButton.classList.add("active");
+            }
+
+            // Set initial video source
+            if (stories.length > 0) {
+              videoElement.src = stories[0].video;
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching content:", error);
+            console.log("Redirecting due to error...");
+            window.location.href =
+              "https://moonmuffin.byc.plus/experience-app/ar";
+          });
+
+        const colors = [
+          "#EACA2A",
+          "#EB579B",
+          "#F77B29",
+          "#FF3755",
+          "#5EA0C6",
+          "#92ED00",
+        ];
+
+        const showMessageButton = document.getElementById("showMessageButton");
+        const messageModal = document.getElementById("messageModal");
+        const modalMessage = document.getElementById("modalMessage");
+
+        // Add the mute button to the right of the record button
+        const muteButton = document.createElement("div");
+        muteButton.id = "muteButton";
+        muteButton.style.position = "fixed";
+        muteButton.style.bottom = "4.5svh";
+        muteButton.style.left = "calc(50% + 80px)";
+        muteButton.style.transform = "translateX(-50%)";
+        muteButton.style.width = "6svh";
+        muteButton.style.height = "6svh";
+        muteButton.style.backgroundColor = "white";
+        muteButton.style.borderRadius = "50%";
+        muteButton.style.display = "flex";
+        muteButton.style.justifyContent = "center";
+        muteButton.style.alignItems = "center";
+        muteButton.style.cursor = "pointer";
+        muteButton.style.zIndex = "20";
+        muteButton.innerHTML = `
+          <svg
+            width="28"
+            height="28"
+            viewBox="0 0 18 18"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
+              fill="#046511"
+            />
+          </svg>
+        `;
+        document.body.appendChild(muteButton);
+
+        // Add functionality to toggle mute state
+        let isMuted = false;
+        muteButton.addEventListener("click", () => {
+          isMuted = !isMuted;
+          videoElement.muted = isMuted;
+          muteButton.innerHTML = isMuted
+            ? `
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 18 18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M3.25477 2.20117L2.19727 3.25867L5.46727 6.52867L5.24977 6.75367H2.24977V11.2537H5.24977L8.99977 15.0037V10.0612L12.1348 13.1962C11.6473 13.5637 11.0998 13.8562 10.4998 14.0287V15.5737C11.5048 15.3487 12.4273 14.8837 13.2073 14.2612L14.7448 15.7987L15.8023 14.7412L3.25477 2.20117ZM7.49977 11.3812L5.87227 9.75367H3.74977V8.25367H5.87227L6.53227 7.59367L7.49977 8.56117V11.3812ZM14.2498 9.00367C14.2498 9.61867 14.1373 10.2112 13.9423 10.7587L15.0898 11.9062C15.5098 11.0287 15.7498 10.0462 15.7498 9.00367C15.7498 5.79367 13.5073 3.10867 10.4998 2.42617V3.97117C12.6673 4.61617 14.2498 6.62617 14.2498 9.00367ZM8.99977 3.00367L7.58977 4.41367L8.99977 5.82367V3.00367ZM12.3748 9.00367C12.3748 7.67617 11.6098 6.53617 10.4998 5.98117V7.32367L12.3598 9.18367C12.3673 9.12367 12.3748 9.06367 12.3748 9.00367Z"
+                fill="#046511"
+              />
+            </svg>
+          `
+            : `
+            <svg
+              width="28"
+              height="28"
+              viewBox="0 0 18 18"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
+                fill="#046511"
+              />
+            </svg>
+          `;
+        });
+
+        // Function to update video and message
+        function updateContent(index) {
+          const activeButton = document.querySelector(".story-button.active");
+          if (activeButton) {
+            const video = activeButton.dataset.video;
+            const signature = activeButton.dataset.signature;
+
+            if (video) {
+              videoElement.src = video;
+              videoElement.play();
+            }
+
+            // Update the signature dynamically
+            const signatureImg = document.querySelector(
+              "#messageModal img[alt='Signature']"
+            );
+            if (signatureImg && signature) {
+              signatureImg.src = signature;
+            }
+          }
+        }
+
+        // Initially hide the stories
+        storiesElement.style.display = "none";
+
+        // Show message modal if the active story is clicked
+        showMessageButton.addEventListener("click", () => {
+          const activeButton = document.querySelector(".story-button.active");
+          if (activeButton) {
+            const message = activeButton.dataset.message;
+            if (message) {
+              modalMessage.innerHTML = message.replace(/\n/g, "<br>");
+              messageModal.style.display = "flex";
+            }
+          }
+        });
+
+        // Add event listener to close the modal when clicking on the overlay
+        messageModal.addEventListener("click", (event) => {
+          if (event.target === messageModal) {
+            messageModal.style.display = "none";
+          }
+        });
+
+        // Ensure the close button functionality remains
+        const closeModalButton = document.getElementById("closeModalButton");
+        closeModalButton.addEventListener("click", () => {
+          messageModal.style.display = "none";
+        });
+
+        const recordButton = document.getElementById("recordButton");
+        const recordInner = document.getElementById("recordInner");
+        let isRecording = false;
+        let mediaRecorder = null;
+        let recordedChunks = [];
+
+        recordButton.addEventListener("click", async () => {
+          isRecording = !isRecording;
+
+          if (isRecording) {
+            try {
+              // Check if we're on localhost
+              const isLocalhost =
+                window.location.hostname === "localhost" ||
+                window.location.hostname === "127.0.0.1";
+
+              if (isLocalhost) {
+                alert(
+                  "Screen recording is not available on localhost. Please deploy the site to a secure HTTPS domain to use this feature."
+                );
+                isRecording = false;
+                return;
+              }
+
+              // Get current tab stream
+              const stream = await navigator.mediaDevices.getDisplayMedia({
+                video: {
+                  mediaSource: "tab",
+                  frameRate: 30,
+                },
+                audio: true,
+              });
+
+              // Create MediaRecorder
+              mediaRecorder = new MediaRecorder(stream, {
+                mimeType: "video/webm;codecs=vp9",
+              });
+
+              // Collect recorded chunks
+              recordedChunks = [];
+              mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                  recordedChunks.push(event.data);
+                }
+              };
+
+              // When recording stops, create and download video
+              mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, {
+                  type: "video/webm",
+                });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                document.body.appendChild(a);
+                a.style.display = "none";
+                a.href = url;
+                a.download = `moon-muffin-ar-${new Date().toISOString()}.webm`;
+                a.click();
+                URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+              };
+
+              // Start recording
+              mediaRecorder.start();
+              recordInner.style.borderRadius = "0";
+              recordInner.style.width = "20px";
+              recordInner.style.height = "20px";
+            } catch (err) {
+              console.error("Error starting recording:", err);
+              alert(
+                "Failed to start recording. Please make sure you've granted tab recording permissions and are using HTTPS."
+              );
+              isRecording = false;
+            }
+          } else {
+            if (mediaRecorder && mediaRecorder.state !== "inactive") {
+              mediaRecorder.stop();
+              mediaRecorder.stream.getTracks().forEach((track) => track.stop());
+              recordInner.style.borderRadius = "50%";
+              recordInner.style.width = "30px";
+              recordInner.style.height = "30px";
+            }
+          }
+        });
+
+        const galleryButton = document.getElementById("galleryButton");
+        galleryButton.addEventListener("click", () => {
+          window.location.href = `/gallery.html?orderID=${orderID}`;
+        });
+
+        document
+          .querySelector("a-marker")
+          .addEventListener("markerFound", function () {
+            console.log("Marker is found");
+            // Ensure video is loaded and play it
+            videoElement.load();
+            videoElement.muted = false; // Unmute when marker is detected
+            const playPromise = videoElement.play();
+            if (playPromise !== undefined) {
+              playPromise.catch((error) => {
+                console.log("Error playing video:", error);
+                // If autoplay with unmute fails, try playing muted
+                if (error.name === "NotAllowedError") {
+                  videoElement.muted = true;
+                  videoElement
+                    .play()
+                    .catch((e) =>
+                      console.log("Even muted autoplay failed:", e)
+                    );
+                }
+              });
+            }
+            if (pauseTimeout) {
+              clearTimeout(pauseTimeout);
+            }
+            // Show the stories when the marker is found
+            storiesElement.style.display = "flex";
+
+            // Show the showMessageButton when the marker is found
+            showMessageButton.style.display = "flex";
+
+            // Hide the overlay when the marker is found
+            const markerNotFoundOverlay = document.getElementById(
+              "markerNotFoundOverlay"
+            );
+            if (!markerDetectedOnce) {
+              markerNotFoundOverlay.style.transition = "opacity 0.5s ease";
+              markerNotFoundOverlay.style.opacity = "0";
+              setTimeout(() => {
+                markerNotFoundOverlay.style.display = "none";
+              }, 500); // Wait for the transition to complete
+              markerDetectedOnce = true;
+            }
+          });
+
+        document
+          .querySelector("a-marker")
+          .addEventListener("markerLost", function () {
+            console.log("Marker is lost");
+            pauseTimeout = setTimeout(() => {
+              videoElement.pause();
+              console.log("Video paused due to marker loss");
+            }, 500); // Pause after 3 seconds
+            // Hide the stories when the marker is lost
+            storiesElement.style.display = "none";
+
+            // Show the overlay when the marker is lost
+            const markerNotFoundOverlay = document.getElementById(
+              "markerNotFoundOverlay"
+            );
+            markerNotFoundOverlay.style.display = "block";
+
+            // Hide the showMessageButton when the marker is lost
+            showMessageButton.style.display = "none";
+          });
+      });
+
+      window.addEventListener("beforeunload", () => {
+        const videoElement = document.getElementById("arsa-video");
+        if (videoElement) {
+          videoElement.pause();
+        }
+      });
+    </script>
+  </body>
+</html>
