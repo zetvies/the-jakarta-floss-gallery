@@ -679,27 +679,7 @@
 
           if (isRecording) {
             try {
-              // Check if we're on localhost
-              const isLocalhost =
-                window.location.hostname === "localhost" ||
-                window.location.hostname === "127.0.0.1";
-
-              if (isLocalhost) {
-                alert(
-                  "Screen recording is not available on localhost. Please deploy the site to a secure HTTPS domain to use this feature."
-                );
-                isRecording = false;
-                return;
-              }
-
-              // First request permissions
-              try {
-                await navigator.permissions.query({ name: "display-capture" });
-              } catch (err) {
-                console.log("Display capture permission not supported");
-              }
-
-              // Get current tab stream with explicit permission request
+              // Request screen capture for the current tab
               const stream = await navigator.mediaDevices.getDisplayMedia({
                 video: {
                   mediaSource: "tab",
@@ -746,11 +726,11 @@
               console.error("Error starting recording:", err);
               if (err.name === "NotAllowedError") {
                 alert(
-                  "Please allow screen recording permission to use this feature."
+                  "Please allow screen recording permissions to use this feature."
                 );
               } else {
                 alert(
-                  "Failed to start recording. Please make sure you've granted tab recording permissions and are using HTTPS."
+                  "Failed to start recording. Please make sure you've granted screen recording permissions."
                 );
               }
               isRecording = false;
