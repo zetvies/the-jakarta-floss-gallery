@@ -679,14 +679,30 @@
 
           if (isRecording) {
             try {
-              // Request screen capture for the current tab
-              const stream = await navigator.mediaDevices.getDisplayMedia({
+              // Get camera stream
+              const cameraStream = await navigator.mediaDevices.getUserMedia({
                 video: {
-                  mediaSource: "tab",
-                  frameRate: 30,
+                  facingMode: "environment",
+                  width: { ideal: 1920 },
+                  height: { ideal: 1080 },
+                  frameRate: { ideal: 30 },
                 },
                 audio: true,
               });
+
+              // Create a canvas element
+              const canvas = document.createElement("canvas");
+              canvas.width = window.innerWidth;
+              canvas.height = window.innerHeight;
+              const ctx = canvas.getContext("2d");
+
+              // Create a video element for the camera feed
+              const video = document.createElement("video");
+              video.srcObject = cameraStream;
+              video.play();
+
+              // Create a stream from the canvas
+              const canvasStream = canvas.captureStream(30); // 30 FPS
 
               // Create MediaRecorder with appropriate MIME type
               const mimeType = MediaRecorder.isTypeSupported(
@@ -695,9 +711,52 @@
                 ? "video/webm;codecs=vp9"
                 : "video/webm";
 
-              mediaRecorder = new MediaRecorder(stream, {
+              mediaRecorder = new MediaRecorder(canvasStream, {
                 mimeType: mimeType,
+                videoBitsPerSecond: 5000000, // 5 Mbps
               });
+
+              // Function to capture and overlay content
+              async function captureAndOverlay() {
+                if (isRecording) {
+                  try {
+                    // Draw camera feed
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                    // Capture AR content
+                    const arContent = await html2canvas(
+                      document.querySelector("a-scene"),
+                      {
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: null,
+                        scale: window.devicePixelRatio,
+                        logging: false,
+                        width: window.innerWidth,
+                        height: window.innerHeight,
+                        onclone: (clonedDoc) => {
+                          const scene = clonedDoc.querySelector("a-scene");
+                          scene.style.position = "absolute";
+                          scene.style.left = "0";
+                          scene.style.top = "0";
+                          scene.style.width = "100%";
+                          scene.style.height = "100%";
+                          scene.style.zIndex = "1";
+                        },
+                      }
+                    );
+
+                    // Overlay AR content on top of camera feed
+                    ctx.drawImage(arContent, 0, 0, canvas.width, canvas.height);
+
+                    // Request next frame
+                    requestAnimationFrame(captureAndOverlay);
+                  } catch (err) {
+                    console.error("Error capturing screen:", err);
+                    requestAnimationFrame(captureAndOverlay);
+                  }
+                }
+              }
 
               // Collect recorded chunks
               recordedChunks = [];
@@ -723,8 +782,9 @@
                 document.body.removeChild(a);
               };
 
-              // Start recording
-              mediaRecorder.start();
+              // Start recording and capturing
+              mediaRecorder.start(1000); // Collect data every second
+              captureAndOverlay();
               recordInner.style.borderRadius = "0";
               recordInner.style.width = "20px";
               recordInner.style.height = "20px";
