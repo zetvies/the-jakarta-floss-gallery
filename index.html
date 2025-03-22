@@ -698,7 +698,7 @@
         }
 
         // Initially hide the stories
-        storiesElement.style.display = "none";
+        storiesElement.style.display = "flex";
 
         // Show message modal if the active story is clicked
         showMessageButton.addEventListener("click", () => {
@@ -747,6 +747,27 @@
           window.location.href = `/gallery.html?orderID=${orderID}`;
         });
 
+        // Function to ensure video autoplay
+        function ensureVideoAutoplay(video) {
+          video.play().catch((error) => {
+            console.log("Autoplay failed:", error);
+            if (error.name === "NotAllowedError") {
+              video.muted = true;
+              video
+                .play()
+                .catch((e) => console.log("Even muted autoplay failed:", e));
+            }
+          });
+        }
+
+        // Initialize all videos to autoplay
+        document.querySelectorAll("video").forEach((video) => {
+          video.autoplay = true;
+          video.playsinline = true;
+          video.muted = true; // Start muted to ensure autoplay works
+          ensureVideoAutoplay(video);
+        });
+
         document
           .querySelector("a-marker")
           .addEventListener("markerFound", function () {
@@ -754,21 +775,8 @@
             // Ensure video is loaded and play it
             videoElement.load();
             videoElement.muted = false; // Unmute when marker is detected
-            const playPromise = videoElement.play();
-            if (playPromise !== undefined) {
-              playPromise.catch((error) => {
-                console.log("Error playing video:", error);
-                // If autoplay with unmute fails, try playing muted
-                if (error.name === "NotAllowedError") {
-                  videoElement.muted = true;
-                  videoElement
-                    .play()
-                    .catch((e) =>
-                      console.log("Even muted autoplay failed:", e)
-                    );
-                }
-              });
-            }
+            ensureVideoAutoplay(videoElement);
+
             if (pauseTimeout) {
               clearTimeout(pauseTimeout);
             }
