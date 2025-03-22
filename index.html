@@ -509,6 +509,24 @@
         }
       }
 
+      // Function to update video width based on aspect ratio for sparkle marker
+      function updateVideoWidth() {
+        const videoPlanes = document.querySelectorAll("a-video");
+        if (videoElement.videoWidth && videoElement.videoHeight) {
+          const aspectRatio =
+            videoElement.videoHeight / videoElement.videoWidth;
+          const height = 5.3; // Keep height fixed for sparkle marker
+          const width = height / aspectRatio;
+
+          videoPlanes.forEach((plane) => {
+            if (plane.getAttribute("width") === "6.3") {
+              // Only update sparkle marker video
+              plane.setAttribute("width", width);
+            }
+          });
+        }
+      }
+
       // Function to get URL parameters
       function getUrlParameter(name) {
         name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
@@ -527,11 +545,13 @@
         videoElement.addEventListener("loadedmetadata", function () {
           console.log("Video metadata loaded");
           updateVideoHeight();
+          updateVideoWidth();
         });
 
-        // Update height when video source changes
+        // Update dimensions when video source changes
         videoElement.addEventListener("loadeddata", function () {
           updateVideoHeight();
+          updateVideoWidth();
         });
 
         const storiesElement = document.getElementById("stories");
