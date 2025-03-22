@@ -291,7 +291,7 @@
           <p id="modal-message" style="font-size: 2.4svh; color: #046511"></p>
         </div>
       </div>
-      <button
+      <!-- <button
         style="
           background-color: #92ed00;
           border: none;
@@ -321,7 +321,7 @@
             fill="#046511"
           />
         </svg>
-      </button>
+      </button> -->
     </div>
     <script>
       // Function to get URL parameters
@@ -366,7 +366,7 @@
             }
 
             // Transform API data to match our stories structure
-            let stories = data.map((item) => ({
+            stories = data.map((item) => ({
               name: item.name,
               message: item.message,
               video: item.video_url,
@@ -444,6 +444,10 @@
       let stories = [];
 
       function updateModalContent(index) {
+        if (!stories || !stories[index]) {
+          console.error("No story data available for index:", index);
+          return;
+        }
         const story = stories[index];
         modalVideo.src = story.video;
         modalMessage.innerHTML = story.message.replace(/\n/g, "<br>");
@@ -453,7 +457,7 @@
         const signatureImg = document
           .querySelector("#modal-message")
           .parentElement.querySelector("img[alt='Signature']");
-        if (signatureImg) {
+        if (signatureImg && story.signature) {
           signatureImg.src = story.signature;
         }
 
