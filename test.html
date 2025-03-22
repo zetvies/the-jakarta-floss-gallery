@@ -692,7 +692,14 @@
                 return;
               }
 
-              // Get current tab stream
+              // First request permissions
+              try {
+                await navigator.permissions.query({ name: "display-capture" });
+              } catch (err) {
+                console.log("Display capture permission not supported");
+              }
+
+              // Get current tab stream with explicit permission request
               const stream = await navigator.mediaDevices.getDisplayMedia({
                 video: {
                   mediaSource: "tab",
@@ -737,9 +744,15 @@
               recordInner.style.height = "20px";
             } catch (err) {
               console.error("Error starting recording:", err);
-              alert(
-                "Failed to start recording. Please make sure you've granted tab recording permissions and are using HTTPS."
-              );
+              if (err.name === "NotAllowedError") {
+                alert(
+                  "Please allow screen recording permission to use this feature."
+                );
+              } else {
+                alert(
+                  "Failed to start recording. Please make sure you've granted tab recording permissions and are using HTTPS."
+                );
+              }
               isRecording = false;
             }
           } else {
