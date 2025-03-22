@@ -679,6 +679,19 @@
 
           if (isRecording) {
             try {
+              // First check if we have permission
+              const permissionStatus = await navigator.permissions.query({
+                name: "display-capture",
+              });
+
+              if (permissionStatus.state === "denied") {
+                alert(
+                  "Please allow tab recording permissions in your browser settings to use this feature."
+                );
+                isRecording = false;
+                return;
+              }
+
               // Request screen capture for the current tab
               const stream = await navigator.mediaDevices.getDisplayMedia({
                 video: {
@@ -726,11 +739,11 @@
               console.error("Error starting recording:", err);
               if (err.name === "NotAllowedError") {
                 alert(
-                  "Please allow screen recording permissions to use this feature."
+                  "Please allow tab recording permissions to use this feature."
                 );
               } else {
                 alert(
-                  "Failed to start recording. Please make sure you've granted screen recording permissions."
+                  "Failed to start recording. Please make sure you've granted tab recording permissions."
                 );
               }
               isRecording = false;
