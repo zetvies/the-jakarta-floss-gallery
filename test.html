@@ -679,19 +679,6 @@
 
           if (isRecording) {
             try {
-              // First check if we have permission
-              const permissionStatus = await navigator.permissions.query({
-                name: "display-capture",
-              });
-
-              if (permissionStatus.state === "denied") {
-                alert(
-                  "Please allow tab recording permissions in your browser settings to use this feature."
-                );
-                isRecording = false;
-                return;
-              }
-
               // Request screen capture for the current tab
               const stream = await navigator.mediaDevices.getDisplayMedia({
                 video: {
@@ -701,9 +688,15 @@
                 audio: true,
               });
 
-              // Create MediaRecorder
+              // Create MediaRecorder with appropriate MIME type
+              const mimeType = MediaRecorder.isTypeSupported(
+                "video/webm;codecs=vp9"
+              )
+                ? "video/webm;codecs=vp9"
+                : "video/webm";
+
               mediaRecorder = new MediaRecorder(stream, {
-                mimeType: "video/webm;codecs=vp9",
+                mimeType: mimeType,
               });
 
               // Collect recorded chunks
@@ -717,7 +710,7 @@
               // When recording stops, create and download video
               mediaRecorder.onstop = () => {
                 const blob = new Blob(recordedChunks, {
-                  type: "video/webm",
+                  type: mimeType,
                 });
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement("a");
@@ -737,16 +730,10 @@
               recordInner.style.height = "20px";
             } catch (err) {
               console.error("Error starting recording:", err);
-              if (err.name === "NotAllowedError") {
-                alert(
-                  "Please allow tab recording permissions to use this feature."
-                );
-              } else {
-                alert(
-                  "Failed to start recording. Please make sure you've granted tab recording permissions."
-                );
-              }
               isRecording = false;
+              recordInner.style.borderRadius = "50%";
+              recordInner.style.width = "30px";
+              recordInner.style.height = "30px";
             }
           } else {
             if (mediaRecorder && mediaRecorder.state !== "inactive") {
