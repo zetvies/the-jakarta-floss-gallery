@@ -808,7 +808,7 @@
 
         const galleryButton = document.getElementById("galleryButton");
         galleryButton.addEventListener("click", () => {
-          window.location.href = `/gallery.html?orderID=${orderID}`;
+          window.location.href = `/gallery.html?orderID=${orderID.toUpperCase()}`;
         });
 
         document
