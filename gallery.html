@@ -601,6 +601,31 @@
           modalVideo.pause();
         }
       });
+
+      // Function to show video modal
+      function showVideoModal(videoUrl) {
+        const modalVideo = document.getElementById("modal-video");
+        modalVideo.src = videoUrl;
+        modalVideo.load(); // Ensure video is loaded
+        modalVideo.play().catch((error) => {
+          console.log("Error playing video:", error);
+          if (error.name === "NotAllowedError") {
+            modalVideo.muted = true;
+            modalVideo
+              .play()
+              .catch((e) => console.log("Even muted autoplay failed:", e));
+          }
+        });
+        document.getElementById("video-modal").style.display = "flex";
+      }
+
+      // Function to hide video modal
+      function hideVideoModal() {
+        const modalVideo = document.getElementById("modal-video");
+        modalVideo.pause();
+        modalVideo.currentTime = 0;
+        document.getElementById("video-modal").style.display = "none";
+      }
     </script>
   </body>
 </html>
