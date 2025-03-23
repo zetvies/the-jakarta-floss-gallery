@@ -177,68 +177,13 @@
         left: 50%;
         transform: translateX(-50%);
         z-index: 10;
-        width: auto;
+        height: 70px;
+        width: 95vw;
+        padding: 15px;
+        overflow-x: auto;
         gap: 16px;
       "
-    >
-      <div
-        class="story-button"
-        style="
-          height: 60px;
-          width: 60px;
-          background-color: #000;
-          border-radius: 50%;
-          overflow: hidden;
-        "
-      >
-        <video
-          src="./assets/videos/rury.mp4"
-          loop
-          muted
-          autoplay
-          playsinline
-          style="width: 100%; height: 100%; object-fit: cover"
-        ></video>
-      </div>
-      <div
-        class="story-button"
-        style="
-          height: 60px;
-          width: 60px;
-          background-color: #000;
-          border-radius: 50%;
-          overflow: hidden;
-        "
-      >
-        <video
-          src="./assets/videos/arsa.mp4"
-          loop
-          muted
-          autoplay
-          playsinline
-          style="width: 100%; height: 100%; object-fit: cover"
-        ></video>
-      </div>
-      <div
-        class="story-button"
-        style="
-          height: 60px;
-          width: 60px;
-          background-color: #000;
-          border-radius: 50%;
-          overflow: hidden;
-        "
-      >
-        <video
-          src="./assets/videos/kojo.mp4"
-          loop
-          muted
-          autoplay
-          playsinline
-          style="width: 100%; height: 100%; object-fit: cover"
-        ></video>
-      </div>
-    </div>
+    ></div>
     <div
       id="showMessageButton"
       style="
@@ -623,7 +568,7 @@
               const storyButton = document.createElement("div");
               storyButton.className = "story-button";
               storyButton.style.height = "60px";
-              storyButton.style.width = "60px";
+              storyButton.style.minWidth = "60px";
               storyButton.style.backgroundColor = "#000";
               storyButton.style.borderRadius = "50%";
               storyButton.style.overflow = "hidden";
