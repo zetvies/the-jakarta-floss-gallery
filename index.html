@@ -163,6 +163,8 @@
       src="./assets/videos/arsa.mp4"
       loop
       playsinline
+      webkit-playsinline
+      x5-playsinline
       preload="auto"
       muted
       style="display: none; aspect-ratio: 1/1"
@@ -177,10 +179,11 @@
         left: 50%;
         transform: translateX(-50%);
         z-index: 10;
-        height: 70px;
         width: 95vw;
-        padding: 15px;
+        height: 70px;
+        padding: 0 15px;
         overflow-x: auto;
+        overflow-y: visible;
         gap: 16px;
       "
     ></div>
@@ -583,6 +586,8 @@
               video.muted = true;
               video.autoplay = true;
               video.playsinline = true;
+              video.setAttribute("webkit-playsinline", "true");
+              video.setAttribute("x5-playsinline", "true");
               video.style.width = "100%";
               video.style.height = "100%";
               video.style.objectFit = "cover";
@@ -592,13 +597,14 @@
 
               // Add click event listener
               storyButton.addEventListener("click", () => {
-                updateContent(index);
                 // Remove active class from all buttons
                 document
                   .querySelectorAll(".story-button")
                   .forEach((btn) => btn.classList.remove("active"));
                 // Add active class to clicked button
                 storyButton.classList.add("active");
+                // Update content immediately
+                updateContent(index);
               });
 
               // Assign random border color
@@ -716,7 +722,17 @@
 
             if (video) {
               videoElement.src = video;
-              videoElement.play();
+              videoElement.play().catch((error) => {
+                console.log("Error playing video:", error);
+                if (error.name === "NotAllowedError") {
+                  videoElement.muted = true;
+                  videoElement
+                    .play()
+                    .catch((e) =>
+                      console.log("Even muted autoplay failed:", e)
+                    );
+                }
+              });
             }
 
             // Update the signature dynamically
