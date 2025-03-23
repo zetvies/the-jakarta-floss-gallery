@@ -166,7 +166,6 @@
       webkit-playsinline
       x5-playsinline
       preload="auto"
-      muted
       style="display: none; aspect-ratio: 1/1"
     ></video>
     <div
@@ -463,16 +462,6 @@
         />
       </div>
     </div>
-    <audio
-      id="arsa-audio"
-      src="./assets/audio/arsa.mp3"
-      loop
-      preload="auto"
-      muted
-      playsinline
-      webkit-playsinline
-      x5-playsinline
-    ></audio>
     <script>
       let videoElement = document.getElementById("arsa-video");
       let pauseTimeout;
@@ -821,6 +810,7 @@
             // Ensure video is loaded and play it
             videoElement.load();
             videoElement.muted = false; // Unmute when marker is detected
+            videoElement.volume = 1; // Set volume to maximum
             const playPromise = videoElement.play();
             if (playPromise !== undefined) {
               playPromise.catch((error) => {
@@ -857,38 +847,12 @@
               }, 500); // Wait for the transition to complete
               markerDetectedOnce = true;
             }
-
-            // Play audio when marker is detected
-            const audioElement = document.getElementById("arsa-audio");
-            if (audioElement) {
-              audioElement.muted = false;
-              const audioPlayPromise = audioElement.play();
-              if (audioPlayPromise !== undefined) {
-                audioPlayPromise.catch((error) => {
-                  console.log("Error playing audio:", error);
-                  // If autoplay with unmute fails, try playing muted
-                  if (error.name === "NotAllowedError") {
-                    audioElement.muted = true;
-                    audioElement
-                      .play()
-                      .catch((e) =>
-                        console.log("Even muted audio autoplay failed:", e)
-                      );
-                  }
-                });
-              }
-            }
           });
 
           marker.addEventListener("markerLost", function () {
             console.log("Marker is lost");
             pauseTimeout = setTimeout(() => {
               videoElement.pause();
-              // Pause audio when marker is lost
-              const audioElement = document.getElementById("arsa-audio");
-              if (audioElement) {
-                audioElement.pause();
-              }
               console.log("Video and audio paused due to marker loss");
             }, 500); // Pause after 3 seconds
             // Hide the stories when the marker is lost
@@ -915,4 +879,3 @@
     </script>
   </body>
 </html>
--->
