@@ -809,8 +809,6 @@
             console.log("Marker is found");
             // Ensure video is loaded and play it
             videoElement.load();
-            videoElement.muted = false; // Unmute when marker is detected
-            videoElement.volume = 1; // Set volume to maximum
             const playPromise = videoElement.play();
             if (playPromise !== undefined) {
               playPromise.catch((error) => {
@@ -829,6 +827,9 @@
             if (pauseTimeout) {
               clearTimeout(pauseTimeout);
             }
+
+            videoElement.muted = false; // Unmute when marker is detected
+            videoElement.volume = 1; // Set volume to maximum
             // Show the stories when the marker is found
             storiesElement.style.display = "flex";
 
