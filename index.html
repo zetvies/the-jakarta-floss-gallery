@@ -160,7 +160,7 @@
 
     <video
       id="arsa-video"
-      src="./assets/videos/arsa.mp4"
+      src=""
       loop
       autoplay
       muted
@@ -292,9 +292,9 @@
           "
         >
           <img
-            src="./assets/images/signature.png"
+            id="signatureImg"
             alt="Signature"
-            style="height: 8svh"
+            style="height: 8svh; display: none"
           />
           <img
             src="./assets/images/highfive.png"
@@ -564,9 +564,11 @@
               name: item.name,
               message: item.message,
               video: item.video_url,
-              signature: item.signature_url || "./assets/images/signature.png",
+              signature: item.signature_url,
             }));
             console.log("Transformed stories:", stories);
+            console.log("First story:", stories[0]);
+            console.log("Number of stories:", stories.length);
 
             // Update the stories UI
             storiesElement.innerHTML = ""; // Clear existing stories
@@ -627,6 +629,16 @@
               storiesElement.querySelector(".story-button");
             if (firstStoryButton) {
               firstStoryButton.classList.add("active");
+              // Set initial signature
+              const signatureImg = document.querySelector("#signatureImg");
+              if (signatureImg && firstStoryButton.dataset.signature) {
+                console.log(
+                  "Setting initial signature URL:",
+                  firstStoryButton.dataset.signature
+                );
+                signatureImg.src = firstStoryButton.dataset.signature;
+                signatureImg.style.display = "block";
+              }
             }
 
             // Set initial video source
@@ -734,7 +746,6 @@
               videoElement.play().catch((error) => {
                 console.log("Error playing video:", error);
                 if (error.name === "NotAllowedError") {
-                  // videoElement.muted = true;
                   videoElement
                     .play()
                     .catch((e) =>
@@ -745,11 +756,16 @@
             }
 
             // Update the signature dynamically
-            const signatureImg = document.querySelector(
-              "#messageModal img[alt='Signature']"
-            );
-            if (signatureImg && signature) {
-              signatureImg.src = signature;
+            const signatureImg = document.querySelector("#signatureImg");
+            if (signatureImg) {
+              if (signature) {
+                console.log("Setting signature URL:", signature);
+                signatureImg.src = signature;
+                signatureImg.style.display = "block";
+              } else {
+                console.log("No signature URL available");
+                signatureImg.style.display = "none";
+              }
             }
           }
         }
