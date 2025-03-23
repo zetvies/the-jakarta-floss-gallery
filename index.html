@@ -741,7 +741,7 @@
               videoElement.play().catch((error) => {
                 console.log("Error playing video:", error);
                 if (error.name === "NotAllowedError") {
-                  videoElement.muted = true;
+                  // videoElement.muted = true;
                   videoElement
                     .play()
                     .catch((e) =>
