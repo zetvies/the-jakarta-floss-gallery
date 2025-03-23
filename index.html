@@ -517,6 +517,7 @@
       document.addEventListener("DOMContentLoaded", function () {
         // Load the video but keep it paused
         videoElement.load();
+        videoElement.play();
 
         // Try to preload the video
         videoElement.addEventListener("loadedmetadata", function () {
