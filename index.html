@@ -463,6 +463,16 @@
         />
       </div>
     </div>
+    <audio
+      id="arsa-audio"
+      src="./assets/audio/arsa.mp3"
+      loop
+      preload="auto"
+      muted
+      playsinline
+      webkit-playsinline
+      x5-playsinline
+    ></audio>
     <script>
       let videoElement = document.getElementById("arsa-video");
       let pauseTimeout;
@@ -588,6 +598,12 @@
               video.playsinline = true;
               video.setAttribute("webkit-playsinline", "true");
               video.setAttribute("x5-playsinline", "true");
+              video.setAttribute("playsinline", "true");
+              video.setAttribute("webkit-playsinline", "true");
+              video.setAttribute("x5-playsinline", "true");
+              video.setAttribute("x-webkit-airplay", "allow");
+              video.setAttribute("x5-video-player-type", "h5");
+              video.setAttribute("x5-video-player-fullscreen", "false");
               video.style.width = "100%";
               video.style.height = "100%";
               video.style.objectFit = "cover";
