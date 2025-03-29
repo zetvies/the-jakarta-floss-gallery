@@ -435,7 +435,7 @@
               name: item.name,
               message: item.message,
               video: item.video_url,
-              signature: item.signature_url || "./assets/images/signature.png",
+              signature: item.signature_url,
             }));
             console.log("Transformed stories:", stories);
 
@@ -522,9 +522,10 @@
         document.getElementById("modal-name").textContent = story.name;
 
         // Update the signature dynamically
-        const signatureImg = document.querySelector("img[alt='Signature']");
-        if (signatureImg && story.signature) {
-          signatureImg.src = story.signature;
+        const signatureImg = document.querySelector("#signatureImg");
+        if (signatureImg) {
+          signatureImg.style.display = "none";
+          signatureImg.removeAttribute("src");
         }
 
         // Apply random rotation to video and letter
@@ -562,15 +563,9 @@
         }
       });
 
-      // Add signature and highfive stickers to the bottom part of the letter
+      // Add highfive sticker to the bottom part of the letter
       const letterContainer =
         document.querySelector("#modal-message").parentElement;
-      const signatureImg = document.createElement("img");
-      signatureImg.src = "./assets/images/signature.png";
-      signatureImg.alt = "Signature";
-      signatureImg.display = "none";
-      signatureImg.style.height = "6svh";
-
       const highfiveImg = document.createElement("img");
       highfiveImg.src = "./assets/images/highfive.png";
       highfiveImg.alt = "High Five";
@@ -581,7 +576,6 @@
       stickerContainer.style.gap = "16px";
       stickerContainer.style.alignItems = "end";
       stickerContainer.style.justifyContent = "space-between";
-      stickerContainer.appendChild(signatureImg);
       stickerContainer.appendChild(highfiveImg);
 
       letterContainer.appendChild(stickerContainer);
