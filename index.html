@@ -624,6 +624,31 @@
               storyButton.style.border = `3px solid ${randomColor}`;
             });
 
+            // Add plus button at the end
+            const plusButton = document.createElement("div");
+            plusButton.className = "story-button";
+            plusButton.style.height = "60px";
+            plusButton.style.minWidth = "60px";
+            plusButton.style.backgroundColor = "#92ed00";
+            plusButton.style.borderRadius = "50%";
+            plusButton.style.display = "flex";
+            plusButton.style.alignItems = "center";
+            plusButton.style.justifyContent = "center";
+            plusButton.style.cursor = "pointer";
+            plusButton.style.border = "2px solid #046511";
+            plusButton.innerHTML = `
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="#046511"/>
+              </svg>
+            `;
+            plusButton.addEventListener("click", () => {
+              window.open(
+                `https://moonmuffin.byc.plus/content/${orderID}`,
+                "_blank"
+              );
+            });
+            storiesElement.appendChild(plusButton);
+
             // Set first story as active by default
             const firstStoryButton =
               storiesElement.querySelector(".story-button");
@@ -739,6 +764,7 @@
           const activeButton = document.querySelector(".story-button.active");
           if (activeButton) {
             const video = activeButton.dataset.video;
+            const message = activeButton.dataset.message;
             const signature = activeButton.dataset.signature;
 
             if (video) {
@@ -758,13 +784,16 @@
             // Update the signature dynamically
             const signatureImg = document.querySelector("#signatureImg");
             if (signatureImg) {
-              if (signature) {
+              if (signature && signature.trim() !== "") {
                 console.log("Setting signature URL:", signature);
                 signatureImg.src = signature;
                 signatureImg.style.display = "block";
               } else {
-                console.log("No signature URL available");
+                console.log(
+                  "No signature URL available, hiding signature image"
+                );
                 signatureImg.style.display = "none";
+                signatureImg.removeAttribute("src");
               }
             }
           }
