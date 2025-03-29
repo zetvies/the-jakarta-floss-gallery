@@ -587,12 +587,18 @@
 
               const video = document.createElement("video");
               video.src = story.video;
+              video.loop = true;
               video.muted = true;
               video.autoplay = true;
-              video.loop = true;
               video.playsinline = true;
               video.setAttribute("webkit-playsinline", "true");
               video.setAttribute("x5-playsinline", "true");
+              video.setAttribute("playsinline", "true");
+              video.setAttribute("webkit-playsinline", "true");
+              video.setAttribute("x5-playsinline", "true");
+              video.setAttribute("x-webkit-airplay", "allow");
+              video.setAttribute("x5-video-player-type", "h5");
+              video.setAttribute("x5-video-player-fullscreen", "false");
               video.style.width = "100%";
               video.style.height = "100%";
               video.style.objectFit = "cover";
@@ -600,37 +606,23 @@
               storyButton.appendChild(video);
               storiesElement.appendChild(storyButton);
 
+              // Add click event listener
               storyButton.addEventListener("click", () => {
-                currentIndex = index;
-                updateContent(currentIndex);
-                document.getElementById("modal").style.display = "flex";
+                // Remove active class from all buttons
+                document
+                  .querySelectorAll(".story-button")
+                  .forEach((btn) => btn.classList.remove("active"));
+                // Add active class to clicked button
+                storyButton.classList.add("active");
+                // Update content immediately
+                updateContent(index);
               });
-            });
 
-            // Add plus button at the end
-            const plusButton = document.createElement("div");
-            plusButton.className = "story-button";
-            plusButton.style.height = "60px";
-            plusButton.style.minWidth = "60px";
-            plusButton.style.backgroundColor = "#92ed00";
-            plusButton.style.borderRadius = "50%";
-            plusButton.style.display = "flex";
-            plusButton.style.alignItems = "center";
-            plusButton.style.justifyContent = "center";
-            plusButton.style.cursor = "pointer";
-            plusButton.style.border = "2px solid #046511";
-            plusButton.innerHTML = `
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="#046511"/>
-              </svg>
-            `;
-            plusButton.addEventListener("click", () => {
-              window.open(
-                `https://moonmuffin.byc.plus/content/${orderID}`,
-                "_blank"
-              );
+              // Assign random border color
+              const randomColor =
+                colors[Math.floor(Math.random() * colors.length)];
+              storyButton.style.border = `3px solid ${randomColor}`;
             });
-            storiesElement.appendChild(plusButton);
 
             // Set first story as active by default
             const firstStoryButton =
