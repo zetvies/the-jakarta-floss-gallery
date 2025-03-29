@@ -522,9 +522,7 @@
         document.getElementById("modal-name").textContent = story.name;
 
         // Update the signature dynamically
-        const signatureImg = document
-          .querySelector("#modal-message")
-          .parentElement.querySelector("img[alt='Signature']");
+        const signatureImg = document.querySelector("img[alt='Signature']");
         if (signatureImg && story.signature) {
           signatureImg.src = story.signature;
         }
@@ -570,6 +568,7 @@
       const signatureImg = document.createElement("img");
       signatureImg.src = "./assets/images/signature.png";
       signatureImg.alt = "Signature";
+      signatureImg.display = "none";
       signatureImg.style.height = "6svh";
 
       const highfiveImg = document.createElement("img");
