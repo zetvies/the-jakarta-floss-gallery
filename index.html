@@ -394,6 +394,78 @@
         const markerNotFoundOverlay = document.getElementById("markerNotFoundOverlay");
         let markerDetectedOnce = false;
 
+        // Configure camera for best rear camera with highest resolution (not wide)
+        const scene = document.querySelector('a-scene');
+        const configureCamera = async () => {
+          try {
+            // Wait a bit for AR.js to initialize
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            const video = scene.querySelector('video');
+            if (video && video.srcObject) {
+              const stream = video.srcObject;
+              const videoTrack = stream.getVideoTracks()[0];
+              
+              if (videoTrack) {
+                // Get available capabilities
+                const capabilities = videoTrack.getCapabilities();
+                console.log('Camera capabilities:', capabilities);
+                
+                // Try to get all video devices and select the best rear camera (not wide)
+                let bestDeviceId = null;
+                try {
+                  const devices = await navigator.mediaDevices.enumerateDevices();
+                  const videoDevices = devices.filter(device => device.kind === 'videoinput');
+                  
+                  // Filter for rear cameras (environment) and exclude wide/ultrawide
+                  const rearCameras = videoDevices.filter(device => {
+                    const label = device.label.toLowerCase();
+                    return !label.includes('wide') && 
+                           !label.includes('ultrawide') && 
+                           !label.includes('front') &&
+                           !label.includes('user');
+                  });
+                  
+                  if (rearCameras.length > 0) {
+                    bestDeviceId = rearCameras[0].deviceId;
+                    console.log('Selected non-wide rear camera:', rearCameras[0].label);
+                  }
+                } catch (e) {
+                  console.log('Could not enumerate devices:', e);
+                }
+                
+                // Apply constraints for rear camera, highest resolution, not wide
+                const constraints = {
+                  facingMode: { ideal: 'environment' }, // Rear camera
+                  width: { ideal: 1920, min: 1280 },
+                  height: { ideal: 1080, min: 720 }
+                };
+                
+                if (bestDeviceId) {
+                  constraints.deviceId = { ideal: bestDeviceId };
+                }
+                
+                await videoTrack.applyConstraints(constraints);
+                console.log('Camera constraints applied:', constraints);
+                
+                // Log final settings
+                const settings = videoTrack.getSettings();
+                console.log('Final camera settings:', settings);
+              }
+            }
+          } catch (error) {
+            console.warn('Could not configure camera:', error);
+          }
+        };
+        
+        if (scene) {
+          // Try multiple ways to configure camera
+          scene.addEventListener('loaded', configureCamera);
+          scene.addEventListener('arjs-video-loaded', configureCamera);
+          // Also try after a delay as fallback
+          setTimeout(configureCamera, 2000);
+        }
+
         const orderID = getUrlParameter("orderID");
         console.log("Fetching content for orderID:", orderID);
 
@@ -446,10 +518,9 @@
             }
             const xOffset = (Math.random() - 0.5) * 0.2;
             const initialX = baseX + xOffset;
-            // Vary Z position - move further back (range from -1.2 to -0.4)
-            const initialZ = -0.8 + (Math.random() - 0.5) * 0.8;
-            // Move images higher (range from 1.8 to 2.0)
-            const initialY = 1.8 + Math.random() * 0.2;
+            // Position images right on the marker plane
+            const initialZ = 0; // Right on marker
+            const initialY = 0; // Right on marker
             
             // Random base rotation
             const rotationZ = (Math.random() - 0.5) * 20; // -10 to 10 degrees
