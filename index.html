@@ -2,10 +2,28 @@
 <html>
   <head>
     <title>AR App | Moon Muffin</title>
-    <link rel="icon" type="image/x-icon" href="/icon.ico" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" type="image/x-icon" href="./icon.ico" />
+    <link rel="stylesheet" href="./styles.css" />
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
+    <style>
+      @keyframes rotate-snap-1 {
+        0%, 100% {
+          transform: rotate(0deg);
+        }
+        50% {
+          transform: rotate(15deg);
+        }
+      }
+      .animate-rotate-slow {
+        animation: rotate-snap-1 3s ease-in-out infinite;
+      }
+      /* Drop shadow for card components */
+      .component {
+        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+    </style>
   </head>
   <body style="margin: 0; overflow: hidden; z-index: 0">
     <a-scene
@@ -15,383 +33,28 @@
       device-orientation-permission-ui="enabled: false"
       vr-mode-ui="enabled: false"
     >
-      <!-- Define a marker using the Hiro pattern -->
-      <a-marker type="pattern" url="pattern-highfive-black.patt">
-        <!-- Add a white plane as a container for the video -->
-        <a-plane
-          color="white"
-          width="2.2"
-          height="4"
-          position="0 0 -1"
-          rotation="-80 0 0"
-        ></a-plane>
-        <!-- Play a video on a plane with cropping effect -->
-        <a-video
-          src="#arsa-video"
-          width="1.8"
-          height="1.8"
-          position="0 0.2 -1.2"
-          rotation="-80 0 0"
-        ></a-video>
-        <!-- Overlay images in front of the video -->
-        <a-image
-          src="./assets/images/mosque.png"
-          width="1.2"
-          height="1.2"
-          position="1.3 0.4 0.7"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/ketupat.png"
-          width="0.8"
-          height="0.8"
-          position="-1.2 0.2 0.8"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/love.png"
-          width="1"
-          height="1"
-          position="1.2 0.6 -2.1"
-          rotation="-80 0 0"
-        ></a-image>
-
-        <a-image
-          src="./assets/images/star.png"
-          width="1.2"
-          height="1.2"
-          position="-1.5 0.4 -.8"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/sparkle.png"
-          width="0.7"
-          height="0.7"
-          position="1.3 0.4 -.7"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/moon.png"
-          width=".7"
-          height=".7"
-          position="-1.2 0.5 -2.4"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/moonmuffin.png"
-          width="1.2"
-          height="0.4"
-          position="0 0.1 .7"
-          rotation="-80 0 0"
-        ></a-image>
+      <!-- Define a marker using the pattern -->
+      <a-marker type="pattern" url="pattern-highfive-black.patt" id="marker-highfive">
+        <!-- Images will be dynamically added here -->
       </a-marker>
-      <a-marker type="pattern" url="pattern-sparkle-black.patt">
-        <!-- Add a white plane as a container for the video -->
-        <a-plane
-          color="white"
-          width="6"
-          height="5"
-          position="-2.6 0 -3.4"
-          rotation="-90 0 0"
-        ></a-plane>
-        <!-- Play a video on a plane with cropping effect -->
-        <a-video
-          src="#arsa-video"
-          width="6.3"
-          height="5.3"
-          position="-2.7 0.4 -3.4"
-          rotation="-90 0 0"
-        ></a-video>
-        <!-- Overlay images in front of the video -->
-        <a-image
-          src="./assets/images/mosque.png"
-          width="2.4"
-          height="2.4"
-          position="0.5 0.8 -.5"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/ketupat.png"
-          width="1.6"
-          height="1.6"
-          position="-6.2 0.8 -.5"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/love.png"
-          width="2"
-          height="2"
-          position=".4 0.8 -6.1"
-          rotation="-80 0 0"
-        ></a-image>
-
-        <a-image
-          src="./assets/images/star.png"
-          width="2.4"
-          height="2.4"
-          position="-6 0.8 -3.3"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/sparkle.png"
-          width="1.4"
-          height="1.4"
-          position=".3 0.8 -3.5"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/moon.png"
-          width="1.4"
-          height="1.4"
-          position="-6 0.8 -6"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/moonmuffin.png"
-          width="1.2"
-          height="0.4"
-          position="0 0.1 .7"
-          rotation="-80 0 0"
-        ></a-image>
+      <a-marker type="pattern" url="pattern-sparkle-black.patt" id="marker-sparkle">
+        <!-- Images will be dynamically added here -->
       </a-marker>
-      <!-- Add a camera -->
-      <a-entity camera></a-entity>
+      <!-- Add a camera with raycaster for interaction -->
+      <a-entity 
+        camera 
+        raycaster="objects: a-image"
+        look-controls
+      >
+        <!-- Cursor for desktop interaction -->
+        <a-cursor
+          raycaster="objects: a-image"
+          geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+          material="color: #4CC3D9; shader: flat"
+          visible="false"
+        ></a-cursor>
+      </a-entity>
     </a-scene>
-
-    <video
-      id="arsa-video"
-      src=""
-      loop
-      autoplay
-      muted
-      playsinline
-      webkit-playsinline
-      x5-playsinline
-      preload="auto"
-      style="display: none; aspect-ratio: 1/1"
-    ></video>
-    <div
-      id="stories"
-      style="
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: fixed;
-        bottom: 13.3svh;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 10;
-        width: 95vw;
-        height: 70px;
-        padding: 0 15px;
-        overflow-x: auto;
-        overflow-y: visible;
-        gap: 16px;
-      "
-    ></div>
-    <div
-      id="showMessageButton"
-      style="
-        background-color: white;
-        border-radius: 30px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 0px 16px;
-        color: #046511;
-        position: fixed;
-        bottom: 24.3svh;
-        left: 50%;
-        font-family: Inter;
-        transform: translateX(-50%);
-        z-index: 20;
-        cursor: pointer;
-      "
-    >
-      <p>Buka Pesan</p>
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6ZM20 6L12 10.99L4 6H20ZM20 18H4V8L12 13L20 8V18Z"
-          fill="#046511"
-        />
-      </svg>
-    </div>
-
-    <div
-      id="messageModal"
-      style="
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 30;
-        justify-content: center;
-        align-items: center;
-      "
-    >
-      <div
-        style="
-          position: relative;
-          background-color: white;
-          color: #046511;
-          font-size: 1.4em;
-          padding: 16px;
-          max-width: 80%;
-          max-height: 90svh;
-          overflow-y: auto;
-          text-align: left;
-        "
-      >
-        <button
-          id="closeModalButton"
-          style="
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: #92ed00;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-          "
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 12 12"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M11.25 1.8075L10.1925 0.75L6 4.9425L1.8075 0.75L0.75 1.8075L4.9425 6L0.75 10.1925L1.8075 11.25L6 7.0575L10.1925 11.25L11.25 10.1925L7.0575 6L11.25 1.8075Z"
-              fill="#046511"
-            />
-          </svg>
-        </button>
-        <p id="modalMessage"></p>
-        <div
-          style="
-            display: flex;
-            gap: 16px;
-            align-items: end;
-            justify-content: space-between;
-          "
-        >
-          <!-- <img
-            id="signatureImg"
-            alt="Signature"
-            style="height: 8svh; display: none"
-          /> -->
-          <img
-            src="./assets/images/highfive.png"
-            alt="High Five"
-            style="height: 6svh"
-          />
-        </div>
-      </div>
-    </div>
-    <div
-      style="
-        position: fixed;
-        bottom: 4.5svh;
-        padding: 1svh;
-        left: calc(50% - 9svh);
-
-        bottom: 3.5svh;
-        width: 14svh;
-        height: 6svh;
-        background-color: white;
-        border-radius: 4svh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        z-index: 20;
-        overflow: hidden;
-      "
-    >
-      <img
-        src="./moonmuffin_logo.png"
-        alt="Gallery"
-        style="width: 100%; height: 100%; object-fit: contain"
-      />
-    </div>
-    <div
-      id="recordButton"
-      style="
-        z-index: -1;
-        opacity: 0;
-        position: fixed;
-        bottom: 4svh;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 7svh;
-        height: 7svh;
-        background-color: white;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        z-index: 20;
-      "
-    >
-      <div
-        id="recordInner"
-        style="
-          width: 5.2svh;
-          height: 5.2svh;
-          background-color: #92ed00;
-          border-radius: 50%;
-          transition: all 0.3s ease;
-        "
-      ></div>
-    </div>
-    <div
-      id="galleryButton"
-      style="
-        position: fixed;
-        bottom: 4.5svh;
-        left: calc(50% - 15svh);
-        transform: translateX(-50%);
-        width: 6svh;
-        height: 6svh;
-        background-color: white;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        z-index: 20;
-      "
-    >
-      <svg
-        width="28"
-        height="28"
-        viewBox="0 0 18 18"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M14.25 2.25H3.75C2.925 2.25 2.25 2.925 2.25 3.75V14.25C2.25 15.075 2.925 15.75 3.75 15.75H14.25C15.075 15.75 15.75 15.075 15.75 14.25V3.75C15.75 2.925 15.075 2.25 14.25 2.25ZM14.25 14.25H3.75V3.75H14.25V14.25ZM10.47 9.2175L8.4075 11.8725L6.9375 10.1025L4.875 12.75H13.125L10.47 9.2175Z"
-          fill="#046511"
-        />
-      </svg>
-    </div>
 
     <div
       id="markerNotFoundOverlay"
@@ -415,7 +78,7 @@
         padding-bottom: 10svh;
       "
     >
-      <p>Arahkan kameramu ke<br />marker Moon Muffin:</p>
+      <p>Arahkan kameramu ke<br />marker berikut:</p>
       <div
         style="
           display: flex;
@@ -458,51 +121,181 @@
               left: 0;
               transform: rotate(10deg);
             "
-          /> </span
-        ><img
+          />
+        </span>
+        <img
           src="./assets/images/line-decoration-right.png"
           style="width: 10svh; max-width: 15vw; height: auto"
         />
       </div>
     </div>
+
+    <!-- Moon Muffin Logo Button -->
+    <div
+      style="
+        position: fixed;
+        bottom: 3.5svh;
+        left: 50%;
+        transform: translateX(-55%);
+        width: 14svh;
+        height: 6svh;
+        background-color: white;
+        border-radius: 4svh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        z-index: 20;
+        overflow: hidden;
+        padding: 1svh;
+      "
+    >
+      <img
+        src="./moonmuffin_logo.png"
+        alt="Moon Muffin"
+        style="width: 100%; height: 100%; object-fit: contain"
+      />
+    </div>
+
+    <!-- Gallery Button -->
+    <div
+      id="galleryButton"
+      style="
+        position: fixed;
+        bottom: 4.5svh;
+        left: calc(50% - 15svh);
+        transform: translateX(-50%);
+        width: 6svh;
+        height: 6svh;
+        background-color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        z-index: 20;
+      "
+    >
+      <svg
+        width="28"
+        height="28"
+        viewBox="0 0 18 18"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M14.25 2.25H3.75C2.925 2.25 2.25 2.925 2.25 3.75V14.25C2.25 15.075 2.925 15.75 3.75 15.75H14.25C15.075 15.75 15.75 15.075 15.75 14.25V3.75C15.75 2.925 15.075 2.25 14.25 2.25ZM14.25 14.25H3.75V3.75H14.25V14.25ZM10.47 9.2175L8.4075 11.8725L6.9375 10.1025L4.875 12.75H13.125L10.47 9.2175Z"
+          fill="#046511"
+        />
+      </svg>
+    </div>
+
+    <!-- Mute/Volume Button -->
+    <div
+      id="muteButton"
+      style="
+        position: fixed;
+        bottom: 4.5svh;
+        left: calc(50% + 13svh);
+        transform: translateX(-50%);
+        width: 6svh;
+        height: 6svh;
+        background-color: white;
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        z-index: 20;
+      "
+    ></div>
+
+    <!-- Letter Detail Modal -->
+    <div id="letters-detail" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 80; display: none;">
+      <div id="letters-detail-overlay" style="width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); cursor: pointer;"></div>
+      <svg id="pin-svg" style="position: absolute; top: 28svh; left: 35svw; width: 10svh; height: 15svh; z-index: 100;" width="47" height="64" viewBox="0 0 47 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M14.9882 30.5399C14.7575 30.798 14.4157 31.6758 13.811 32.4282C12.9256 33.5298 12.3032 34.3378 10.4444 36.6623C9.73858 37.545 8.61764 39.2652 7.07598 41.3014C6.04406 42.6644 5.22841 43.8583 4.5577 44.652C3.69027 45.6785 3.00772 46.9243 2.39982 47.978C1.98266 48.7011 1.54059 49.9758 1.45755 50.9851C1.39714 51.7194 2.3761 53.0561 3.07071 54.0032C3.58089 54.6988 4.31263 55.0905 5.0388 55.5007C5.72033 55.8858 6.5896 56.2402 7.46128 56.6079C8.09018 56.8731 9.36689 57.3075 10.8189 57.8307C13.3935 58.7583 14.2233 58.5021 15.045 58.4533C16.37 58.3746 17.2403 57.6981 18.4211 56.5079C18.6701 56.257 18.7457 56.1078 19.8318 54.7436C20.9179 53.3794 22.9977 50.791 24.1206 49.3647C26.0222 46.9496 27.2421 45.2976 28.1661 43.9595C28.6777 43.2186 29.2421 42.6572 29.9777 41.6183C31.8322 38.9993 32.8066 37.796 33.4229 36.8043C33.9325 35.9844 35.1348 34.1238 36.3971 31.8245C37.2155 30.3338 38.0476 28.2818 38.7255 26.5658C39.4023 24.8526 40.0234 23.5248 40.529 22.1472C40.8727 21.2111 41.3068 20.1462 41.6984 19.39C42.1792 18.4617 42.718 17.0863 43.1505 15.9815C43.4153 15.3053 43.8773 14.3756 44.312 13.2537C44.8712 11.8107 44.9395 10.6163 44.7699 10.2485C44.3814 9.4064 43.7203 8.94379 42.9568 8.28115C41.7375 7.22308 40.3804 6.75635 38.6826 6.3515C37.8641 6.15634 37.2155 7.08772 36.2078 8.4487C34.0471 11.3668 32.9506 13.755 32.4165 14.5481C30.5383 17.3378 29.9945 18.7695 28.4663 21.0541C27.1396 23.0374 24.9752 25.2734 23.7285 26.7667C23.198 27.4021 22.8443 27.9563 22.4497 28.5244C21.9775 29.2042 21.5388 29.8135 21.1554 30.4394C20.4575 31.5789 19.4896 33.0354 18.742 34.1251C17.8798 35.382 17.3123 36.5428 16.7805 37.4238C15.7038 39.2079 15.1499 39.7892 14.7802 40.3639C14.348 41.0356 13.8444 41.6464 13.2937 42.4957C12.8502 43.1796 12.708 43.8736 12.6346 44.446C12.5509 45.0984 14.6356 45.4709 16.2793 45.4024C17.3666 45.3571 17.8931 44.4083 18.6299 43.772C19.9264 42.6523 20.2726 41.7628 21.0296 41.048C22.1019 40.0354 23.8899 37.0903 25.0691 35.6169C26.7858 33.4719 27.227 32.6916 27.7377 31.9947C28.746 30.6187 29.0309 29.7821 29.3004 29.1805C29.654 28.391 30.1994 27.8333 30.5873 27.2901C31.0939 26.5808 31.7097 25.8145 32.0727 25.2647C32.4357 24.7149 32.6579 24.2897 32.7633 23.9957C32.8288 23.8508 32.9185 23.7149 33.1617 23.6153" stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round"/>
+        <path d="M42.9478 16.6166C43.2126 15.9405 43.6746 15.0108 44.1093 13.8888C44.6684 12.4458 44.7368 11.2514 44.5672 10.8836C44.1787 10.0415 43.5176 9.5789 42.7541 8.91627C41.5348 7.8582 40.1777 7.39146 38.4799 6.98662C37.6614 6.79145 37.0127 7.72283 36.005 9.08381C33.8444 12.002 32.7479 14.3901 32.2138 15.1833C30.3355 17.9729 29.7918 19.4046 28.2636 21.6892C26.9369 23.6726 24.7725 25.9085 23.5258 27.4018C22.9953 28.0372 22.6416 28.5915 22.247 29.1595C21.7748 29.8393 21.3361 30.4486 20.9527 31.0746C20.2548 32.214 19.2869 33.6705 18.5393 34.7602C17.677 36.0171 17.1095 37.1779 16.5778 38.0589C15.501 39.843 14.9471 40.4243 14.5775 40.999C14.1453 41.6708 13.6417 42.2815 13.091 43.1308C12.6475 43.8147 12.5053 44.5087 12.4319 45.0812C12.3482 45.7335 14.4329 46.1061 16.0766 46.0376C17.1639 45.9922 17.6904 45.0434 18.4272 44.4071C19.7237 43.2875 20.0698 42.3979 20.8269 41.6831C21.8992 40.6705 23.6872 37.7254 24.8664 36.252C26.5831 34.107 27.0243 33.3267 27.535 32.6298C28.5433 31.2539 28.8282 30.4172 29.0977 29.8157C29.4513 29.0261 29.9967 28.4684 30.3845 27.9252C30.8912 27.2159 31.507 26.4496 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.6261 24.4859 32.7158 24.35 32.959 24.2504" stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round"/>
+      </svg>
+      
+      <div id="video-component" class="component" style="cursor: pointer; width: 27svh; height: 45svh; background-color: white; position: absolute; top: 10svh; left: 50%; transform: translateX(-50%); z-index: 81; display: flex; align-items: center; justify-content: center;">
+        <video 
+          id="rury-video"
+          src=""
+          style="width: 90%; height: 80%; object-fit: cover; margin-top: 5%; display: none;"
+          loop
+          autoplay
+          playsinline
+          webkit-playsinline
+          x5-playsinline
+        ></video>
+        <audio 
+          id="rury-audio"
+          src=""
+          loop
+          style="display: none;"
+        ></audio>
+        <div id="audio-icon" style="display: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.48 8.71 14 7.97V16.02C15.48 15.29 16.5 13.77 16.5 12ZM14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.85 14 18.71V20.77C18.01 19.86 21 16.28 21 12C21 7.72 18.01 4.14 14 3.23Z" fill="#FF5627"/>
+          </svg>
+        </div>
+      </div>
+      <div id="letter-component" class="component" style="cursor: pointer; transform: rotate(1deg); background-color: #F4F2E4; width: 75svw; height: 40svh; padding: 3svh; overflow-y: auto; position: absolute; bottom: 5svh; left: 0; right: 0; margin: 0 auto; z-index: 83; font-family: 'Playpen Sans', cursive;">
+        <div id="letter-component-text" style="font-size: 2svh; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;"></div>
+        <div id="letter-component-footer" style="position: absolute; bottom: 2svh; right: 2svh; display: flex; flex-direction: column; align-items: flex-end; gap: 1svh;">
+          <img 
+            id="photo-component-img" 
+            src="" 
+            alt="photo" 
+            class="animate-rotate-slow"
+            style="width: auto; height: 13svh; object-fit: cover; display: none;"
+          >
+          <div id="letter-component-sender" style="font-size: 2.4svh; font-weight: bold; font-family: 'Playpen Sans', cursive; display: none;"></div>
+        </div>
+      </div>
+    </div>
+
     <script>
-      let videoElement = document.getElementById("arsa-video");
-      let pauseTimeout;
-      let markerDetectedOnce = false;
-      let currentDeviceIndex = 0;
-      let videoDevices = [];
-      const muteButton = document.getElementById("muteButton");
-      let currentStream;
-
-      // Function to update video height based on aspect ratio
-      function updateVideoHeight() {
-        const videoPlane = document.querySelector("a-video");
-        if (videoPlane && videoElement.videoWidth && videoElement.videoHeight) {
-          const aspectRatio =
-            videoElement.videoHeight / videoElement.videoWidth;
-          const width = 1.8; // Keep width fixed
-          const height = width * aspectRatio;
-          videoPlane.setAttribute("height", height);
-        }
-      }
-
-      // Function to update video width based on aspect ratio for sparkle marker
-      function updateVideoWidth() {
-        const videoPlanes = document.querySelectorAll("a-video");
-        if (videoElement.videoWidth && videoElement.videoHeight) {
-          const aspectRatio =
-            videoElement.videoHeight / videoElement.videoWidth;
-          const height = 5.3; // Keep height fixed for sparkle marker
-          const width = height / aspectRatio;
-
-          videoPlanes.forEach((plane) => {
-            if (plane.getAttribute("width") === "6.3") {
-              // Only update sparkle marker video
-              plane.setAttribute("width", width);
-            }
+      // Register custom rotation animation component
+      AFRAME.registerComponent('rotate-animation', {
+        schema: {
+          maxAngle: {type: 'number', default: 15},
+          duration: {type: 'number', default: 3000},
+          delay: {type: 'number', default: 0}
+        },
+        init: function() {
+          const rotation = this.el.getAttribute('rotation');
+          this.baseRotationZ = rotation.z || 0; // Store base Z rotation in degrees
+          this.startTime = Date.now() + this.data.delay;
+        },
+        tick: function() {
+          const elapsed = (Date.now() - this.startTime) / 1000;
+          if (elapsed < 0) return; // Still in delay period
+          
+          const normalizedTime = (elapsed % (this.data.duration / 1000)) / (this.data.duration / 1000);
+          
+          // Calculate rotation using ease-in-out curve (similar to slamat-slimit-ar)
+          let rotationProgress;
+          if (normalizedTime < 0.5) {
+            // Ease in
+            rotationProgress = 2 * normalizedTime * normalizedTime;
+          } else {
+            // Ease out
+            rotationProgress = 1 - 2 * (1 - normalizedTime) * (1 - normalizedTime);
+          }
+          
+          // Apply rotation: 0 -> maxAngle -> 0 (using sine wave)
+          const rotationAngle = this.baseRotationZ + (this.data.maxAngle * Math.sin(rotationProgress * Math.PI));
+          
+          const currentRotation = this.el.getAttribute('rotation');
+          this.el.setAttribute('rotation', {
+            x: currentRotation.x,
+            y: currentRotation.y,
+            z: rotationAngle // Already in degrees
           });
         }
-      }
+      });
 
       // Function to get URL parameters
       function getUrlParameter(name) {
@@ -514,236 +307,239 @@
           : decodeURIComponent(results[1].replace(/\+/g, " ")).toUpperCase();
       }
 
+      // Function to check if image exists
+      function checkImageExists(url) {
+        return new Promise((resolve) => {
+          const img = new Image();
+          img.onload = () => resolve(true);
+          img.onerror = () => resolve(false);
+          img.src = url;
+        });
+      }
+
+      // Function to create image element in AR with animation
+      function createARImage(src, position, initialRotation, scale, marker, rotationPattern, index, letterData) {
+        const imageEl = document.createElement("a-image");
+        imageEl.setAttribute("src", src);
+        imageEl.setAttribute("position", position);
+        imageEl.setAttribute("rotation", initialRotation);
+        imageEl.setAttribute("width", scale);
+        imageEl.setAttribute("height", scale);
+        
+        // Make image interactive (required for raycaster)
+        imageEl.setAttribute("class", "clickable");
+        imageEl.setAttribute("data-url", src); // Store URL in data attribute
+        
+        // Store letter data on the element
+        if (letterData) {
+          imageEl.setAttribute("data-letter", JSON.stringify(letterData));
+        }
+        
+        // Add click event listener (works with raycaster)
+        imageEl.addEventListener("click", function(evt) {
+          console.log("Image clicked, URL:", src);
+          if (letterData) {
+            // Dispatch custom event to open letter detail
+            const event = new CustomEvent('openLetterDetail', { 
+              detail: { 
+                letterData: letterData
+              } 
+            });
+            document.dispatchEvent(event);
+          }
+        });
+        
+        // Also handle touch events for mobile
+        imageEl.addEventListener("touchstart", function(evt) {
+          console.log("Image touched, URL:", src);
+          if (letterData) {
+            // Dispatch custom event to open letter detail
+            const event = new CustomEvent('openLetterDetail', { 
+              detail: { 
+                letterData: letterData
+              } 
+            });
+            document.dispatchEvent(event);
+          }
+        });
+        
+        // Add rotation animation using custom component
+        // Animation oscillates around base rotation by maxAngle degrees
+        imageEl.setAttribute("rotate-animation", {
+          maxAngle: rotationPattern.maxAngle,
+          duration: rotationPattern.duration * 1000, // Convert to milliseconds
+          delay: Math.max(0, rotationPattern.delay * 1000) // Convert to milliseconds, ensure non-negative
+        });
+        marker.appendChild(imageEl);
+        return imageEl;
+      }
+
+      // Function to remove all images from marker
+      function clearMarkerImages(marker) {
+        const images = marker.querySelectorAll("a-image");
+        images.forEach((img) => img.remove());
+      }
+
       document.addEventListener("DOMContentLoaded", function () {
-        // Load the video but keep it paused
-        videoElement.load();
-        videoElement.play();
+        const markerHighfive = document.getElementById("marker-highfive");
+        const markerSparkle = document.getElementById("marker-sparkle");
+        const markerNotFoundOverlay = document.getElementById("markerNotFoundOverlay");
+        let markerDetectedOnce = false;
 
-        // Try to preload the video
-        videoElement.addEventListener("loadedmetadata", function () {
-          console.log("Video metadata loaded");
-          updateVideoHeight();
-          updateVideoWidth();
-        });
-
-        // Update dimensions when video source changes
-        videoElement.addEventListener("loadeddata", function () {
-          updateVideoHeight();
-          updateVideoWidth();
-        });
-
-        const storiesElement = document.getElementById("stories");
         const orderID = getUrlParameter("orderID");
         console.log("Fetching content for orderID:", orderID);
 
-        if (!orderID) {
-          console.log("No orderID found, redirecting to base URL...");
-          window.location.href =
-            "https://moonmuffin.byc.plus/experience-app/ar";
-          return;
-        }
-
-        // Fetch content from API
-        fetch(`https://moonmuffin.byc.plus/api/gallery?order_id=${orderID}`)
-          .then((response) => {
-            console.log("API Response status:", response.status);
-            return response.json();
-          })
-          .then((data) => {
-            console.log("API Response data:", data);
-            if (!data || data.length === 0) {
-              console.log(
-                "No data received, redirecting to order-specific URL..."
-              );
-              window.location.href = `https://moonmuffin.byc.plus/experience-app/ar/${orderID}`;
-              return;
-            }
-
-            // Transform API data to match our stories structure
-            const stories = data.map((item) => ({
-              name: item.name,
-              message: item.message,
-              video: item.video_url,
-              signature: item.signature_url,
-            }));
-            console.log("Transformed stories:", stories);
-            console.log("First story:", stories[0]);
-            console.log("Number of stories:", stories.length);
-
-            // Update the stories UI
-            storiesElement.innerHTML = ""; // Clear existing stories
-            stories.forEach((story, index) => {
-              const storyButton = document.createElement("div");
-              storyButton.className = "story-button";
-              storyButton.style.height = "60px";
-              storyButton.style.minWidth = "60px";
-              storyButton.style.backgroundColor = "#000";
-              storyButton.style.borderRadius = "50%";
-              storyButton.style.overflow = "hidden";
-              // Store all story data
-              storyButton.dataset.message = story.message;
-              storyButton.dataset.video = story.video;
-              storyButton.dataset.signature = story.signature;
-
-              const video = document.createElement("video");
-              video.src = story.video;
-              video.loop = true;
-              video.muted = true;
-              video.autoplay = true;
-              video.playsinline = true;
-              video.setAttribute("webkit-playsinline", "true");
-              video.setAttribute("x5-playsinline", "true");
-              video.setAttribute("playsinline", "true");
-              video.setAttribute("webkit-playsinline", "true");
-              video.setAttribute("x5-playsinline", "true");
-              video.setAttribute("x-webkit-airplay", "allow");
-              video.setAttribute("x5-video-player-type", "h5");
-              video.setAttribute("x5-video-player-fullscreen", "false");
-              video.style.width = "100%";
-              video.style.height = "100%";
-              video.style.objectFit = "cover";
-
-              storyButton.appendChild(video);
-              storiesElement.appendChild(storyButton);
-
-              // Add click event listener
-              storyButton.addEventListener("click", () => {
-                // Remove active class from all buttons
-                document
-                  .querySelectorAll(".story-button")
-                  .forEach((btn) => btn.classList.remove("active"));
-                // Add active class to clicked button
-                storyButton.classList.add("active");
-                // Update content immediately
-                updateContent(index);
-              });
-
-              // Assign random border color
-              const randomColor =
-                colors[Math.floor(Math.random() * colors.length)];
-              storyButton.style.border = `3px solid ${randomColor}`;
-            });
-
-            // Add plus button at the end
-            const plusButton = document.createElement("div");
-            plusButton.className = "story-button";
-            plusButton.style.height = "60px";
-            plusButton.style.minWidth = "60px";
-            plusButton.style.backgroundColor = "#92ed00";
-            plusButton.style.borderRadius = "50%";
-            plusButton.style.display = "flex";
-            plusButton.style.alignItems = "center";
-            plusButton.style.justifyContent = "center";
-            plusButton.style.cursor = "pointer";
-            plusButton.style.border = "2px solid #046511";
-            plusButton.innerHTML = `
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="#046511"/>
-              </svg>
-            `;
-            plusButton.addEventListener("click", () => {
-              window.open(
-                `https://moonmuffin.byc.plus/content/${orderID}`,
-                "_blank"
-              );
-            });
-            storiesElement.appendChild(plusButton);
-
-            // Set first story as active by default
-            const firstStoryButton =
-              storiesElement.querySelector(".story-button");
-            if (firstStoryButton) {
-              firstStoryButton.classList.add("active");
-              // Set initial signature
-              const signatureImg = document.querySelector("#signatureImg");
-              if (signatureImg && firstStoryButton.dataset.signature) {
-                console.log(
-                  "Setting initial signature URL:",
-                  firstStoryButton.dataset.signature
-                );
-                signatureImg.src = firstStoryButton.dataset.signature;
-                signatureImg.style.display = "block";
-              }
-            }
-
-            // Set initial video source
-            if (stories.length > 0) {
-              videoElement.src = stories[0].video;
-            }
-          })
-          .catch((error) => {
-            console.error("Error fetching content:", error);
-            // console.log("Redirecting due to error...");
-            // window.location.href =
-            //   "https://moonmuffin.byc.plus/experience-app/ar";
-          });
-
-        const colors = [
-          "#EACA2A",
-          "#EB579B",
-          "#F77B29",
-          "#FF3755",
-          "#5EA0C6",
-          "#92ED00",
+        // Default face images (static fallback)
+        const defaultFaces = [
+          "./assets/face-1.png",
+          "./assets/face-2.png",
+          "./assets/face-3.png",
+          "./assets/face-4.png",
         ];
 
-        const showMessageButton = document.getElementById("showMessageButton");
-        const messageModal = document.getElementById("messageModal");
-        const modalMessage = document.getElementById("modalMessage");
+        // Initial setup with static faces
+        let faceUrls = [...defaultFaces];
+        let letterDataArray = []; // Store full letter data
 
-        // Add the mute button to the right of the record button
-        const muteButton = document.createElement("div");
-        muteButton.id = "muteButton";
-        muteButton.style.position = "fixed";
-        muteButton.style.bottom = "4.5svh";
-        muteButton.style.left = "calc(50% + 13svh)";
-        muteButton.style.transform = "translateX(-50%)";
-        muteButton.style.width = "6svh";
-        muteButton.style.height = "6svh";
-        muteButton.style.backgroundColor = "white";
-        muteButton.style.borderRadius = "50%";
-        muteButton.style.display = "flex";
-        muteButton.style.justifyContent = "center";
-        muteButton.style.alignItems = "center";
-        muteButton.style.cursor = "pointer";
-        muteButton.style.zIndex = "20";
-        muteButton.innerHTML = `
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 18 18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
-              fill="#046511"
-            />
-          </svg>
-        `;
-        document.body.appendChild(muteButton);
+        // Rotation patterns (similar to slamat-slimit-ar)
+        const rotationPatterns = [
+          { maxAngle: 15, duration: 3, delay: 0 },      // rotate-snap-1
+          { maxAngle: -18, duration: 3.5, delay: 0 },    // rotate-snap-2
+          { maxAngle: 12, duration: 4, delay: -1 },     // rotate-snap-3
+          { maxAngle: -20, duration: 3.2, delay: -0.5 } // rotate-snap-4
+        ];
 
-        // Add functionality to toggle mute state
+        // Function to setup images in AR
+        function setupARImages(urls, marker, baseRotation, dataArray = []) {
+          clearMarkerImages(marker);
+          
+          // Only show as many images as we have URLs (no duplication)
+          const faceCount = urls.length;
+          
+          // Position configuration for images - dynamically calculate spacing based on count
+          // X spacing - evenly spaced from -3.5 to 0
+          const xMin = -3.5;
+          const xMax = 0;
+          const xCenter = -1.75; // Center of -3.5 to 0
+          
+          for (let i = 0; i < faceCount; i++) {
+            const faceUrl = urls[i]; // Use actual URL, no cycling
+            const letterData = dataArray[i] || null; // Get corresponding letter data
+            
+            // Calculate position - start from center (-2) and spread evenly
+            let baseX;
+            if (faceCount === 1) {
+              baseX = xCenter; // Single image at center
+            } else {
+              // Spread evenly from -3.5 to 0
+              const xRange = xMax - xMin; // 3.5
+              const xSpacing = xRange / (faceCount - 1);
+              baseX = xMin + (i * xSpacing);
+            }
+            const xOffset = (Math.random() - 0.5) * 0.2;
+            const initialX = baseX + xOffset;
+            // Vary Z position - move further back (range from -1.2 to -0.4)
+            const initialZ = -0.8 + (Math.random() - 0.5) * 0.8;
+            // Move images higher (range from 1.8 to 2.0)
+            const initialY = 1.8 + Math.random() * 0.2;
+            
+            // Random base rotation
+            const rotationZ = (Math.random() - 0.5) * 20; // -10 to 10 degrees
+            
+            // Scale - make images smaller (200% of original)
+            const scale = 3.0;
+            
+            // Get rotation pattern for this image
+            const rotationPattern = rotationPatterns[i % rotationPatterns.length];
+            
+            // Create image with specified base rotation and animation
+            createARImage(
+              faceUrl,
+              `${initialX} ${initialY} ${initialZ}`,
+              `${baseRotation} ${rotationZ} 0`,
+              scale,
+              marker,
+              rotationPattern,
+              i,
+              letterData
+            );
+          }
+        }
+
+        // Initial setup with static faces
+        // Highfive marker uses -80 rotation, Sparkle marker uses -90 rotation
+        setupARImages(faceUrls, markerHighfive, -80, letterDataArray);
+        setupARImages(faceUrls, markerSparkle, -90, letterDataArray);
+
+        // Fetch content from API if orderID exists
+        if (orderID) {
+          fetch(`https://slamatslimit.byc.plus/api/gallery?order_id=${orderID}`)
+            .then((response) => {
+              console.log("API Response status:", response.status);
+              return response.json();
+            })
+            .then(async (data) => {
+              console.log("API Response data:", data);
+              
+              if (data && data.length > 0) {
+                // Filter items with photo_url and store full data
+                const validItems = data.filter((item) => item.photo_url && item.photo_url.trim() !== "");
+                
+                console.log("Valid items with photos:", validItems);
+                
+                // Check which images exist and store corresponding data
+                const existingUrls = [];
+                const existingData = [];
+                for (const item of validItems) {
+                  const exists = await checkImageExists(item.photo_url);
+                  if (exists) {
+                    existingUrls.push(item.photo_url);
+                    existingData.push(item); // Store full letter data
+                  } else {
+                    console.log("Image does not exist:", item.photo_url);
+                  }
+                }
+                
+                // Use API photos if available, otherwise use static faces
+                if (existingUrls.length > 0) {
+                  faceUrls = existingUrls;
+                  letterDataArray = existingData; // Store full data array
+                  console.log("Using API photos:", faceUrls);
+                  console.log("Letter data array:", letterDataArray);
+                } else {
+                  console.log("No valid API photos, using static faces");
+                  faceUrls = defaultFaces;
+                  letterDataArray = [];
+                }
+                
+                // Update AR images
+                // Highfive marker uses -80 rotation, Sparkle marker uses -90 rotation
+                setupARImages(faceUrls, markerHighfive, -80, letterDataArray);
+                setupARImages(faceUrls, markerSparkle, -90, letterDataArray);
+              } else {
+                console.log("No data received, using static faces");
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching content:", error);
+              // Keep using static faces on error
+            });
+        }
+
+        // Setup gallery button
+        const galleryButton = document.getElementById("galleryButton");
+        if (galleryButton && orderID) {
+          galleryButton.addEventListener("click", () => {
+            window.location.href = `./gallery.html?orderID=${orderID.toUpperCase()}`;
+          });
+        }
+
+        // Setup mute button
+        const muteButton = document.getElementById("muteButton");
         let isMuted = false;
-        muteButton.addEventListener("click", () => {
-          isMuted = !isMuted;
-          videoElement.muted = isMuted;
-          muteButton.innerHTML = isMuted
-            ? `
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 18 18"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M3.25477 2.20117L2.19727 3.25867L5.46727 6.52867L5.24977 6.75367H2.24977V11.2537H5.24977L8.99977 15.0037V10.0612L12.1348 13.1962C11.6473 13.5637 11.0998 13.8562 10.4998 14.0287V15.5737C11.5048 15.3487 12.4273 14.8837 13.2073 14.2612L14.7448 15.7987L15.8023 14.7412L3.25477 2.20117ZM7.49977 11.3812L5.87227 9.75367H3.74977V8.25367H5.87227L6.53227 7.59367L7.49977 8.56117V11.3812ZM14.2498 9.00367C14.2498 9.61867 14.1373 10.2112 13.9423 10.7587L15.0898 11.9062C15.5098 11.0287 15.7498 10.0462 15.7498 9.00367C15.7498 5.79367 13.5073 3.10867 10.4998 2.42617V3.97117C12.6673 4.61617 14.2498 6.62617 14.2498 9.00367ZM8.99977 3.00367L7.58977 4.41367L8.99977 5.82367V3.00367ZM12.3748 9.00367C12.3748 7.67617 11.6098 6.53617 10.4998 5.98117V7.32367L12.3598 9.18367C12.3673 9.12367 12.3748 9.06367 12.3748 9.00367Z"
-                fill="#046511"
-              />
-            </svg>
-          `
-            : `
+        if (muteButton) {
+          // Set initial mute button icon (sound on)
+          muteButton.innerHTML = `
             <svg
               width="28"
               height="28"
@@ -757,174 +553,320 @@
               />
             </svg>
           `;
-        });
 
-        // Function to update video and message
-        function updateContent(index) {
-          const activeButton = document.querySelector(".story-button.active");
-          if (activeButton) {
-            const video = activeButton.dataset.video;
-            const message = activeButton.dataset.message;
-            const signature = activeButton.dataset.signature;
-
-            if (video) {
-              videoElement.src = video;
-              videoElement.play().catch((error) => {
-                console.log("Error playing video:", error);
-                if (error.name === "NotAllowedError") {
-                  videoElement
-                    .play()
-                    .catch((e) =>
-                      console.log("Even muted autoplay failed:", e)
-                    );
-                }
-              });
-            }
-
-            // Update the signature dynamically
-            const signatureImg = document.querySelector("#signatureImg");
-            if (signatureImg) {
-              if (signature && signature.trim() !== "") {
-                console.log("Setting signature URL:", signature);
-                signatureImg.src = signature;
-                signatureImg.style.display = "block";
-              } else {
-                console.log(
-                  "No signature URL available, hiding signature image"
-                );
-                signatureImg.style.display = "none";
-                signatureImg.removeAttribute("src");
-              }
-            }
-          }
+          muteButton.addEventListener("click", () => {
+            isMuted = !isMuted;
+            muteButton.innerHTML = isMuted
+              ? `
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M3.25477 2.20117L2.19727 3.25867L5.46727 6.52867L5.24977 6.75367H2.24977V11.2537H5.24977L8.99977 15.0037V10.0612L12.1348 13.1962C11.6473 13.5637 11.0998 13.8562 10.4998 14.0287V15.5737C11.5048 15.3487 12.4273 14.8837 13.2073 14.2612L14.7448 15.7987L15.8023 14.7412L3.25477 2.20117ZM7.49977 11.3812L5.87227 9.75367H3.74977V8.25367H5.87227L6.53227 7.59367L7.49977 8.56117V11.3812ZM14.2498 9.00367C14.2498 9.61867 14.1373 10.2112 13.9423 10.7587L15.0898 11.9062C15.5098 11.0287 15.7498 10.0462 15.7498 9.00367C15.7498 5.79367 13.5073 3.10867 10.4998 2.42617V3.97117C12.6673 4.61617 14.2498 6.62617 14.2498 9.00367ZM8.99977 3.00367L7.58977 4.41367L8.99977 5.82367V3.00367ZM12.3748 9.00367C12.3748 7.67617 11.6098 6.53617 10.4998 5.98117V7.32367L12.3598 9.18367C12.3673 9.12367 12.3748 9.06367 12.3748 9.00367Z"
+                    fill="#046511"
+                  />
+                </svg>
+              `
+              : `
+                <svg
+                  width="28"
+                  height="28"
+                  viewBox="0 0 18 18"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
+                    fill="#046511"
+                  />
+                </svg>
+              `;
+          });
         }
 
-        // Initially hide the stories
-        storiesElement.style.display = "none";
-
-        // Initially hide the showMessageButton
-        showMessageButton.style.display = "none";
-
-        // Show message modal if the active story is clicked
-        showMessageButton.addEventListener("click", () => {
-          const activeButton = document.querySelector(".story-button.active");
-          if (activeButton) {
-            const message = activeButton.dataset.message;
-            if (message) {
-              modalMessage.innerHTML = message.replace(/\n/g, "<br>");
-              messageModal.style.display = "flex";
+        // Letter detail modal functionality
+        const lettersDetail = document.getElementById('letters-detail');
+        const lettersDetailOverlay = document.getElementById('letters-detail-overlay');
+        const videoComponent = document.getElementById('video-component');
+        const letterComponent = document.getElementById('letter-component');
+        const ruryVideo = document.getElementById('rury-video');
+        const ruryAudio = document.getElementById('rury-audio');
+        const audioIcon = document.getElementById('audio-icon');
+        
+        // Component z-index management
+        const baseZIndexes = {
+          video: 81,
+          letter: 83
+        };
+        const pinZIndex = 100; // Pin always stays on top
+        
+        // Stacking system - tracks click order
+        let componentStack = ['letter', 'video']; // Initial order (letter on top)
+        
+        // Ensure pin always stays on top
+        const pinSvg = document.getElementById('pin-svg');
+        if (pinSvg) {
+          pinSvg.style.zIndex = pinZIndex;
+        }
+        
+        // Function to update component stack and z-indexes
+        function updateStack(componentId) {
+          // Remove component from stack if it exists
+          componentStack = componentStack.filter(id => id !== componentId);
+          // Add to top of stack (most recent)
+          componentStack.push(componentId);
+          
+          // Assign z-indexes based on stack position (last = highest)
+          componentStack.forEach((id, index) => {
+            const zIndex = 80 + (index * 5);
+            const isActive = index === componentStack.length - 1; // Top of stack is active
+            
+            if (id === 'video') {
+              if (!videoComponent) return;
+              videoComponent.style.zIndex = zIndex;
+              // Add transform effects with scale (preserve base translateX(-50%))
+              if (isActive) {
+                videoComponent.style.transform = 'translate(calc(-50% - 2px), -5px) rotate(8deg) scale(1.05)';
+                videoComponent.style.transition = 'transform 0.3s ease';
+                // Play video/audio when active
+                if (ruryVideo && ruryVideo.style.display !== 'none') {
+                  ruryVideo.play().catch(e => console.log('Video play error:', e));
+                }
+                if (ruryAudio && ruryAudio.style.display !== 'none') {
+                  ruryAudio.muted = false;
+                  ruryAudio.volume = 1.0;
+                  ruryAudio.play().catch(e => console.log('Audio play error:', e));
+                }
+              } else {
+                videoComponent.style.transform = 'translate(calc(-50% + 1px), 3px) rotate(4deg) scale(1)';
+                videoComponent.style.transition = 'transform 0.3s ease';
+              }
+            } else if (id === 'letter') {
+              if (!letterComponent) return;
+              letterComponent.style.zIndex = zIndex;
+              // Add transform effects with scale (preserve base rotate(1deg))
+              const baseTransform = letterComponent.style.left === '50%' 
+                ? 'translateX(-50%) rotate(1deg)' 
+                : 'rotate(1deg)';
+              if (isActive) {
+                if (letterComponent.style.left === '50%') {
+                  letterComponent.style.transform = 'translateX(-50%) translateY(-5px) rotate(1deg) scale(1.02)';
+                } else {
+                  letterComponent.style.transform = 'translateY(-5px) rotate(1deg) scale(1.02)';
+                }
+                letterComponent.style.transition = 'transform 0.3s ease';
+              } else {
+                if (letterComponent.style.left === '50%') {
+                  letterComponent.style.transform = 'translateX(-50%) translateY(3px) rotate(1deg) scale(1)';
+                } else {
+                  letterComponent.style.transform = 'translateY(3px) rotate(1deg) scale(1)';
+                }
+                letterComponent.style.transition = 'transform 0.3s ease';
+              }
             }
+          });
+        }
+        
+        // Initialize stack on load
+        updateStack('letter');
+        
+        // Click handlers for components
+        if (videoComponent) {
+          videoComponent.addEventListener('click', () => updateStack('video'));
+        }
+        if (letterComponent) {
+          letterComponent.addEventListener('click', () => updateStack('letter'));
+        }
+
+        // Listen for letter detail open event
+        document.addEventListener('openLetterDetail', (e) => {
+          if (lettersDetail && e.detail && e.detail.letterData) {
+            const letterData = e.detail.letterData;
+            
+            // Hide both video and audio initially
+            if (ruryVideo) {
+              ruryVideo.style.display = 'none';
+              ruryVideo.src = '';
+              ruryVideo.pause();
+            }
+            if (ruryAudio) {
+              ruryAudio.style.display = 'none';
+              ruryAudio.src = '';
+              ruryAudio.pause();
+            }
+            if (audioIcon) {
+              audioIcon.style.display = 'none';
+            }
+            
+            // Update media component - prioritize video, then audio
+            const hasVideo = letterData.video_url && letterData.video_url.trim() !== '';
+            const hasAudio = letterData.audio_url && letterData.audio_url.trim() !== '';
+            
+            if (hasVideo && ruryVideo) {
+              if (audioIcon) audioIcon.style.display = 'none';
+              ruryVideo.src = letterData.video_url;
+              ruryVideo.style.display = 'block';
+              const playVideo = () => {
+                ruryVideo.play().catch(e => {
+                  console.log('Video autoplay error:', e);
+                  setTimeout(() => {
+                    ruryVideo.play().catch(err => console.log('Video retry error:', err));
+                  }, 500);
+                });
+              };
+              if (ruryVideo.readyState >= 2) {
+                playVideo();
+              } else {
+                ruryVideo.addEventListener('canplay', playVideo, { once: true });
+                ruryVideo.load();
+              }
+            } else if (hasAudio && ruryAudio) {
+              if (ruryVideo) ruryVideo.style.display = 'none';
+              if (audioIcon) audioIcon.style.display = 'flex';
+              ruryAudio.muted = false;
+              ruryAudio.volume = 1.0;
+              ruryAudio.src = letterData.audio_url;
+              ruryAudio.style.display = 'block';
+              
+              const playAudio = () => {
+                ruryAudio.muted = false;
+                ruryAudio.volume = 1.0;
+                ruryAudio.play().then(() => {
+                  console.log('Audio playing successfully');
+                }).catch(e => {
+                  console.log('Audio autoplay error:', e);
+                  setTimeout(() => {
+                    ruryAudio.muted = false;
+                    ruryAudio.volume = 1.0;
+                    ruryAudio.play().catch(err => console.log('Audio retry error:', err));
+                  }, 500);
+                });
+              };
+              
+              if (ruryAudio.readyState >= 2) {
+                playAudio();
+              } else {
+                ruryAudio.addEventListener('canplay', playAudio, { once: true });
+                ruryAudio.addEventListener('loadeddata', playAudio, { once: true });
+                ruryAudio.addEventListener('canplaythrough', playAudio, { once: true });
+                ruryAudio.load();
+              }
+            }
+            
+            // Update photo component
+            const photoImg = document.getElementById('photo-component-img');
+            if (photoImg) {
+              if (letterData.photo_url && letterData.photo_url.trim() !== '') {
+                photoImg.src = letterData.photo_url;
+                photoImg.style.display = 'block';
+              } else {
+                photoImg.style.display = 'none';
+              }
+            }
+            
+            // Update sender name
+            const letterSender = document.getElementById('letter-component-sender');
+            if (letterSender) {
+              if (letterData.name && letterData.name.trim() !== '') {
+                letterSender.textContent = letterData.name;
+                letterSender.style.display = 'block';
+              } else {
+                letterSender.style.display = 'none';
+              }
+            }
+            
+            // Update letter text component
+            const letterText = document.getElementById('letter-component-text');
+            if (letterText && letterData.message) {
+              letterText.textContent = letterData.message;
+            }
+            
+            // Center letter if no video and no audio
+            if (!hasVideo && !hasAudio && letterComponent) {
+              letterComponent.style.left = '50%';
+              letterComponent.style.right = 'auto';
+              letterComponent.style.transform = 'translateX(-50%) rotate(1deg)';
+            } else if (letterComponent) {
+              letterComponent.style.left = '0';
+              letterComponent.style.right = '0';
+              letterComponent.style.transform = 'rotate(1deg)';
+            }
+            
+            // Initialize stack when modal opens
+            componentStack = ['letter', 'video'];
+            updateStack('letter');
+            
+            lettersDetail.style.display = 'block';
           }
         });
 
-        // Add event listener to close the modal when clicking on the overlay
-        messageModal.addEventListener("click", (event) => {
-          if (event.target === messageModal) {
-            messageModal.style.display = "none";
-          }
-        });
+        // Close modal when overlay is clicked
+        if (lettersDetailOverlay) {
+          lettersDetailOverlay.addEventListener('click', () => {
+            if (lettersDetail) {
+              // Stop video and audio when closing
+              if (ruryVideo) {
+                ruryVideo.pause();
+                ruryVideo.currentTime = 0;
+              }
+              if (ruryAudio) {
+                ruryAudio.pause();
+                ruryAudio.currentTime = 0;
+              }
+              
+              lettersDetail.style.display = 'none';
+            }
+          });
+        }
 
-        // Ensure the close button functionality remains
-        const closeModalButton = document.getElementById("closeModalButton");
-        closeModalButton.addEventListener("click", () => {
-          messageModal.style.display = "none";
-        });
-
-        const recordButton = document.getElementById("recordButton");
-        const recordInner = document.getElementById("recordInner");
-        let isRecording = false;
-
-        recordButton.addEventListener("click", () => {
-          isRecording = !isRecording;
-          if (isRecording) {
-            recordInner.style.borderRadius = "0";
-            recordInner.style.width = "20px";
-            recordInner.style.height = "20px";
-          } else {
-            recordInner.style.borderRadius = "50%";
-            recordInner.style.width = "30px";
-            recordInner.style.height = "30px";
-          }
-        });
-
-        const galleryButton = document.getElementById("galleryButton");
-        galleryButton.addEventListener("click", () => {
-          window.location.href = `/gallery.html?orderID=${orderID.toUpperCase()}`;
-        });
-
-        // Add event listeners for both markers
+        // Handle marker detection
+        const detectedMarkers = new Set();
+        
         document.querySelectorAll("a-marker").forEach((marker) => {
           marker.addEventListener("markerFound", function () {
             console.log("Marker is found");
-            // Ensure video is loaded and play it
-            videoElement.load();
-            const playPromise = videoElement.play();
-            if (playPromise !== undefined) {
-              playPromise.catch((error) => {
-                console.log("Error playing video:", error);
-                // If autoplay with unmute fails, try playing muted
-                if (error.name === "NotAllowedError") {
-                  videoElement.muted = true;
-                  videoElement
-                    .play()
-                    .catch((e) =>
-                      console.log("Even muted autoplay failed:", e)
-                    );
-                }
-              });
-            }
-            if (pauseTimeout) {
-              clearTimeout(pauseTimeout);
-            }
-
-            videoElement.muted = false; // Unmute when marker is detected
-            videoElement.volume = 1; // Set volume to maximum
-            // Show the stories when the marker is found
-            storiesElement.style.display = "flex";
-
-            // Show the showMessageButton when the marker is found
-            showMessageButton.style.display = "flex";
-
-            // Hide the overlay when the marker is found
-            const markerNotFoundOverlay = document.getElementById(
-              "markerNotFoundOverlay"
-            );
-            if (!markerDetectedOnce) {
+            detectedMarkers.add(marker.id || marker);
+            
+            // Hide the overlay when any marker is found
+            if (markerNotFoundOverlay.style.display !== "none") {
               markerNotFoundOverlay.style.transition = "opacity 0.5s ease";
               markerNotFoundOverlay.style.opacity = "0";
               setTimeout(() => {
                 markerNotFoundOverlay.style.display = "none";
-              }, 500); // Wait for the transition to complete
+              }, 500);
               markerDetectedOnce = true;
             }
           });
 
           marker.addEventListener("markerLost", function () {
             console.log("Marker is lost");
-            pauseTimeout = setTimeout(() => {
-              videoElement.pause();
-              console.log("Video and audio paused due to marker loss");
-            }, 500); // Pause after 3 seconds
-            // Hide the stories when the marker is lost
-            storiesElement.style.display = "none";
-
-            // Show the overlay when the marker is lost
-            const markerNotFoundOverlay = document.getElementById(
-              "markerNotFoundOverlay"
-            );
-            markerNotFoundOverlay.style.display = "block";
-
-            // Hide the showMessageButton when the marker is lost
-            showMessageButton.style.display = "none";
+            detectedMarkers.delete(marker.id || marker);
+            
+            // Hide letter detail modal when marker is lost
+            if (lettersDetail) {
+              lettersDetail.style.display = 'none';
+              // Stop video and audio when closing
+              if (ruryVideo) {
+                ruryVideo.pause();
+                ruryVideo.currentTime = 0;
+              }
+              if (ruryAudio) {
+                ruryAudio.pause();
+                ruryAudio.currentTime = 0;
+              }
+            }
+            
+            // Only show the overlay when ALL markers are lost
+            if (detectedMarkers.size === 0) {
+              markerNotFoundOverlay.style.display = "flex";
+              markerNotFoundOverlay.style.opacity = "1";
+            }
           });
         });
-      });
-
-      window.addEventListener("beforeunload", () => {
-        const videoElement = document.getElementById("arsa-video");
-        if (videoElement) {
-          videoElement.pause();
-        }
       });
     </script>
   </body>

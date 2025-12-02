@@ -2,8 +2,8 @@
 <html>
   <head>
     <title>AR App | Moon Muffin</title>
-    <link rel="icon" type="image/x-icon" href="/icon.ico" />
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="icon" type="image/x-icon" href="./icon.ico" />
+    <link rel="stylesheet" href="./styles.css" />
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
   </head>
@@ -442,14 +442,12 @@
         console.log("Fetching content for orderID:", orderID);
 
         if (!orderID) {
-          console.log("No orderID found, redirecting to base URL...");
-          window.location.href =
-            "https://moonmuffin.byc.plus/experience-app/ar";
+          console.log("No orderID found");
           return;
         }
 
         // Fetch content from API
-        fetch(`https://moonmuffin.byc.plus/api/gallery?order_id=${orderID}`)
+        fetch(`https://slamatslimit.byc.plus/api/gallery?order_id=${orderID}`)
           .then((response) => {
             console.log("API Response status:", response.status);
             return response.json();
@@ -457,10 +455,7 @@
           .then((data) => {
             console.log("API Response data:", data);
             if (!data || data.length === 0) {
-              console.log(
-                "No data received, redirecting to order-specific URL..."
-              );
-              window.location.href = `https://moonmuffin.byc.plus/experience-app/ar/${orderID}`;
+              console.log("No data received");
               return;
             }
 
@@ -532,9 +527,13 @@
           })
           .catch((error) => {
             console.error("Error fetching content:", error);
-            console.log("Redirecting due to error...");
-            window.location.href =
-              "https://moonmuffin.byc.plus/experience-app/ar";
+            if (error.message.includes("Failed to fetch") || error.message.includes("CORS")) {
+              console.error("CORS Error: The API server only allows requests from localhost:3000. You are accessing from:", window.location.origin);
+              console.error("Solutions:");
+              console.error("1. Update server CORS settings to allow your origin");
+              console.error("2. Use a proxy to forward requests");
+              console.error("3. Run your dev server on port 3000");
+            }
           });
 
         const colors = [
@@ -808,7 +807,7 @@
 
         const galleryButton = document.getElementById("galleryButton");
         galleryButton.addEventListener("click", () => {
-          window.location.href = `/gallery.html?orderID=${orderID.toUpperCase()}`;
+          window.location.href = `./gallery.html?orderID=${orderID.toUpperCase()}`;
         });
 
         document
