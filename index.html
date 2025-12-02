@@ -293,6 +293,35 @@
         return originalGetUserMedia(constraints);
       };
 
+      // Register custom component to lock position on marker
+      AFRAME.registerComponent('lock-position', {
+        schema: {
+          x: {type: 'number', default: 0},
+          y: {type: 'number', default: 0},
+          z: {type: 'number', default: 0}
+        },
+        init: function() {
+          // Lock position immediately
+          this.lockPosition();
+          // Also lock when element is loaded
+          this.el.addEventListener('loaded', () => this.lockPosition());
+        },
+        tick: function() {
+          // Continuously lock position to keep it exactly on the marker
+          if (this.el.object3D && this.el.object3D.parent) {
+            this.lockPosition();
+          }
+        },
+        lockPosition: function() {
+          if (this.el.object3D) {
+            // Force position to be exactly on the marker
+            this.el.object3D.position.set(this.data.x, this.data.y, this.data.z);
+            // Also update the A-Frame position attribute to keep them in sync
+            this.el.setAttribute('position', `${this.data.x} ${this.data.y} ${this.data.z}`);
+          }
+        }
+      });
+
       // Register custom rotation animation component
       AFRAME.registerComponent('rotate-animation', {
         schema: {
@@ -353,19 +382,20 @@
       function createARImage(src, position, initialRotation, scale, marker, rotationPattern, index, letterData) {
         const imageEl = document.createElement("a-image");
         imageEl.setAttribute("src", src);
-        // Set position first and store it to ensure it doesn't change
-        imageEl.setAttribute("position", position);
+        // Parse position
         const [x, y, z] = position.split(" ").map(parseFloat);
+        
+        // Set initial position
+        imageEl.setAttribute("position", position);
         imageEl.setAttribute("rotation", initialRotation);
         imageEl.setAttribute("width", scale);
         imageEl.setAttribute("height", scale);
         
-        // Ensure position stays fixed (prevent any accidental modifications)
-        imageEl.addEventListener('loaded', function() {
-          // Lock position after element is loaded
-          if (imageEl.object3D) {
-            imageEl.object3D.position.set(x, y, z);
-          }
+        // Add lock-position component to keep it exactly on the marker
+        imageEl.setAttribute("lock-position", {
+          x: x,
+          y: y,
+          z: z
         });
         
         // Make image interactive (required for raycaster)
