@@ -265,6 +265,34 @@
     ></audio>
 
     <script>
+      // Intercept getUserMedia to configure camera before AR.js initializes
+      // This ensures high resolution from the start (like slamat-slimit-ar)
+      const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = async function(constraints) {
+        // If this is a video request (likely from AR.js), enhance it with high resolution
+        if (constraints && constraints.video) {
+          // Merge with high resolution constraints (like slamat-slimit-ar)
+          // Ensure we properly merge video constraints
+          const videoConstraints = typeof constraints.video === 'object' && !Array.isArray(constraints.video)
+            ? { ...constraints.video }
+            : constraints.video;
+          
+          const enhancedConstraints = {
+            ...constraints,
+            video: {
+              ...(typeof videoConstraints === 'object' ? videoConstraints : {}),
+              facingMode: { ideal: 'environment' }, // Rear camera
+              width: { ideal: 1920, min: 1280 },
+              height: { ideal: 1080, min: 720 }
+            }
+          };
+          console.log('Intercepting getUserMedia with enhanced constraints:', enhancedConstraints);
+          console.log('Original constraints:', constraints);
+          return originalGetUserMedia(enhancedConstraints);
+        }
+        return originalGetUserMedia(constraints);
+      };
+
       // Register custom rotation animation component
       AFRAME.registerComponent('rotate-animation', {
         schema: {
@@ -273,8 +301,9 @@
           delay: {type: 'number', default: 0}
         },
         init: function() {
-          const rotation = this.el.getAttribute('rotation');
-          this.baseRotationZ = rotation.z || 0; // Store base Z rotation in degrees
+          // Get initial rotation from object3D (in radians) and convert to degrees
+          const initialRotationZ = this.el.object3D.rotation.z || 0;
+          this.baseRotationZ = THREE.MathUtils.radToDeg(initialRotationZ); // Store base Z rotation in degrees
           this.startTime = Date.now() + this.data.delay;
         },
         tick: function() {
@@ -294,14 +323,9 @@
           }
           
           // Apply rotation: 0 -> maxAngle -> 0 (using sine wave)
+          // Use object3D directly to avoid affecting position
           const rotationAngle = this.baseRotationZ + (this.data.maxAngle * Math.sin(rotationProgress * Math.PI));
-          
-          const currentRotation = this.el.getAttribute('rotation');
-          this.el.setAttribute('rotation', {
-            x: currentRotation.x,
-            y: currentRotation.y,
-            z: rotationAngle // Already in degrees
-          });
+          this.el.object3D.rotation.z = THREE.MathUtils.degToRad(rotationAngle);
         }
       });
 
@@ -329,10 +353,20 @@
       function createARImage(src, position, initialRotation, scale, marker, rotationPattern, index, letterData) {
         const imageEl = document.createElement("a-image");
         imageEl.setAttribute("src", src);
+        // Set position first and store it to ensure it doesn't change
         imageEl.setAttribute("position", position);
+        const [x, y, z] = position.split(" ").map(parseFloat);
         imageEl.setAttribute("rotation", initialRotation);
         imageEl.setAttribute("width", scale);
         imageEl.setAttribute("height", scale);
+        
+        // Ensure position stays fixed (prevent any accidental modifications)
+        imageEl.addEventListener('loaded', function() {
+          // Lock position after element is loaded
+          if (imageEl.object3D) {
+            imageEl.object3D.position.set(x, y, z);
+          }
+        });
         
         // Make image interactive (required for raycaster)
         imageEl.setAttribute("class", "clickable");
@@ -395,75 +429,59 @@
         let markerDetectedOnce = false;
 
         // Configure camera for best rear camera with highest resolution (not wide)
+        // Exactly like slamat-slimit-ar approach
         const scene = document.querySelector('a-scene');
         const configureCamera = async () => {
           try {
-            // Wait a bit for AR.js to initialize
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            
             const video = scene.querySelector('video');
             if (video && video.srcObject) {
               const stream = video.srcObject;
               const videoTrack = stream.getVideoTracks()[0];
               
               if (videoTrack) {
-                // Get available capabilities
+                // Check capabilities and apply autofocus if supported (exactly like slamat-slimit-ar)
                 const capabilities = videoTrack.getCapabilities();
                 console.log('Camera capabilities:', capabilities);
                 
-                // Try to get all video devices and select the best rear camera (not wide)
-                let bestDeviceId = null;
-                try {
-                  const devices = await navigator.mediaDevices.enumerateDevices();
-                  const videoDevices = devices.filter(device => device.kind === 'videoinput');
-                  
-                  // Filter for rear cameras (environment) and exclude wide/ultrawide
-                  const rearCameras = videoDevices.filter(device => {
-                    const label = device.label.toLowerCase();
-                    return !label.includes('wide') && 
-                           !label.includes('ultrawide') && 
-                           !label.includes('front') &&
-                           !label.includes('user');
+                if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                  await videoTrack.applyConstraints({
+                    advanced: [{ focusMode: 'continuous' }]
                   });
-                  
-                  if (rearCameras.length > 0) {
-                    bestDeviceId = rearCameras[0].deviceId;
-                    console.log('Selected non-wide rear camera:', rearCameras[0].label);
-                  }
-                } catch (e) {
-                  console.log('Could not enumerate devices:', e);
+                  console.log('Autofocus enabled');
                 }
                 
-                // Apply constraints for rear camera, highest resolution, not wide
-                const constraints = {
-                  facingMode: { ideal: 'environment' }, // Rear camera
-                  width: { ideal: 1920, min: 1280 },
-                  height: { ideal: 1080, min: 720 }
-                };
-                
-                if (bestDeviceId) {
-                  constraints.deviceId = { ideal: bestDeviceId };
-                }
-                
-                await videoTrack.applyConstraints(constraints);
-                console.log('Camera constraints applied:', constraints);
-                
-                // Log final settings
+                // Ensure HD resolution (exactly like slamat-slimit-ar)
                 const settings = videoTrack.getSettings();
-                console.log('Final camera settings:', settings);
+                console.log('Current camera resolution:', settings.width, 'x', settings.height);
+                
+                // Try to apply higher resolution constraints (exactly like slamat-slimit-ar)
+                try {
+                  await videoTrack.applyConstraints({
+                    width: { ideal: 1920, min: 1280 },
+                    height: { ideal: 1080, min: 720 }
+                  });
+                  console.log('HD resolution constraints applied');
+                } catch (err) {
+                  console.warn('Could not apply HD constraints:', err);
+                }
               }
             }
           } catch (error) {
-            console.warn('Could not configure camera:', error);
+            console.warn('Could not configure camera settings:', error);
           }
         };
         
         if (scene) {
-          // Try multiple ways to configure camera
-          scene.addEventListener('loaded', configureCamera);
+          // Configure camera after AR session begins (like slamat-slimit-ar)
+          scene.addEventListener('loaded', () => {
+            // Wait a bit for AR.js to fully initialize
+            setTimeout(configureCamera, 1000);
+          });
+          // Also try on arjs-video-loaded event
           scene.addEventListener('arjs-video-loaded', configureCamera);
-          // Also try after a delay as fallback
+          // Fallback with multiple attempts
           setTimeout(configureCamera, 2000);
+          setTimeout(configureCamera, 3000);
         }
 
         const orderID = getUrlParameter("orderID");
