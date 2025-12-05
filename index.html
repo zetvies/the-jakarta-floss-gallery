@@ -6,6 +6,7 @@
     <link rel="stylesheet" href="./styles.css" />
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
+    <script src="./svg-component.js" type="module"></script>
     <style>
       @keyframes rotate-snap-1 {
         0%, 100% {
@@ -22,6 +23,13 @@
       .component {
         filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+      /* Story button styles */
+      .story-button {
+        transition: transform 0.3s ease;
+      }
+      .story-button.active {
+        transform: scale(1.1);
       }
     </style>
   </head>
@@ -130,85 +138,33 @@
       </div>
     </div>
 
-    <!-- Moon Muffin Logo Button -->
-    <div
-      style="
-        position: fixed;
-        bottom: 3.5svh;
-        left: 50%;
-        transform: translateX(-55%);
-        width: 14svh;
-        height: 6svh;
-        background-color: white;
-        border-radius: 4svh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        z-index: 20;
-        overflow: hidden;
-        padding: 1svh;
-      "
-    >
-      <img
-        src="./moonmuffin_logo.png"
-        alt="Moon Muffin"
-        style="width: 100%; height: 100%; object-fit: contain"
-      />
-    </div>
+    <!-- Letters List (Stories Style) -->
+    <div id="letters-list-bottom" style="display: none; align-items: center; justify-content: center; position: fixed; bottom: 13.3svh; left: 50%; transform: translateX(-50%); z-index: 10; width: 95vw; height: 70px; padding: 0 15px; overflow-x: auto; overflow-y: visible; gap: 16px;"></div>
 
-    <!-- Gallery Button -->
-    <div
-      id="galleryButton"
-      style="
-        position: fixed;
-        bottom: 4.5svh;
-        left: calc(50% - 15svh);
-        transform: translateX(-50%);
-        width: 6svh;
-        height: 6svh;
-        background-color: white;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        z-index: 20;
-      "
-    >
-      <svg
-        width="28"
-        height="28"
-        viewBox="0 0 18 18"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M14.25 2.25H3.75C2.925 2.25 2.25 2.925 2.25 3.75V14.25C2.25 15.075 2.925 15.75 3.75 15.75H14.25C15.075 15.75 15.75 15.075 15.75 14.25V3.75C15.75 2.925 15.075 2.25 14.25 2.25ZM14.25 14.25H3.75V3.75H14.25V14.25ZM10.47 9.2175L8.4075 11.8725L6.9375 10.1025L4.875 12.75H13.125L10.47 9.2175Z"
-          fill="#046511"
-        />
-      </svg>
+    <!-- Buttons Container -->
+    <div style="position: fixed; bottom: 0; left: 0; width: 90%; padding-bottom: 5svh; padding-left: 5svw; padding-right: 5svw; display: flex; align-items: center; justify-content: space-between; gap: 3svh; z-index: 50;">
+      <!-- Mailbox Button -->
+      <button id="mailbox-btn" style="display: flex; align-items: center; justify-content: center; width: 5svh; height: 5svh; background-color: #49B400; border-radius: 50%; cursor: pointer; z-index: 50; border: none; padding: 0;">
+        <svg style="width: 45%; height: 45%;" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M1.5 6H4.5C5.325 6 6 5.325 6 4.5V1.5C6 0.675 5.325 0 4.5 0H1.5C0.675 0 0 0.675 0 1.5V4.5C0 5.325 0.675 6 1.5 6Z" fill="#F4F2E4" />
+          <path d="M1.5 13.5H4.5C5.325 13.5 6 12.825 6 12V9C6 8.175 5.325 7.5 4.5 7.5H1.5C0.675 7.5 0 8.175 0 9V12C0 12.825 0.675 13.5 1.5 13.5Z" fill="#F4F2E4" />
+          <path d="M7.5 1.5V4.5C7.5 5.325 8.175 6 9 6H12C12.825 6 13.5 5.325 13.5 4.5V1.5C13.5 0.675 12.825 0 12 0H9C8.175 0 7.5 0.675 7.5 1.5Z" fill="#F4F2E4" />
+          <path d="M9 13.5H12C12.825 13.5 13.5 12.825 13.5 12V9C13.5 8.175 12.825 7.5 12 7.5H9C8.175 7.5 7.5 8.175 7.5 9V12C7.5 12.825 8.175 13.5 9 13.5Z" fill="#F4F2E4" />
+        </svg>
+      </button>
+      
+      <!-- Sound Button (Mute/Unmute) -->
+      <button id="sound-btn" style="display: flex; align-items: center; justify-content: center; width: 5svh; height: 5svh; background-color: #FFC61C; border-radius: 50%; cursor: pointer; z-index: 50; border: none; padding: 0;">
+        <svg id="sound-on" style="width: 60%; height: 60%; display: block;" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+          <path d="M0 0h24v24H0z" fill="none" />
+          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" fill="#000000" />
+        </svg>
+        <svg id="sound-off" style="width: 60%; height: 60%; display: none;" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+          <path d="M0 0h24v24H0z" fill="none" />
+          <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" fill="#000000" />
+        </svg>
+      </button>
     </div>
-
-    <!-- Mute/Volume Button -->
-    <div
-      id="muteButton"
-      style="
-        position: fixed;
-        bottom: 4.5svh;
-        left: calc(50% + 13svh);
-        transform: translateX(-50%);
-        width: 6svh;
-        height: 6svh;
-        background-color: white;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        z-index: 20;
-      "
-    ></div>
 
     <!-- Letter Detail Modal -->
     <div id="letters-detail" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 80; display: none;">
@@ -256,6 +212,19 @@
       </div>
     </div>
 
+    <!-- Mailbox Container -->
+    <div id="mailbox" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 70; background-color: #F4F2E4; display: none; flex-direction: column; overflow-y: auto; overflow-x: hidden;">
+      <div style="padding: 4svh 5svw; display: flex; gap: 2svh;">
+        <button id="close-mailbox-btn" style="cursor: pointer; min-width: 5svh; min-height: 5svh; width: 5svh; height: 5svh; background-color: #274044; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; padding: 0;">
+          <svg width="10" height="16" viewBox="0 0 10 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M8.91437 0.414375C8.36187 -0.138125 7.46938 -0.138125 6.91688 0.414375L0.414375 6.91688C-0.138125 7.46938 -0.138125 8.36188 0.414375 8.91438L6.91688 15.4169C7.46938 15.9694 8.36187 15.9694 8.91437 15.4169C9.46687 14.8644 9.46687 13.9719 8.91437 13.4194L3.41771 7.90854L8.91437 2.41187C9.46687 1.85937 9.45271 0.952708 8.91437 0.414375Z" fill="#F4F2E4" />
+          </svg>
+        </button>
+        <h1 style="font-size: 3svh; text-align: center; font-family: 'Barrio', system-ui; flex: 1;">Ucapan dari yang kenal kamu paling dekat</h1>
+      </div>
+      <div id="letters-container" style="width: 90svw; margin: 0 auto; position: relative; display: flex; flex-wrap: wrap; overflow: visible; padding: 2svh 0;"></div>
+    </div>
+
     <!-- Background Music -->
     <audio 
       id="background-music"
@@ -265,63 +234,6 @@
     ></audio>
 
     <script>
-      // Intercept getUserMedia to configure camera before AR.js initializes
-      // This ensures high resolution from the start (like slamat-slimit-ar)
-      const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-      navigator.mediaDevices.getUserMedia = async function(constraints) {
-        // If this is a video request (likely from AR.js), enhance it with high resolution
-        if (constraints && constraints.video) {
-          // Merge with high resolution constraints (like slamat-slimit-ar)
-          // Ensure we properly merge video constraints
-          const videoConstraints = typeof constraints.video === 'object' && !Array.isArray(constraints.video)
-            ? { ...constraints.video }
-            : constraints.video;
-          
-          const enhancedConstraints = {
-            ...constraints,
-            video: {
-              ...(typeof videoConstraints === 'object' ? videoConstraints : {}),
-              facingMode: { ideal: 'environment' }, // Rear camera
-              width: { ideal: 1920, min: 1280 },
-              height: { ideal: 1080, min: 720 }
-            }
-          };
-          console.log('Intercepting getUserMedia with enhanced constraints:', enhancedConstraints);
-          console.log('Original constraints:', constraints);
-          return originalGetUserMedia(enhancedConstraints);
-        }
-        return originalGetUserMedia(constraints);
-      };
-
-      // Register custom component to lock position on marker
-      AFRAME.registerComponent('lock-position', {
-        schema: {
-          x: {type: 'number', default: 0},
-          y: {type: 'number', default: 0},
-          z: {type: 'number', default: 0}
-        },
-        init: function() {
-          // Lock position immediately
-          this.lockPosition();
-          // Also lock when element is loaded
-          this.el.addEventListener('loaded', () => this.lockPosition());
-        },
-        tick: function() {
-          // Continuously lock position to keep it exactly on the marker
-          if (this.el.object3D && this.el.object3D.parent) {
-            this.lockPosition();
-          }
-        },
-        lockPosition: function() {
-          if (this.el.object3D) {
-            // Force position to be exactly on the marker
-            this.el.object3D.position.set(this.data.x, this.data.y, this.data.z);
-            // Also update the A-Frame position attribute to keep them in sync
-            this.el.setAttribute('position', `${this.data.x} ${this.data.y} ${this.data.z}`);
-          }
-        }
-      });
-
       // Register custom rotation animation component
       AFRAME.registerComponent('rotate-animation', {
         schema: {
@@ -330,9 +242,8 @@
           delay: {type: 'number', default: 0}
         },
         init: function() {
-          // Get initial rotation from object3D (in radians) and convert to degrees
-          const initialRotationZ = this.el.object3D.rotation.z || 0;
-          this.baseRotationZ = THREE.MathUtils.radToDeg(initialRotationZ); // Store base Z rotation in degrees
+          const rotation = this.el.getAttribute('rotation');
+          this.baseRotationZ = rotation.z || 0; // Store base Z rotation in degrees
           this.startTime = Date.now() + this.data.delay;
         },
         tick: function() {
@@ -352,9 +263,14 @@
           }
           
           // Apply rotation: 0 -> maxAngle -> 0 (using sine wave)
-          // Use object3D directly to avoid affecting position
           const rotationAngle = this.baseRotationZ + (this.data.maxAngle * Math.sin(rotationProgress * Math.PI));
-          this.el.object3D.rotation.z = THREE.MathUtils.degToRad(rotationAngle);
+          
+          const currentRotation = this.el.getAttribute('rotation');
+          this.el.setAttribute('rotation', {
+            x: currentRotation.x,
+            y: currentRotation.y,
+            z: rotationAngle // Already in degrees
+          });
         }
       });
 
@@ -382,21 +298,10 @@
       function createARImage(src, position, initialRotation, scale, marker, rotationPattern, index, letterData) {
         const imageEl = document.createElement("a-image");
         imageEl.setAttribute("src", src);
-        // Parse position
-        const [x, y, z] = position.split(" ").map(parseFloat);
-        
-        // Set initial position
         imageEl.setAttribute("position", position);
         imageEl.setAttribute("rotation", initialRotation);
         imageEl.setAttribute("width", scale);
         imageEl.setAttribute("height", scale);
-        
-        // Add lock-position component to keep it exactly on the marker
-        imageEl.setAttribute("lock-position", {
-          x: x,
-          y: y,
-          z: z
-        });
         
         // Make image interactive (required for raycaster)
         imageEl.setAttribute("class", "clickable");
@@ -598,6 +503,292 @@
         setupARImages(faceUrls, markerHighfive, -80, letterDataArray);
         setupARImages(faceUrls, markerSparkle, -90, letterDataArray);
 
+
+        // Function to render letters in horizontal story list (circular buttons with letter SVGs)
+        async function renderLettersBottomLeft(lettersData) {
+          const lettersListBottom = document.getElementById('letters-list-bottom');
+          if (!lettersListBottom) return;
+          
+          // Clear existing letters
+          lettersListBottom.innerHTML = '';
+          
+          if (!lettersData || lettersData.length === 0) {
+            return;
+          }
+          
+          // Import createSVGComponent dynamically
+          const { createSVGComponent } = await import('./svg-component.js');
+          
+          // Color palette for sequential assignment
+          const colorPalette = [
+            '90FF77',
+            'FF5627',
+            '008177',
+            'FFC61C',
+            'FF443D',
+            '8142FF',
+            '28B7FF',
+            'FF7ADC'
+          ];
+          
+          lettersData.forEach((letter, i) => {
+            // Create unique ID for filter IDs
+            const uniqueId = `letter_story_${i}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Get sequential color from palette
+            const colorIndex = i % colorPalette.length;
+            const selectedColor = colorPalette[colorIndex];
+            
+            // Create SVG with sequential color
+            const svg = createSVGComponent(selectedColor, uniqueId);
+            
+            // Create circular story button (like in provided HTML) - bigger size
+            const storyButton = document.createElement('div');
+            storyButton.className = 'story-button';
+            storyButton.style.height = 'auto';
+            storyButton.style.minWidth = '80px';
+            storyButton.style.width = '80px';
+            storyButton.style.overflow = 'visible';
+            storyButton.style.position = 'relative';
+            storyButton.style.cursor = 'pointer';
+            storyButton.style.transition = 'transform 0.3s ease';
+            
+            // Store letter data
+            storyButton.dataset.letterData = JSON.stringify({
+              video_url: letter.video_url || '',
+              audio_url: letter.audio_url || '',
+              message: letter.message || '',
+              name: letter.name || 'Anonymous',
+              photo_url: letter.photo_url || ''
+            });
+            
+            // Make SVG fit in circular container - bigger
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.display = 'block';
+            svg.style.objectFit = 'cover';
+            // svg.style.borderRadius = '50%';
+            
+            // Create wrapper for SVG to contain it
+            const svgWrapper = document.createElement('div');
+            svgWrapper.style.width = '100%';
+            svgWrapper.style.height = '100%';
+            // svgWrapper.style.borderRadius = '50%';
+            svgWrapper.style.overflow = 'hidden';
+            svgWrapper.style.position = 'relative';
+            svgWrapper.appendChild(svg);
+            
+            // Add name text at bottom right (overlay on SVG)
+            const nameText = document.createElement('div');
+            nameText.textContent = letter.name || 'Anonymous';
+            nameText.style.fontFamily = "'Playpen Sans', cursive";
+            nameText.style.position = 'absolute';
+            nameText.style.bottom = '8%';
+            nameText.style.right = '8%';
+            nameText.style.fontSize = '11px';
+            nameText.style.fontWeight = '600';
+            nameText.style.color = '#000000';
+            nameText.style.pointerEvents = 'none';
+            nameText.style.zIndex = '10';
+            nameText.style.whiteSpace = 'nowrap';
+            nameText.style.textShadow = '0 1px 2px rgba(255, 255, 255, 0.8)';
+            nameText.style.maxWidth = '70%';
+            nameText.style.overflow = 'hidden';
+            nameText.style.textOverflow = 'ellipsis';
+            
+            // Append SVG wrapper and name
+            storyButton.appendChild(svgWrapper);
+            storyButton.appendChild(nameText);
+            
+            // Add click handler
+            storyButton.addEventListener('click', (e) => {
+              e.stopPropagation();
+              // Remove active class from all buttons
+              document.querySelectorAll('.story-button').forEach((btn) => btn.classList.remove('active'));
+              // Add active class to clicked button
+              storyButton.classList.add('active');
+              
+              const letterData = JSON.parse(storyButton.dataset.letterData);
+              
+              // Dispatch custom event to open letter detail
+              const event = new CustomEvent('openLetterDetail', { 
+                detail: { 
+                  letterData: {
+                    video_url: letterData.video_url,
+                    audio_url: letterData.audio_url,
+                    message: letterData.message,
+                    name: letterData.name,
+                    photo_url: letterData.photo_url
+                  }
+                } 
+              });
+              document.dispatchEvent(event);
+            });
+            
+            lettersListBottom.appendChild(storyButton);
+          });
+        }
+
+        // Function to render letters in mailbox container (same design as gallery.html)
+        async function renderLettersInMailbox(lettersData) {
+          const lettersContainer = document.getElementById('letters-container');
+          if (!lettersContainer) return;
+          
+          // Clear existing letters
+          lettersContainer.innerHTML = '';
+          
+          if (!lettersData || lettersData.length === 0) {
+            return;
+          }
+
+          // Import createSVGComponent dynamically
+          const { createSVGComponent } = await import('./svg-component.js');
+          
+          const numLetters = lettersData.length;
+          const columns = 2;
+          
+          // Color palette for sequential assignment
+          const colorPalette = [
+            '90FF77',
+            'FF5627',
+            '008177',
+            'FFC61C',
+            'FF443D',
+            '8142FF',
+            '28B7FF',
+            'FF7ADC'
+          ];
+          
+          lettersData.forEach((letter, i) => {
+            // Create unique ID for filter IDs
+            const uniqueId = `letter_${i}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
+            // Get sequential color from palette (cycle through if more letters than colors)
+            const colorIndex = i % colorPalette.length;
+            const selectedColor = colorPalette[colorIndex];
+            
+            // Create SVG with sequential color
+            const svg = createSVGComponent(selectedColor, uniqueId);
+            
+            // Create wrapper div for positioning and styling
+            const wrapper = document.createElement('div');
+            wrapper.style.width = `${100 / columns}%`;
+            wrapper.style.position = 'relative';
+            wrapper.style.boxSizing = 'border-box';
+            wrapper.style.padding = '1svh';
+            
+            // Set z-index (decreasing: first letter has highest z-index)
+            const zIndex = numLetters - i;
+            wrapper.style.zIndex = zIndex;
+            
+            // Add cursor pointer
+            wrapper.style.cursor = 'pointer';
+            
+            // Add drop shadow using filter (works better with SVGs)
+            wrapper.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))';
+            
+            // Random rotation between -15 and 15 degrees
+            const rotation = (Math.random() - 0.5) * 30;
+            
+            // Make SVG responsive - maintain aspect ratio
+            svg.style.width = '100%';
+            svg.style.height = 'auto';
+            svg.style.display = 'block';
+            svg.style.maxWidth = '100%';
+            
+            // Create inner container that will rotate and scale together
+            const innerContainer = document.createElement('div');
+            innerContainer.style.position = 'relative';
+            innerContainer.style.display = 'inline-block';
+            innerContainer.style.width = '100%';
+            innerContainer.style.transform = `rotate(${rotation}deg) scale(1.2)`;
+            innerContainer.style.transformOrigin = 'center';
+            innerContainer.style.transition = 'transform 0.3s ease';
+            
+            // Store initial rotation and letter data
+            innerContainer.dataset.initialRotation = rotation;
+            innerContainer.dataset.isOpen = 'false';
+            wrapper.dataset.letterIndex = i;
+            wrapper.dataset.letterData = JSON.stringify({
+              video_url: letter.video_url || '',
+              audio_url: letter.audio_url || '',
+              message: letter.message || '',
+              name: letter.name || 'Anonymous',
+              photo_url: letter.photo_url || ''
+            });
+            
+            // Add name text in bottom right (use name from data)
+            const nameText = document.createElement('div');
+            nameText.textContent = letter.name || 'Anonymous';
+            nameText.style.fontFamily = "'Playpen Sans', cursive";
+            nameText.style.position = 'absolute';
+            nameText.style.bottom = '15%';
+            nameText.style.right = '15%';
+            nameText.style.color = '#000000';
+            nameText.style.fontSize = 'clamp(1.8svh, 3vw, 3svh)';
+            nameText.style.fontWeight = '600';
+            nameText.style.pointerEvents = 'none';
+            nameText.style.zIndex = '10';
+            nameText.style.whiteSpace = 'nowrap';
+            
+            // Append SVG and name text to inner container
+            innerContainer.appendChild(svg);
+            innerContainer.appendChild(nameText);
+            
+            // Append inner container to wrapper
+            wrapper.appendChild(innerContainer);
+            
+            // Add hover effect - rotate on hover
+            wrapper.addEventListener('mouseenter', () => {
+              const currentRotation = parseFloat(innerContainer.dataset.initialRotation);
+              const isOpen = innerContainer.dataset.isOpen === 'true';
+              if (!isOpen) {
+                // Rotate more on hover (add 10 degrees)
+                innerContainer.style.transform = `rotate(${currentRotation + 10}deg) scale(1.2)`;
+              }
+            });
+            
+            wrapper.addEventListener('mouseleave', () => {
+              const currentRotation = parseFloat(innerContainer.dataset.initialRotation);
+              const isOpen = innerContainer.dataset.isOpen === 'true';
+              if (!isOpen) {
+                // Return to initial rotation
+                innerContainer.style.transform = `rotate(${currentRotation}deg) scale(1.2)`;
+              }
+            });
+            
+            // Add click handler to open letter detail and rotate
+            wrapper.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const currentRotation = parseFloat(innerContainer.dataset.initialRotation);
+              // Rotate more when opened (add 15 degrees)
+              innerContainer.style.transform = `rotate(${currentRotation + 15}deg) scale(1.2)`;
+              innerContainer.dataset.isOpen = 'true';
+              
+              const letterData = JSON.parse(wrapper.dataset.letterData);
+              
+              // Dispatch custom event to open letter detail with letter data
+              const event = new CustomEvent('openLetterDetail', { 
+                detail: { 
+                  letterWrapper: wrapper, 
+                  innerContainer: innerContainer,
+                  letterData: {
+                    video_url: letterData.video_url,
+                    audio_url: letterData.audio_url,
+                    message: letterData.message,
+                    name: letterData.name,
+                    photo_url: letterData.photo_url
+                  },
+                  letterIndex: i
+                } 
+              });
+              document.dispatchEvent(event);
+            });
+            
+            lettersContainer.appendChild(wrapper);
+          });
+        }
+
         // Fetch content from API if orderID exists
         if (orderID) {
           fetch(`https://slamatslimit.byc.plus/api/gallery?order_id=${orderID}`)
@@ -643,6 +834,9 @@
                 // Highfive marker uses -80 rotation, Sparkle marker uses -90 rotation
                 setupARImages(faceUrls, markerHighfive, -80, letterDataArray);
                 setupARImages(faceUrls, markerSparkle, -90, letterDataArray);
+                
+                // Also render letters in bottom left list (use all data, not just those with photos)
+                renderLettersBottomLeft(data);
               } else {
                 console.log("No data received, using static faces");
               }
@@ -653,65 +847,48 @@
             });
         }
 
-        // Setup gallery button
-        const galleryButton = document.getElementById("galleryButton");
-        if (galleryButton && orderID) {
-          galleryButton.addEventListener("click", () => {
-            window.location.href = `./gallery.html?orderID=${orderID.toUpperCase()}`;
+        // Setup mailbox button - opens gallery.html
+        const mailboxBtn = document.getElementById("mailbox-btn");
+        
+        if (mailboxBtn) {
+          mailboxBtn.addEventListener("click", () => {
+            if (orderID) {
+              window.location.href = `./gallery.html?orderID=${orderID}`;
+            } else {
+              window.location.href = './gallery.html';
+            }
           });
         }
 
-        // Setup mute button
-        const muteButton = document.getElementById("muteButton");
-        let isMuted = false;
-        if (muteButton) {
-          // Set initial mute button icon (sound on)
-          muteButton.innerHTML = `
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 18 18"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
-                fill="#046511"
-              />
-            </svg>
-          `;
-
-          muteButton.addEventListener("click", () => {
-            isMuted = !isMuted;
-            muteButton.innerHTML = isMuted
-              ? `
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 18 18"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M3.25477 2.20117L2.19727 3.25867L5.46727 6.52867L5.24977 6.75367H2.24977V11.2537H5.24977L8.99977 15.0037V10.0612L12.1348 13.1962C11.6473 13.5637 11.0998 13.8562 10.4998 14.0287V15.5737C11.5048 15.3487 12.4273 14.8837 13.2073 14.2612L14.7448 15.7987L15.8023 14.7412L3.25477 2.20117ZM7.49977 11.3812L5.87227 9.75367H3.74977V8.25367H5.87227L6.53227 7.59367L7.49977 8.56117V11.3812ZM14.2498 9.00367C14.2498 9.61867 14.1373 10.2112 13.9423 10.7587L15.0898 11.9062C15.5098 11.0287 15.7498 10.0462 15.7498 9.00367C15.7498 5.79367 13.5073 3.10867 10.4998 2.42617V3.97117C12.6673 4.61617 14.2498 6.62617 14.2498 9.00367ZM8.99977 3.00367L7.58977 4.41367L8.99977 5.82367V3.00367ZM12.3748 9.00367C12.3748 7.67617 11.6098 6.53617 10.4998 5.98117V7.32367L12.3598 9.18367C12.3673 9.12367 12.3748 9.06367 12.3748 9.00367Z"
-                    fill="#046511"
-                  />
-                </svg>
-              `
-              : `
-                <svg
-                  width="28"
-                  height="28"
-                  viewBox="0 0 18 18"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
-                    fill="#046511"
-                  />
-                </svg>
-              `;
+        // Setup sound button (mute/unmute)
+        const soundBtn = document.getElementById("sound-btn");
+        const soundOn = document.getElementById("sound-on");
+        const soundOff = document.getElementById("sound-off");
+        
+        if (soundBtn && soundOn && soundOff) {
+          soundBtn.addEventListener("click", () => {
+            const bgMusic = document.getElementById('background-music');
+            if (soundOn.style.display === "none") {
+              // Turn sound on
+              soundOn.style.display = "block";
+              soundOff.style.display = "none";
+              // Unmute background music
+              if (bgMusic) {
+                bgMusic.muted = false;
+                if (bgMusic.paused) {
+                  bgMusic.play().catch(e => console.log('Background music play error:', e));
+                }
+              }
+            } else {
+              // Turn sound off
+              soundOn.style.display = "none";
+              soundOff.style.display = "block";
+              // Mute background music
+              if (bgMusic) {
+                bgMusic.muted = true;
+                bgMusic.pause();
+              }
+            }
           });
         }
 
@@ -830,12 +1007,18 @@
             }
             
             // Update media component - prioritize video, then audio
-            const hasVideo = letterData.video_url && letterData.video_url.trim() !== '';
-            const hasAudio = letterData.audio_url && letterData.audio_url.trim() !== '';
+            // Support both video_url/audio_url (from API) and video/audio (from mailbox)
+            const hasVideo = (letterData.video_url && letterData.video_url.trim() !== '') || 
+                            (letterData.video && letterData.video.trim() !== '');
+            const hasAudio = (letterData.audio_url && letterData.audio_url.trim() !== '') || 
+                            (letterData.audio && letterData.audio.trim() !== '');
             
-            if (hasVideo && ruryVideo) {
+            const videoUrl = letterData.video_url || letterData.video || '';
+            const audioUrl = letterData.audio_url || letterData.audio || '';
+            
+            if (hasVideo && ruryVideo && videoUrl) {
               if (audioIcon) audioIcon.style.display = 'none';
-              ruryVideo.src = letterData.video_url;
+              ruryVideo.src = videoUrl;
               ruryVideo.style.display = 'block';
               const playVideo = () => {
                 ruryVideo.play().catch(e => {
@@ -851,12 +1034,12 @@
                 ruryVideo.addEventListener('canplay', playVideo, { once: true });
                 ruryVideo.load();
               }
-            } else if (hasAudio && ruryAudio) {
+            } else if (hasAudio && ruryAudio && audioUrl) {
               if (ruryVideo) ruryVideo.style.display = 'none';
               if (audioIcon) audioIcon.style.display = 'flex';
               ruryAudio.muted = false;
               ruryAudio.volume = 1.0;
-              ruryAudio.src = letterData.audio_url;
+              ruryAudio.src = audioUrl;
               ruryAudio.style.display = 'block';
               
               const playAudio = () => {
@@ -887,8 +1070,9 @@
             // Update photo component
             const photoImg = document.getElementById('photo-component-img');
             if (photoImg) {
-              if (letterData.photo_url && letterData.photo_url.trim() !== '') {
-                photoImg.src = letterData.photo_url;
+              const photoUrl = letterData.photo_url || letterData.photo || '';
+              if (photoUrl && photoUrl.trim() !== '') {
+                photoImg.src = photoUrl;
                 photoImg.style.display = 'block';
               } else {
                 photoImg.style.display = 'none';
@@ -898,8 +1082,9 @@
             // Update sender name
             const letterSender = document.getElementById('letter-component-sender');
             if (letterSender) {
-              if (letterData.name && letterData.name.trim() !== '') {
-                letterSender.textContent = letterData.name;
+              const senderName = letterData.name || letterData.senderName || '';
+              if (senderName && senderName.trim() !== '') {
+                letterSender.textContent = senderName;
                 letterSender.style.display = 'block';
               } else {
                 letterSender.style.display = 'none';
@@ -908,8 +1093,11 @@
             
             // Update letter text component
             const letterText = document.getElementById('letter-component-text');
-            if (letterText && letterData.message) {
-              letterText.textContent = letterData.message;
+            if (letterText) {
+              const message = letterData.message || letterData.text || '';
+              if (message) {
+                letterText.textContent = message;
+              }
             }
             
             // Center letter if no video and no audio
@@ -966,6 +1154,12 @@
             console.log("Marker is found");
             detectedMarkers.add(marker.id || marker);
             
+            // Show letters list when marker is found
+            const lettersListBottom = document.getElementById('letters-list-bottom');
+            if (lettersListBottom) {
+              lettersListBottom.style.display = 'flex';
+            }
+            
             // Play background music when marker is found for the first time
             if (backgroundMusic && !backgroundMusicStarted) {
               backgroundMusic.play().catch(e => {
@@ -1009,6 +1203,14 @@
           marker.addEventListener("markerLost", function () {
             console.log("Marker is lost");
             detectedMarkers.delete(marker.id || marker);
+            
+            // Hide letters list when all markers are lost
+            if (detectedMarkers.size === 0) {
+              const lettersListBottom = document.getElementById('letters-list-bottom');
+              if (lettersListBottom) {
+                lettersListBottom.style.display = 'none';
+              }
+            }
             
             // Pause background music when marker is lost
             if (backgroundMusic && !backgroundMusic.paused) {
