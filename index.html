@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AR App | Slamat Slimit</title>
+    <title>AR App | Moon Muffin</title>
     <link rel="icon" type="image/x-icon" href="./icon.ico" />
     <link rel="stylesheet" href="./styles.css" />
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
@@ -37,12 +37,12 @@
     <a-scene
       style="z-index: 1"
       embedded
-      arjs="debugUIEnabled: false;"
+      arjs="debugUIEnabled: false; patternRatio: 0.7;"
       device-orientation-permission-ui="enabled: false"
       vr-mode-ui="enabled: false"
     >
       <!-- Define a marker using the pattern -->
-      <a-marker type="pattern" url="pattern-confetti-black.patt" id="marker-highfive">
+      <a-marker type="pattern" url="pattern-ribbon-final.patt" id="marker-highfive">
         <!-- Images will be dynamically added here -->
       </a-marker>
       <a-marker type="pattern" url="pattern-sparkle-black.patt" id="marker-sparkle">
@@ -243,7 +243,7 @@
         },
         init: function() {
           const rotation = this.el.getAttribute('rotation');
-          this.baseRotationY = rotation.y || 0; // Store base Y rotation in degrees
+          this.baseRotationZ = rotation.z || 0; // Store base Z rotation in degrees
           this.startTime = Date.now() + this.data.delay;
         },
         tick: function() {
@@ -263,13 +263,13 @@
           }
           
           // Apply rotation: 0 -> maxAngle -> 0 (using sine wave)
-          const rotationAngle = this.baseRotationY + (this.data.maxAngle * Math.sin(rotationProgress * Math.PI));
+          const rotationAngle = this.baseRotationZ + (this.data.maxAngle * Math.sin(rotationProgress * Math.PI));
           
           const currentRotation = this.el.getAttribute('rotation');
           this.el.setAttribute('rotation', {
             x: currentRotation.x,
-            y: rotationAngle, // Rotate around Y-axis
-            z: currentRotation.z
+            y: currentRotation.y,
+            z: rotationAngle // Already in degrees
           });
         }
       });
@@ -301,20 +301,44 @@
         imageEl.setAttribute("position", position);
         imageEl.setAttribute("rotation", initialRotation);
         imageEl.setAttribute("width", scale);
-        imageEl.setAttribute("height", scale * 1.1); // Slightly taller aspect ratio
+        imageEl.setAttribute("height", scale);
         
-        // Add material properties to prevent z-fighting and overlapping glitches
-        imageEl.setAttribute("material", {
-          depthTest: true,
-          depthWrite: true,
-          transparent: false,
-          alphaTest: 0.5
-        });
+        // Make image interactive (required for raycaster)
+        imageEl.setAttribute("class", "clickable");
+        imageEl.setAttribute("data-url", src); // Store URL in data attribute
         
-        // Store letter data on the element (for reference, but images are not clickable)
+        // Store letter data on the element
         if (letterData) {
           imageEl.setAttribute("data-letter", JSON.stringify(letterData));
         }
+        
+        // Add click event listener (works with raycaster)
+        imageEl.addEventListener("click", function(evt) {
+          console.log("Image clicked, URL:", src);
+          if (letterData) {
+            // Dispatch custom event to open letter detail
+            const event = new CustomEvent('openLetterDetail', { 
+              detail: { 
+                letterData: letterData
+              } 
+            });
+            document.dispatchEvent(event);
+          }
+        });
+        
+        // Also handle touch events for mobile
+        imageEl.addEventListener("touchstart", function(evt) {
+          console.log("Image touched, URL:", src);
+          if (letterData) {
+            // Dispatch custom event to open letter detail
+            const event = new CustomEvent('openLetterDetail', { 
+              detail: { 
+                letterData: letterData
+              } 
+            });
+            document.dispatchEvent(event);
+          }
+        });
         
         // Add rotation animation using custom component
         // Animation oscillates around base rotation by maxAngle degrees
@@ -340,6 +364,7 @@
         let markerDetectedOnce = false;
 
         // Configure camera for best rear camera with highest resolution (not wide)
+        // Exactly like slamat-slimit-ar approach
         const scene = document.querySelector('a-scene');
         const configureCamera = async () => {
           try {
@@ -349,85 +374,30 @@
               const videoTrack = stream.getVideoTracks()[0];
               
               if (videoTrack) {
-                // Check capabilities and apply autofocus if supported
+                // Check capabilities and apply autofocus if supported (exactly like slamat-slimit-ar)
                 const capabilities = videoTrack.getCapabilities();
                 console.log('Camera capabilities:', capabilities);
                 
-                // Build constraints object
-                const constraints = {};
-                
-                // Request back camera (environment facing)
-                if (capabilities.facingMode && capabilities.facingMode.includes('environment')) {
-                  constraints.facingMode = { ideal: 'environment' };
-                }
-                
-                // Request HD resolution
-                constraints.width = { ideal: 1920, min: 1280 };
-                constraints.height = { ideal: 1080, min: 720 };
-                
-                // Apply autofocus if supported
                 if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-                  constraints.advanced = [{ focusMode: 'continuous' }];
+                  await videoTrack.applyConstraints({
+                    advanced: [{ focusMode: 'continuous' }]
+                  });
+                  console.log('Autofocus enabled');
                 }
                 
-                // Apply all constraints at once
+                // Ensure HD resolution (exactly like slamat-slimit-ar)
+                const settings = videoTrack.getSettings();
+                console.log('Current camera resolution:', settings.width, 'x', settings.height);
+                
+                // Try to apply higher resolution constraints (exactly like slamat-slimit-ar)
                 try {
-                  await videoTrack.applyConstraints(constraints);
-                  console.log('Camera constraints applied:', constraints);
-                  
-                  // Log final settings
-                  const settings = videoTrack.getSettings();
-                  console.log('Final camera resolution:', settings.width, 'x', settings.height);
-                  console.log('Final camera facingMode:', settings.facingMode);
-                  
-                  // Verify we're using back camera
-                  if (settings.facingMode !== 'environment') {
-                    console.warn('Warning: Not using back camera! Current facingMode:', settings.facingMode);
-                    // Try to force back camera
-                    try {
-                      await videoTrack.applyConstraints({ facingMode: { exact: 'environment' } });
-                      console.log('Forced back camera');
-                    } catch (err) {
-                      console.warn('Could not force back camera:', err);
-                    }
-                  }
-                  
-                  // Verify HD resolution
-                  if (settings.width < 1280 || settings.height < 720) {
-                    console.warn('Warning: Not using HD resolution! Current:', settings.width, 'x', settings.height);
-                    // Try to force HD again
-                    try {
-                      await videoTrack.applyConstraints({
-                        width: { exact: 1920 },
-                        height: { exact: 1080 }
-                      });
-                      console.log('Forced HD resolution');
-                    } catch (err) {
-                      // If exact fails, try ideal
-                      try {
-                        await videoTrack.applyConstraints({
-                          width: { ideal: 1920 },
-                          height: { ideal: 1080 }
-                        });
-                        console.log('Applied ideal HD resolution');
-                      } catch (err2) {
-                        console.warn('Could not force HD resolution:', err2);
-                      }
-                    }
-                  }
+                  await videoTrack.applyConstraints({
+                    width: { ideal: 1920, min: 1280 },
+                    height: { ideal: 1080, min: 720 }
+                  });
+                  console.log('HD resolution constraints applied');
                 } catch (err) {
-                  console.warn('Could not apply all constraints:', err);
-                  
-                  // Try applying constraints separately if combined fails
-                  try {
-                    await videoTrack.applyConstraints({
-                      width: { ideal: 1920, min: 1280 },
-                      height: { ideal: 1080, min: 720 }
-                    });
-                    console.log('HD resolution constraints applied');
-                  } catch (err2) {
-                    console.warn('Could not apply HD constraints:', err2);
-                  }
+                  console.warn('Could not apply HD constraints:', err);
                 }
               }
             }
@@ -437,22 +407,16 @@
         };
         
         if (scene) {
-          // Configure camera after AR session begins
+          // Configure camera after AR session begins (like slamat-slimit-ar)
           scene.addEventListener('loaded', () => {
-            setTimeout(configureCamera, 500);
+            // Wait a bit for AR.js to fully initialize
             setTimeout(configureCamera, 1000);
-            setTimeout(configureCamera, 2000);
           });
           // Also try on arjs-video-loaded event
-          scene.addEventListener('arjs-video-loaded', () => {
-            setTimeout(configureCamera, 100);
-            setTimeout(configureCamera, 500);
-          });
+          scene.addEventListener('arjs-video-loaded', configureCamera);
           // Fallback with multiple attempts
-          setTimeout(configureCamera, 1000);
           setTimeout(configureCamera, 2000);
           setTimeout(configureCamera, 3000);
-          setTimeout(configureCamera, 5000);
         }
 
         const orderID = getUrlParameter("orderID");
@@ -486,40 +450,36 @@
           const faceCount = urls.length;
           
           // Position configuration for images - dynamically calculate spacing based on count
-          // X spacing - evenly spaced from -4.0 to 0
-          const xMin = -4.0;
+          // X spacing - evenly spaced from -3.5 to 0
+          const xMin = -3.5;
           const xMax = 0;
-          const xCenter = -2.0; // Center of range
+          const xCenter = -1.75; // Center of -3.5 to 0
           
           for (let i = 0; i < faceCount; i++) {
             const faceUrl = urls[i]; // Use actual URL, no cycling
             const letterData = dataArray[i] || null; // Get corresponding letter data
             
-            // Calculate position - start from center and spread evenly
+            // Calculate position - start from center (-2) and spread evenly
             let baseX;
             if (faceCount === 1) {
               baseX = xCenter; // Single image at center
             } else {
-              // Spread evenly from xMin to xMax
-              const xRange = xMax - xMin; // 4.5
+              // Spread evenly from -3.5 to 0
+              const xRange = xMax - xMin; // 3.5
               const xSpacing = xRange / (faceCount - 1);
               baseX = xMin + (i * xSpacing);
             }
-            // Minimal X random offset to prevent horizontal overlap
-            const xOffset = (Math.random() - 0.5) * 0.05; // Very small random variation
+            const xOffset = (Math.random() - 0.5) * 0.2;
             const initialX = baseX + xOffset;
-            // Z position is fixed at -0.5
-            const initialZ = -0.5;
-            // Y position (depth) varies: systematic offset based on index to ensure distinct depths and prevent glitching
-            const yBaseOffset = (i / Math.max(1, faceCount - 1)) * 0.5; // Systematic offset from 0 to 0.5
-            const yRandomOffset = (Math.random() - 0.5) * 0.05; // Small random variation
-            const initialY = yBaseOffset + yRandomOffset;
+            // Position images right on the marker plane
+            const initialZ = 0; // Right on marker
+            const initialY = 0; // Right on marker
             
             // Random base rotation
             const rotationZ = (Math.random() - 0.5) * 20; // -10 to 10 degrees
             
-            // Scale - make images bigger
-            const scale = 2.5;
+            // Scale - make images smaller (200% of original)
+            const scale = 3.0;
             
             // Get rotation pattern for this image
             const rotationPattern = rotationPatterns[i % rotationPatterns.length];
