@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>AR App | Moon Muffin</title>
+    <title>AR App | Slamat Slimit</title>
     <link rel="icon" type="image/x-icon" href="./icon.ico" />
     <link rel="stylesheet" href="./styles.css" />
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
@@ -42,7 +42,7 @@
       vr-mode-ui="enabled: false"
     >
       <!-- Define a marker using the pattern -->
-      <a-marker type="pattern" url="pattern-highfive-black.patt" id="marker-highfive">
+      <a-marker type="pattern" url="pattern-confetti.patt" id="marker-highfive">
         <!-- Images will be dynamically added here -->
       </a-marker>
       <a-marker type="pattern" url="pattern-sparkle-black.patt" id="marker-sparkle">
@@ -243,7 +243,7 @@
         },
         init: function() {
           const rotation = this.el.getAttribute('rotation');
-          this.baseRotationZ = rotation.z || 0; // Store base Z rotation in degrees
+          this.baseRotationY = rotation.y || 0; // Store base Y rotation in degrees
           this.startTime = Date.now() + this.data.delay;
         },
         tick: function() {
@@ -263,13 +263,13 @@
           }
           
           // Apply rotation: 0 -> maxAngle -> 0 (using sine wave)
-          const rotationAngle = this.baseRotationZ + (this.data.maxAngle * Math.sin(rotationProgress * Math.PI));
+          const rotationAngle = this.baseRotationY + (this.data.maxAngle * Math.sin(rotationProgress * Math.PI));
           
           const currentRotation = this.el.getAttribute('rotation');
           this.el.setAttribute('rotation', {
             x: currentRotation.x,
-            y: currentRotation.y,
-            z: rotationAngle // Already in degrees
+            y: rotationAngle, // Rotate around Y-axis
+            z: currentRotation.z
           });
         }
       });
@@ -301,44 +301,20 @@
         imageEl.setAttribute("position", position);
         imageEl.setAttribute("rotation", initialRotation);
         imageEl.setAttribute("width", scale);
-        imageEl.setAttribute("height", scale);
+        imageEl.setAttribute("height", scale * 1.1); // Slightly taller aspect ratio
         
-        // Make image interactive (required for raycaster)
-        imageEl.setAttribute("class", "clickable");
-        imageEl.setAttribute("data-url", src); // Store URL in data attribute
+        // Add material properties to prevent z-fighting and overlapping glitches
+        imageEl.setAttribute("material", {
+          depthTest: true,
+          depthWrite: true,
+          transparent: false,
+          alphaTest: 0.5
+        });
         
-        // Store letter data on the element
+        // Store letter data on the element (for reference, but images are not clickable)
         if (letterData) {
           imageEl.setAttribute("data-letter", JSON.stringify(letterData));
         }
-        
-        // Add click event listener (works with raycaster)
-        imageEl.addEventListener("click", function(evt) {
-          console.log("Image clicked, URL:", src);
-          if (letterData) {
-            // Dispatch custom event to open letter detail
-            const event = new CustomEvent('openLetterDetail', { 
-              detail: { 
-                letterData: letterData
-              } 
-            });
-            document.dispatchEvent(event);
-          }
-        });
-        
-        // Also handle touch events for mobile
-        imageEl.addEventListener("touchstart", function(evt) {
-          console.log("Image touched, URL:", src);
-          if (letterData) {
-            // Dispatch custom event to open letter detail
-            const event = new CustomEvent('openLetterDetail', { 
-              detail: { 
-                letterData: letterData
-              } 
-            });
-            document.dispatchEvent(event);
-          }
-        });
         
         // Add rotation animation using custom component
         // Animation oscillates around base rotation by maxAngle degrees
@@ -450,36 +426,40 @@
           const faceCount = urls.length;
           
           // Position configuration for images - dynamically calculate spacing based on count
-          // X spacing - evenly spaced from -3.5 to 0
-          const xMin = -3.5;
+          // X spacing - evenly spaced from -4.0 to 0
+          const xMin = -4.0;
           const xMax = 0;
-          const xCenter = -1.75; // Center of -3.5 to 0
+          const xCenter = -2.0; // Center of range
           
           for (let i = 0; i < faceCount; i++) {
             const faceUrl = urls[i]; // Use actual URL, no cycling
             const letterData = dataArray[i] || null; // Get corresponding letter data
             
-            // Calculate position - start from center (-2) and spread evenly
+            // Calculate position - start from center and spread evenly
             let baseX;
             if (faceCount === 1) {
               baseX = xCenter; // Single image at center
             } else {
-              // Spread evenly from -3.5 to 0
-              const xRange = xMax - xMin; // 3.5
+              // Spread evenly from xMin to xMax
+              const xRange = xMax - xMin; // 4.5
               const xSpacing = xRange / (faceCount - 1);
               baseX = xMin + (i * xSpacing);
             }
-            const xOffset = (Math.random() - 0.5) * 0.2;
+            // Minimal X random offset to prevent horizontal overlap
+            const xOffset = (Math.random() - 0.5) * 0.05; // Very small random variation
             const initialX = baseX + xOffset;
-            // Position images right on the marker plane
-            const initialZ = 0; // Right on marker
-            const initialY = 0; // Right on marker
+            // Z position is fixed at -0.5
+            const initialZ = -0.5;
+            // Y position (depth) varies: systematic offset based on index to ensure distinct depths and prevent glitching
+            const yBaseOffset = (i / Math.max(1, faceCount - 1)) * 0.5; // Systematic offset from 0 to 0.5
+            const yRandomOffset = (Math.random() - 0.5) * 0.05; // Small random variation
+            const initialY = yBaseOffset + yRandomOffset;
             
             // Random base rotation
             const rotationZ = (Math.random() - 0.5) * 20; // -10 to 10 degrees
             
-            // Scale - make images smaller (200% of original)
-            const scale = 3.0;
+            // Scale - make images bigger
+            const scale = 2.5;
             
             // Get rotation pattern for this image
             const rotationPattern = rotationPatterns[i % rotationPatterns.length];
