@@ -42,7 +42,7 @@
       vr-mode-ui="enabled: false"
     >
       <!-- Define a marker using the pattern -->
-      <a-marker type="pattern" url="pattern-confetti-2.patt" id="marker-highfive">
+      <a-marker type="pattern" url="pattern-confetti-black.patt" id="marker-highfive">
         <!-- Images will be dynamically added here -->
       </a-marker>
       <a-marker type="pattern" url="pattern-sparkle-black.patt" id="marker-sparkle">
@@ -340,7 +340,6 @@
         let markerDetectedOnce = false;
 
         // Configure camera for best rear camera with highest resolution (not wide)
-        // Exactly like slamat-slimit-ar approach
         const scene = document.querySelector('a-scene');
         const configureCamera = async () => {
           try {
@@ -350,30 +349,85 @@
               const videoTrack = stream.getVideoTracks()[0];
               
               if (videoTrack) {
-                // Check capabilities and apply autofocus if supported (exactly like slamat-slimit-ar)
+                // Check capabilities and apply autofocus if supported
                 const capabilities = videoTrack.getCapabilities();
                 console.log('Camera capabilities:', capabilities);
                 
-                if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-                  await videoTrack.applyConstraints({
-                    advanced: [{ focusMode: 'continuous' }]
-                  });
-                  console.log('Autofocus enabled');
+                // Build constraints object
+                const constraints = {};
+                
+                // Request back camera (environment facing)
+                if (capabilities.facingMode && capabilities.facingMode.includes('environment')) {
+                  constraints.facingMode = { ideal: 'environment' };
                 }
                 
-                // Ensure HD resolution (exactly like slamat-slimit-ar)
-                const settings = videoTrack.getSettings();
-                console.log('Current camera resolution:', settings.width, 'x', settings.height);
+                // Request HD resolution
+                constraints.width = { ideal: 1920, min: 1280 };
+                constraints.height = { ideal: 1080, min: 720 };
                 
-                // Try to apply higher resolution constraints (exactly like slamat-slimit-ar)
+                // Apply autofocus if supported
+                if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                  constraints.advanced = [{ focusMode: 'continuous' }];
+                }
+                
+                // Apply all constraints at once
                 try {
-                  await videoTrack.applyConstraints({
-                    width: { ideal: 1920, min: 1280 },
-                    height: { ideal: 1080, min: 720 }
-                  });
-                  console.log('HD resolution constraints applied');
+                  await videoTrack.applyConstraints(constraints);
+                  console.log('Camera constraints applied:', constraints);
+                  
+                  // Log final settings
+                  const settings = videoTrack.getSettings();
+                  console.log('Final camera resolution:', settings.width, 'x', settings.height);
+                  console.log('Final camera facingMode:', settings.facingMode);
+                  
+                  // Verify we're using back camera
+                  if (settings.facingMode !== 'environment') {
+                    console.warn('Warning: Not using back camera! Current facingMode:', settings.facingMode);
+                    // Try to force back camera
+                    try {
+                      await videoTrack.applyConstraints({ facingMode: { exact: 'environment' } });
+                      console.log('Forced back camera');
+                    } catch (err) {
+                      console.warn('Could not force back camera:', err);
+                    }
+                  }
+                  
+                  // Verify HD resolution
+                  if (settings.width < 1280 || settings.height < 720) {
+                    console.warn('Warning: Not using HD resolution! Current:', settings.width, 'x', settings.height);
+                    // Try to force HD again
+                    try {
+                      await videoTrack.applyConstraints({
+                        width: { exact: 1920 },
+                        height: { exact: 1080 }
+                      });
+                      console.log('Forced HD resolution');
+                    } catch (err) {
+                      // If exact fails, try ideal
+                      try {
+                        await videoTrack.applyConstraints({
+                          width: { ideal: 1920 },
+                          height: { ideal: 1080 }
+                        });
+                        console.log('Applied ideal HD resolution');
+                      } catch (err2) {
+                        console.warn('Could not force HD resolution:', err2);
+                      }
+                    }
+                  }
                 } catch (err) {
-                  console.warn('Could not apply HD constraints:', err);
+                  console.warn('Could not apply all constraints:', err);
+                  
+                  // Try applying constraints separately if combined fails
+                  try {
+                    await videoTrack.applyConstraints({
+                      width: { ideal: 1920, min: 1280 },
+                      height: { ideal: 1080, min: 720 }
+                    });
+                    console.log('HD resolution constraints applied');
+                  } catch (err2) {
+                    console.warn('Could not apply HD constraints:', err2);
+                  }
                 }
               }
             }
@@ -383,16 +437,22 @@
         };
         
         if (scene) {
-          // Configure camera after AR session begins (like slamat-slimit-ar)
+          // Configure camera after AR session begins
           scene.addEventListener('loaded', () => {
-            // Wait a bit for AR.js to fully initialize
+            setTimeout(configureCamera, 500);
             setTimeout(configureCamera, 1000);
+            setTimeout(configureCamera, 2000);
           });
           // Also try on arjs-video-loaded event
-          scene.addEventListener('arjs-video-loaded', configureCamera);
+          scene.addEventListener('arjs-video-loaded', () => {
+            setTimeout(configureCamera, 100);
+            setTimeout(configureCamera, 500);
+          });
           // Fallback with multiple attempts
+          setTimeout(configureCamera, 1000);
           setTimeout(configureCamera, 2000);
           setTimeout(configureCamera, 3000);
+          setTimeout(configureCamera, 5000);
         }
 
         const orderID = getUrlParameter("orderID");
