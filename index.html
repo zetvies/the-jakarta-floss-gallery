@@ -1,72 +1,69 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>AR App | Moon Muffin</title>
-    <link rel="icon" type="image/x-icon" href="./icon.ico" />
-    <link rel="stylesheet" href="./styles.css" />
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
-    <script src="./svg-component.js" type="module"></script>
-    <style>
-      @keyframes rotate-snap-1 {
-        0%, 100% {
-          transform: rotate(0deg);
-        }
-        50% {
-          transform: rotate(15deg);
-        }
-      }
-      .animate-rotate-slow {
-        animation: rotate-snap-1 3s ease-in-out infinite;
-      }
-      /* Drop shadow for card components */
-      .component {
-        filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      }
-      /* Story button styles */
-      .story-button {
-        transition: transform 0.3s ease;
-      }
-      .story-button.active {
-        transform: scale(1.1);
-      }
-    </style>
-  </head>
-  <body style="margin: 0; overflow: hidden; z-index: 0">
-    <a-scene
-      style="z-index: 1"
-      embedded
-      arjs="debugUIEnabled: false; patternRatio: 0.7;"
-      device-orientation-permission-ui="enabled: false"
-      vr-mode-ui="enabled: false"
-    >
-      <!-- Define a marker using the pattern -->
-      <a-marker type="pattern" url="pattern-confetti-final.patt" id="marker-highfive">
-        <!-- Images will be dynamically added here -->
-      </a-marker>
-      <a-marker type="pattern" url="pattern-sparkle-black.patt" id="marker-sparkle">
-        <!-- Images will be dynamically added here -->
-      </a-marker>
-      <!-- Add a camera with raycaster for interaction -->
-      <a-entity 
-        camera 
-        raycaster="objects: a-image"
-        look-controls
-      >
-        <!-- Cursor for desktop interaction -->
-        <a-cursor
-          raycaster="objects: a-image"
-          geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
-          material="color: #4CC3D9; shader: flat"
-          visible="false"
-        ></a-cursor>
-      </a-entity>
-    </a-scene>
 
-    <div
-      id="markerNotFoundOverlay"
-      style="
+<head>
+  <title>AR App | Moon Muffin</title>
+  <link rel="icon" type="image/x-icon" href="./icon.ico" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
+  <script src="./svg-component.js" type="module"></script>
+  <style>
+    @keyframes rotate-snap-1 {
+
+      0%,
+      100% {
+        transform: rotate(0deg);
+      }
+
+      50% {
+        transform: rotate(15deg);
+      }
+    }
+
+    .animate-rotate-slow {
+      animation: rotate-snap-1 3s ease-in-out infinite;
+    }
+
+    /* Drop shadow for card components */
+    .component {
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Story button styles */
+    .story-button {
+      transition: transform 0.3s ease;
+    }
+
+    .story-button.active {
+      transform: scale(1.1);
+    }
+  </style>
+</head>
+
+<body style="margin: 0; overflow: hidden; z-index: 0">
+  <a-scene style="z-index: 1" embedded arjs="debugUIEnabled: false; patternRatio: 0.7;"
+    device-orientation-permission-ui="enabled: false" vr-mode-ui="enabled: false">
+    <!-- Define a marker using the pattern -->
+    <a-marker type="pattern" url="pattern-confetti-final.patt" id="marker-highfive">
+      <!-- Images will be dynamically added here -->
+    </a-marker>
+    <a-marker type="pattern" url="pattern-cake-final.patt" id="marker-highfive">
+      <!-- Images will be dynamically added here -->
+    </a-marker>
+    <a-marker type="pattern" url="pattern-ribbon-final.patt" id="marker-highfive">
+      <!-- Images will be dynamically added here -->
+    </a-marker>
+    <!-- Add a camera with raycaster for interaction -->
+    <a-entity camera raycaster="objects: a-image" look-controls>
+      <!-- Cursor for desktop interaction -->
+      <a-cursor raycaster="objects: a-image" geometry="primitive: ring; radiusInner: 0.02; radiusOuter: 0.03"
+        material="color: #4CC3D9; shader: flat" visible="false"></a-cursor>
+    </a-entity>
+  </a-scene>
+
+  <div id="markerNotFoundOverlay" style="
         font-family: Inter;
         position: fixed;
         height: 100svh;
@@ -84,43 +81,30 @@
         text-align: center;
         z-index: 2;
         padding-bottom: 10svh;
-      "
-    >
-      <p>Arahkan kameramu ke<br />marker berikut:</p>
-      <div
-        style="
+      ">
+    <p>Arahkan kameramu ke<br />marker berikut:</p>
+    <div style="
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 16px;
-        "
-      >
-        <img
-          src="./assets/images/line-decoration-left.png"
-          style="width: 10svh; max-width: 15vw; height: auto"
-        />
-        <span
-          style="
+        ">
+      <img src="./assets/images/line-decoration-left.png" style="width: 10svh; max-width: 15vw; height: auto" />
+      <span style="
             position: relative;
             width: 24svh;
             height: 40svh;
             display: flex;
             justify-content: center;
-          "
-        >
-          <img
-            src="./pattern-sparkle-white.png"
-            style="
+          ">
+        <img src="./pattern-sparkle-white.png" style="
               padding-top: 3svh;
               width: 15svh;
               max-width: 40vw;
               height: 15svh;
               transform: rotate(-5deg);
               margin-left: 4svh;
-            "
-          /><img
-            src="./pattern-highfive-white.png"
-            style="
+            " /><img src="./pattern-highfive-white.png" style="
               width: 18svh;
               max-width: 30vw;
               height: auto;
@@ -128,1115 +112,1131 @@
               top: 20svh;
               left: 0;
               transform: rotate(10deg);
-            "
-          />
-        </span>
-        <img
-          src="./assets/images/line-decoration-right.png"
-          style="width: 10svh; max-width: 15vw; height: auto"
-        />
-      </div>
+            " />
+      </span>
+      <img src="./assets/images/line-decoration-right.png" style="width: 10svh; max-width: 15vw; height: auto" />
     </div>
+  </div>
 
-    <!-- Letters List (Stories Style) -->
-    <div id="letters-list-bottom" style="display: none; align-items: center; justify-content: center; position: fixed; bottom: 13.3svh; left: 50%; transform: translateX(-50%); z-index: 10; width: 95vw; height: 70px; padding: 0 15px; overflow-x: auto; overflow-y: visible; gap: 16px;"></div>
+  <!-- Letters List (Stories Style) -->
+  <div id="letters-list-bottom"
+    style="display: none; align-items: center; justify-content: center; position: fixed; bottom: 13.3svh; left: 50%; transform: translateX(-50%); z-index: 10; width: 95vw; height: 70px; padding: 0 15px; overflow-x: auto; overflow-y: visible; gap: 16px;">
+  </div>
 
-    <!-- Buttons Container -->
-    <div style="position: fixed; bottom: 0; left: 0; width: 90%; padding-bottom: 5svh; padding-left: 5svw; padding-right: 5svw; display: flex; align-items: center; justify-content: space-between; gap: 3svh; z-index: 50;">
-      <!-- Mailbox Button -->
-      <button id="mailbox-btn" style="display: flex; align-items: center; justify-content: center; width: 5svh; height: 5svh; background-color: #49B400; border-radius: 50%; cursor: pointer; z-index: 50; border: none; padding: 0;">
-        <svg style="width: 45%; height: 45%;" width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M1.5 6H4.5C5.325 6 6 5.325 6 4.5V1.5C6 0.675 5.325 0 4.5 0H1.5C0.675 0 0 0.675 0 1.5V4.5C0 5.325 0.675 6 1.5 6Z" fill="#F4F2E4" />
-          <path d="M1.5 13.5H4.5C5.325 13.5 6 12.825 6 12V9C6 8.175 5.325 7.5 4.5 7.5H1.5C0.675 7.5 0 8.175 0 9V12C0 12.825 0.675 13.5 1.5 13.5Z" fill="#F4F2E4" />
-          <path d="M7.5 1.5V4.5C7.5 5.325 8.175 6 9 6H12C12.825 6 13.5 5.325 13.5 4.5V1.5C13.5 0.675 12.825 0 12 0H9C8.175 0 7.5 0.675 7.5 1.5Z" fill="#F4F2E4" />
-          <path d="M9 13.5H12C12.825 13.5 13.5 12.825 13.5 12V9C13.5 8.175 12.825 7.5 12 7.5H9C8.175 7.5 7.5 8.175 7.5 9V12C7.5 12.825 8.175 13.5 9 13.5Z" fill="#F4F2E4" />
-        </svg>
-      </button>
-      
-      <!-- Sound Button (Mute/Unmute) -->
-      <button id="sound-btn" style="display: flex; align-items: center; justify-content: center; width: 5svh; height: 5svh; background-color: #FFC61C; border-radius: 50%; cursor: pointer; z-index: 50; border: none; padding: 0;">
-        <svg id="sound-on" style="width: 60%; height: 60%; display: block;" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
-          <path d="M0 0h24v24H0z" fill="none" />
-          <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z" fill="#000000" />
-        </svg>
-        <svg id="sound-off" style="width: 60%; height: 60%; display: none;" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
-          <path d="M0 0h24v24H0z" fill="none" />
-          <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z" fill="#000000" />
-        </svg>
-      </button>
-    </div>
-
-    <!-- Letter Detail Modal -->
-    <div id="letters-detail" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 80; display: none;">
-      <div id="letters-detail-overlay" style="width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); cursor: pointer;"></div>
-      <svg id="pin-svg" style="position: absolute; top: 43svh; left: 35svw; width: 8svh; height: 8svh; z-index: 100;" width="47" height="64" viewBox="0 0 47 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M14.9882 30.5399C14.7575 30.798 14.4157 31.6758 13.811 32.4282C12.9256 33.5298 12.3032 34.3378 10.4444 36.6623C9.73858 37.545 8.61764 39.2652 7.07598 41.3014C6.04406 42.6644 5.22841 43.8583 4.5577 44.652C3.69027 45.6785 3.00772 46.9243 2.39982 47.978C1.98266 48.7011 1.54059 49.9758 1.45755 50.9851C1.39714 51.7194 2.3761 53.0561 3.07071 54.0032C3.58089 54.6988 4.31263 55.0905 5.0388 55.5007C5.72033 55.8858 6.5896 56.2402 7.46128 56.6079C8.09018 56.8731 9.36689 57.3075 10.8189 57.8307C13.3935 58.7583 14.2233 58.5021 15.045 58.4533C16.37 58.3746 17.2403 57.6981 18.4211 56.5079C18.6701 56.257 18.7457 56.1078 19.8318 54.7436C20.9179 53.3794 22.9977 50.791 24.1206 49.3647C26.0222 46.9496 27.2421 45.2976 28.1661 43.9595C28.6777 43.2186 29.2421 42.6572 29.9777 41.6183C31.8322 38.9993 32.8066 37.796 33.4229 36.8043C33.9325 35.9844 35.1348 34.1238 36.3971 31.8245C37.2155 30.3338 38.0476 28.2818 38.7255 26.5658C39.4023 24.8526 40.0234 23.5248 40.529 22.1472C40.8727 21.2111 41.3068 20.1462 41.6984 19.39C42.1792 18.4617 42.718 17.0863 43.1505 15.9815C43.4153 15.3053 43.8773 14.3756 44.312 13.2537C44.8712 11.8107 44.9395 10.6163 44.7699 10.2485C44.3814 9.4064 43.7203 8.94379 42.9568 8.28115C41.7375 7.22308 40.3804 6.75635 38.6826 6.3515C37.8641 6.15634 37.2155 7.08772 36.2078 8.4487C34.0471 11.3668 32.9506 13.755 32.4165 14.5481C30.5383 17.3378 29.9945 18.7695 28.4663 21.0541C27.1396 23.0374 24.9752 25.2734 23.7285 26.7667C23.198 27.4021 22.8443 27.9563 22.4497 28.5244C21.9775 29.2042 21.5388 29.8135 21.1554 30.4394C20.4575 31.5789 19.4896 33.0354 18.742 34.1251C17.8798 35.382 17.3123 36.5428 16.7805 37.4238C15.7038 39.2079 15.1499 39.7892 14.7802 40.3639C14.348 41.0356 13.8444 41.6464 13.2937 42.4957C12.8502 43.1796 12.708 43.8736 12.6346 44.446C12.5509 45.0984 14.6356 45.4709 16.2793 45.4024C17.3666 45.3571 17.8931 44.4083 18.6299 43.772C19.9264 42.6523 20.2726 41.7628 21.0296 41.048C22.1019 40.0354 23.8899 37.0903 25.0691 35.6169C26.7858 33.4719 27.227 32.6916 27.7377 31.9947C28.746 30.6187 29.0309 29.7821 29.3004 29.1805C29.654 28.391 30.1994 27.8333 30.5873 27.2901C31.0939 26.5808 31.7097 25.8145 32.0727 25.2647C32.4357 24.7149 32.6579 24.2897 32.7633 23.9957C32.8288 23.8508 32.9185 23.7149 33.1617 23.6153" stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round"/>
-        <path d="M42.9478 16.6166C43.2126 15.9405 43.6746 15.0108 44.1093 13.8888C44.6684 12.4458 44.7368 11.2514 44.5672 10.8836C44.1787 10.0415 43.5176 9.5789 42.7541 8.91627C41.5348 7.8582 40.1777 7.39146 38.4799 6.98662C37.6614 6.79145 37.0127 7.72283 36.005 9.08381C33.8444 12.002 32.7479 14.3901 32.2138 15.1833C30.3355 17.9729 29.7918 19.4046 28.2636 21.6892C26.9369 23.6726 24.7725 25.9085 23.5258 27.4018C22.9953 28.0372 22.6416 28.5915 22.247 29.1595C21.7748 29.8393 21.3361 30.4486 20.9527 31.0746C20.2548 32.214 19.2869 33.6705 18.5393 34.7602C17.677 36.0171 17.1095 37.1779 16.5778 38.0589C15.501 39.843 14.9471 40.4243 14.5775 40.999C14.1453 41.6708 13.6417 42.2815 13.091 43.1308C12.6475 43.8147 12.5053 44.5087 12.4319 45.0812C12.3482 45.7335 14.4329 46.1061 16.0766 46.0376C17.1639 45.9922 17.6904 45.0434 18.4272 44.4071C19.7237 43.2875 20.0698 42.3979 20.8269 41.6831C21.8992 40.6705 23.6872 37.7254 24.8664 36.252C26.5831 34.107 27.0243 33.3267 27.535 32.6298C28.5433 31.2539 28.8282 30.4172 29.0977 29.8157C29.4513 29.0261 29.9967 28.4684 30.3845 27.9252C30.8912 27.2159 31.507 26.4496 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.6261 24.4859 32.7158 24.35 32.959 24.2504" stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round"/>
+  <!-- Buttons Container -->
+  <div
+    style="position: fixed; bottom: 0; left: 0; width: 90%; padding-bottom: 5svh; padding-left: 5svw; padding-right: 5svw; display: flex; align-items: center; justify-content: space-between; gap: 3svh; z-index: 50;">
+    <!-- Mailbox Button -->
+    <button id="mailbox-btn"
+      style="display: flex; align-items: center; justify-content: center; width: 5svh; height: 5svh; background-color: #49B400; border-radius: 50%; cursor: pointer; z-index: 50; border: none; padding: 0;">
+      <svg style="width: 45%; height: 45%;" width="14" height="14" viewBox="0 0 14 14" fill="none"
+        xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M1.5 6H4.5C5.325 6 6 5.325 6 4.5V1.5C6 0.675 5.325 0 4.5 0H1.5C0.675 0 0 0.675 0 1.5V4.5C0 5.325 0.675 6 1.5 6Z"
+          fill="#F4F2E4" />
+        <path
+          d="M1.5 13.5H4.5C5.325 13.5 6 12.825 6 12V9C6 8.175 5.325 7.5 4.5 7.5H1.5C0.675 7.5 0 8.175 0 9V12C0 12.825 0.675 13.5 1.5 13.5Z"
+          fill="#F4F2E4" />
+        <path
+          d="M7.5 1.5V4.5C7.5 5.325 8.175 6 9 6H12C12.825 6 13.5 5.325 13.5 4.5V1.5C13.5 0.675 12.825 0 12 0H9C8.175 0 7.5 0.675 7.5 1.5Z"
+          fill="#F4F2E4" />
+        <path
+          d="M9 13.5H12C12.825 13.5 13.5 12.825 13.5 12V9C13.5 8.175 12.825 7.5 12 7.5H9C8.175 7.5 7.5 8.175 7.5 9V12C7.5 12.825 8.175 13.5 9 13.5Z"
+          fill="#F4F2E4" />
       </svg>
-      
-      <div id="video-component" class="component" style="cursor: pointer; width: 27svh; height: 45svh; background-color: white; position: absolute; top: 10svh; left: 50%; transform: translateX(-50%); z-index: 81; display: flex; align-items: center; justify-content: center;">
-        <video 
-          id="rury-video"
-          src=""
-          style="width: 90%; height: 80%; object-fit: cover; margin-top: 5%; display: none;"
-          loop
-          autoplay
-          playsinline
-          webkit-playsinline
-          x5-playsinline
-        ></video>
-        <audio 
-          id="rury-audio"
-          src=""
-          loop
-          style="display: none;"
-        ></audio>
-        <div id="audio-icon" style="display: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.48 8.71 14 7.97V16.02C15.48 15.29 16.5 13.77 16.5 12ZM14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.85 14 18.71V20.77C18.01 19.86 21 16.28 21 12C21 7.72 18.01 4.14 14 3.23Z" fill="#FF5627"/>
-          </svg>
-        </div>
-      </div>
-      <div id="letter-component" class="component" style="cursor: pointer; transform: rotate(1deg); background-color: #F4F2E4; width: 75svw; height: 40svh; padding: 3svh; overflow-y: auto; position: absolute; bottom: 5svh; left: 0; right: 0; margin: 0 auto; z-index: 83; font-family: 'Playpen Sans', cursive;">
-        <div id="letter-component-text" style="font-size: 2svh; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;"></div>
-        <div id="letter-component-footer" style="position: absolute; bottom: 2svh; right: 2svh; display: flex; flex-direction: column; align-items: flex-end; gap: 1svh;">
-          <img 
-            id="photo-component-img" 
-            src="" 
-            alt="photo" 
-            class="animate-rotate-slow"
-            style="width: auto; height: 13svh; object-fit: cover; display: none;"
-          >
-          <div id="letter-component-sender" style="font-size: 2.4svh; font-weight: bold; font-family: 'Playpen Sans', cursive; display: none;"></div>
-        </div>
+    </button>
+
+    <!-- Sound Button (Mute/Unmute) -->
+    <button id="sound-btn"
+      style="display: flex; align-items: center; justify-content: center; width: 5svh; height: 5svh; background-color: #FFC61C; border-radius: 50%; cursor: pointer; z-index: 50; border: none; padding: 0;">
+      <svg id="sound-on" style="width: 60%; height: 60%; display: block;" xmlns="http://www.w3.org/2000/svg" height="24"
+        viewBox="0 0 24 24" width="24">
+        <path d="M0 0h24v24H0z" fill="none" />
+        <path
+          d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"
+          fill="#000000" />
+      </svg>
+      <svg id="sound-off" style="width: 60%; height: 60%; display: none;" xmlns="http://www.w3.org/2000/svg" height="24"
+        viewBox="0 0 24 24" width="24">
+        <path d="M0 0h24v24H0z" fill="none" />
+        <path
+          d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"
+          fill="#000000" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Letter Detail Modal -->
+  <div id="letters-detail"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 80; display: none;">
+    <div id="letters-detail-overlay"
+      style="width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); cursor: pointer;"></div>
+    <svg id="pin-svg" style="position: absolute; top: 43svh; left: 35svw; width: 8svh; height: 8svh; z-index: 100;"
+      width="47" height="64" viewBox="0 0 47 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M14.9882 30.5399C14.7575 30.798 14.4157 31.6758 13.811 32.4282C12.9256 33.5298 12.3032 34.3378 10.4444 36.6623C9.73858 37.545 8.61764 39.2652 7.07598 41.3014C6.04406 42.6644 5.22841 43.8583 4.5577 44.652C3.69027 45.6785 3.00772 46.9243 2.39982 47.978C1.98266 48.7011 1.54059 49.9758 1.45755 50.9851C1.39714 51.7194 2.3761 53.0561 3.07071 54.0032C3.58089 54.6988 4.31263 55.0905 5.0388 55.5007C5.72033 55.8858 6.5896 56.2402 7.46128 56.6079C8.09018 56.8731 9.36689 57.3075 10.8189 57.8307C13.3935 58.7583 14.2233 58.5021 15.045 58.4533C16.37 58.3746 17.2403 57.6981 18.4211 56.5079C18.6701 56.257 18.7457 56.1078 19.8318 54.7436C20.9179 53.3794 22.9977 50.791 24.1206 49.3647C26.0222 46.9496 27.2421 45.2976 28.1661 43.9595C28.6777 43.2186 29.2421 42.6572 29.9777 41.6183C31.8322 38.9993 32.8066 37.796 33.4229 36.8043C33.9325 35.9844 35.1348 34.1238 36.3971 31.8245C37.2155 30.3338 38.0476 28.2818 38.7255 26.5658C39.4023 24.8526 40.0234 23.5248 40.529 22.1472C40.8727 21.2111 41.3068 20.1462 41.6984 19.39C42.1792 18.4617 42.718 17.0863 43.1505 15.9815C43.4153 15.3053 43.8773 14.3756 44.312 13.2537C44.8712 11.8107 44.9395 10.6163 44.7699 10.2485C44.3814 9.4064 43.7203 8.94379 42.9568 8.28115C41.7375 7.22308 40.3804 6.75635 38.6826 6.3515C37.8641 6.15634 37.2155 7.08772 36.2078 8.4487C34.0471 11.3668 32.9506 13.755 32.4165 14.5481C30.5383 17.3378 29.9945 18.7695 28.4663 21.0541C27.1396 23.0374 24.9752 25.2734 23.7285 26.7667C23.198 27.4021 22.8443 27.9563 22.4497 28.5244C21.9775 29.2042 21.5388 29.8135 21.1554 30.4394C20.4575 31.5789 19.4896 33.0354 18.742 34.1251C17.8798 35.382 17.3123 36.5428 16.7805 37.4238C15.7038 39.2079 15.1499 39.7892 14.7802 40.3639C14.348 41.0356 13.8444 41.6464 13.2937 42.4957C12.8502 43.1796 12.708 43.8736 12.6346 44.446C12.5509 45.0984 14.6356 45.4709 16.2793 45.4024C17.3666 45.3571 17.8931 44.4083 18.6299 43.772C19.9264 42.6523 20.2726 41.7628 21.0296 41.048C22.1019 40.0354 23.8899 37.0903 25.0691 35.6169C26.7858 33.4719 27.227 32.6916 27.7377 31.9947C28.746 30.6187 29.0309 29.7821 29.3004 29.1805C29.654 28.391 30.1994 27.8333 30.5873 27.2901C31.0939 26.5808 31.7097 25.8145 32.0727 25.2647C32.4357 24.7149 32.6579 24.2897 32.7633 23.9957C32.8288 23.8508 32.9185 23.7149 33.1617 23.6153"
+        stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round" />
+      <path
+        d="M42.9478 16.6166C43.2126 15.9405 43.6746 15.0108 44.1093 13.8888C44.6684 12.4458 44.7368 11.2514 44.5672 10.8836C44.1787 10.0415 43.5176 9.5789 42.7541 8.91627C41.5348 7.8582 40.1777 7.39146 38.4799 6.98662C37.6614 6.79145 37.0127 7.72283 36.005 9.08381C33.8444 12.002 32.7479 14.3901 32.2138 15.1833C30.3355 17.9729 29.7918 19.4046 28.2636 21.6892C26.9369 23.6726 24.7725 25.9085 23.5258 27.4018C22.9953 28.0372 22.6416 28.5915 22.247 29.1595C21.7748 29.8393 21.3361 30.4486 20.9527 31.0746C20.2548 32.214 19.2869 33.6705 18.5393 34.7602C17.677 36.0171 17.1095 37.1779 16.5778 38.0589C15.501 39.843 14.9471 40.4243 14.5775 40.999C14.1453 41.6708 13.6417 42.2815 13.091 43.1308C12.6475 43.8147 12.5053 44.5087 12.4319 45.0812C12.3482 45.7335 14.4329 46.1061 16.0766 46.0376C17.1639 45.9922 17.6904 45.0434 18.4272 44.4071C19.7237 43.2875 20.0698 42.3979 20.8269 41.6831C21.8992 40.6705 23.6872 37.7254 24.8664 36.252C26.5831 34.107 27.0243 33.3267 27.535 32.6298C28.5433 31.2539 28.8282 30.4172 29.0977 29.8157C29.4513 29.0261 29.9967 28.4684 30.3845 27.9252C30.8912 27.2159 31.507 26.4496 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.6261 24.4859 32.7158 24.35 32.959 24.2504"
+        stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round" />
+    </svg>
+
+    <div id="video-component" class="component"
+      style="cursor: pointer; width: 27svh; height: 45svh; background-color: white; position: absolute; top: 10svh; left: 50%; transform: translateX(-50%); z-index: 81; display: flex; align-items: center; justify-content: center;">
+      <video id="rury-video" src="" style="width: 90%; height: 80%; object-fit: cover; margin-top: 5%; display: none;"
+        loop autoplay playsinline webkit-playsinline x5-playsinline></video>
+      <audio id="rury-audio" src="" loop style="display: none;"></audio>
+      <div id="audio-icon"
+        style="display: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.48 8.71 14 7.97V16.02C15.48 15.29 16.5 13.77 16.5 12ZM14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.85 14 18.71V20.77C18.01 19.86 21 16.28 21 12C21 7.72 18.01 4.14 14 3.23Z"
+            fill="#FF5627" />
+        </svg>
       </div>
     </div>
-
-    <!-- Mailbox Container -->
-    <div id="mailbox" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 70; background-color: #F4F2E4; display: none; flex-direction: column; overflow-y: auto; overflow-x: hidden;">
-      <div style="padding: 4svh 5svw; display: flex; gap: 2svh;">
-        <button id="close-mailbox-btn" style="cursor: pointer; min-width: 5svh; min-height: 5svh; width: 5svh; height: 5svh; background-color: #274044; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; padding: 0;">
-          <svg width="10" height="16" viewBox="0 0 10 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M8.91437 0.414375C8.36187 -0.138125 7.46938 -0.138125 6.91688 0.414375L0.414375 6.91688C-0.138125 7.46938 -0.138125 8.36188 0.414375 8.91438L6.91688 15.4169C7.46938 15.9694 8.36187 15.9694 8.91437 15.4169C9.46687 14.8644 9.46687 13.9719 8.91437 13.4194L3.41771 7.90854L8.91437 2.41187C9.46687 1.85937 9.45271 0.952708 8.91437 0.414375Z" fill="#F4F2E4" />
-          </svg>
-        </button>
-        <h1 style="font-size: 3svh; text-align: center; font-family: 'Barrio', system-ui; flex: 1;">Ucapan dari yang kenal kamu paling dekat</h1>
+    <div id="letter-component" class="component"
+      style="cursor: pointer; transform: rotate(1deg); background-color: #F4F2E4; width: 75svw; height: 40svh; padding: 3svh; overflow-y: auto; position: absolute; bottom: 5svh; left: 0; right: 0; margin: 0 auto; z-index: 83; font-family: 'Playpen Sans', cursive;">
+      <div id="letter-component-text"
+        style="font-size: 2svh; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;"></div>
+      <div id="letter-component-footer"
+        style="position: absolute; bottom: 2svh; right: 2svh; display: flex; flex-direction: column; align-items: flex-end; gap: 1svh;">
+        <img id="photo-component-img" src="" alt="photo" class="animate-rotate-slow"
+          style="width: auto; height: 13svh; object-fit: cover; display: none;">
+        <div id="letter-component-sender"
+          style="font-size: 2.4svh; font-weight: bold; font-family: 'Playpen Sans', cursive; display: none;"></div>
       </div>
-      <div id="letters-container" style="width: 90svw; margin: 0 auto; position: relative; display: flex; flex-wrap: wrap; overflow: visible; padding: 2svh 0;"></div>
     </div>
+  </div>
 
-    <!-- Background Music -->
-    <audio 
-      id="background-music"
-      src="./assets/happy-birthday-orchestra.mp3"
-      loop
-      style="display: none;"
-    ></audio>
+  <!-- Mailbox Container -->
+  <div id="mailbox"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 70; background-color: #F4F2E4; display: none; flex-direction: column; overflow-y: auto; overflow-x: hidden;">
+    <div style="padding: 4svh 5svw; display: flex; gap: 2svh;">
+      <button id="close-mailbox-btn"
+        style="cursor: pointer; min-width: 5svh; min-height: 5svh; width: 5svh; height: 5svh; background-color: #274044; border-radius: 50%; display: flex; align-items: center; justify-content: center; border: none; padding: 0;">
+        <svg width="10" height="16" viewBox="0 0 10 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M8.91437 0.414375C8.36187 -0.138125 7.46938 -0.138125 6.91688 0.414375L0.414375 6.91688C-0.138125 7.46938 -0.138125 8.36188 0.414375 8.91438L6.91688 15.4169C7.46938 15.9694 8.36187 15.9694 8.91437 15.4169C9.46687 14.8644 9.46687 13.9719 8.91437 13.4194L3.41771 7.90854L8.91437 2.41187C9.46687 1.85937 9.45271 0.952708 8.91437 0.414375Z"
+            fill="#F4F2E4" />
+        </svg>
+      </button>
+      <h1 style="font-size: 3svh; text-align: center; font-family: 'Barrio', system-ui; flex: 1;">Ucapan dari yang kenal
+        kamu paling dekat</h1>
+    </div>
+    <div id="letters-container"
+      style="width: 90svw; margin: 0 auto; position: relative; display: flex; flex-wrap: wrap; overflow: visible; padding: 2svh 0;">
+    </div>
+  </div>
 
-    <script>
-      // Register custom rotation animation component
-      AFRAME.registerComponent('rotate-animation', {
-        schema: {
-          maxAngle: {type: 'number', default: 15},
-          duration: {type: 'number', default: 3000},
-          delay: {type: 'number', default: 0}
-        },
-        init: function() {
-          const rotation = this.el.getAttribute('rotation');
-          this.baseRotationZ = rotation.z || 0; // Store base Z rotation in degrees
-          this.startTime = Date.now() + this.data.delay;
-        },
-        tick: function() {
-          const elapsed = (Date.now() - this.startTime) / 1000;
-          if (elapsed < 0) return; // Still in delay period
-          
-          const normalizedTime = (elapsed % (this.data.duration / 1000)) / (this.data.duration / 1000);
-          
-          // Calculate rotation using ease-in-out curve (similar to slamat-slimit-ar)
-          let rotationProgress;
-          if (normalizedTime < 0.5) {
-            // Ease in
-            rotationProgress = 2 * normalizedTime * normalizedTime;
-          } else {
-            // Ease out
-            rotationProgress = 1 - 2 * (1 - normalizedTime) * (1 - normalizedTime);
-          }
-          
-          // Apply rotation: 0 -> maxAngle -> 0 (using sine wave)
-          const rotationAngle = this.baseRotationZ + (this.data.maxAngle * Math.sin(rotationProgress * Math.PI));
-          
-          const currentRotation = this.el.getAttribute('rotation');
-          this.el.setAttribute('rotation', {
-            x: currentRotation.x,
-            y: currentRotation.y,
-            z: rotationAngle // Already in degrees
+  <!-- Background Music -->
+  <audio id="background-music" src="./assets/happy-birthday-orchestra.mp3" loop style="display: none;"></audio>
+
+  <script>
+    // Register custom rotation animation component
+    AFRAME.registerComponent('rotate-animation', {
+      schema: {
+        maxAngle: { type: 'number', default: 15 },
+        duration: { type: 'number', default: 3000 },
+        delay: { type: 'number', default: 0 }
+      },
+      init: function () {
+        const rotation = this.el.getAttribute('rotation');
+        this.baseRotationZ = rotation.z || 0; // Store base Z rotation in degrees
+        this.startTime = Date.now() + this.data.delay;
+      },
+      tick: function () {
+        const elapsed = (Date.now() - this.startTime) / 1000;
+        if (elapsed < 0) return; // Still in delay period
+
+        const normalizedTime = (elapsed % (this.data.duration / 1000)) / (this.data.duration / 1000);
+
+        // Calculate rotation using ease-in-out curve (similar to slamat-slimit-ar)
+        let rotationProgress;
+        if (normalizedTime < 0.5) {
+          // Ease in
+          rotationProgress = 2 * normalizedTime * normalizedTime;
+        } else {
+          // Ease out
+          rotationProgress = 1 - 2 * (1 - normalizedTime) * (1 - normalizedTime);
+        }
+
+        // Apply rotation: 0 -> maxAngle -> 0 (using sine wave)
+        const rotationAngle = this.baseRotationZ + (this.data.maxAngle * Math.sin(rotationProgress * Math.PI));
+
+        const currentRotation = this.el.getAttribute('rotation');
+        this.el.setAttribute('rotation', {
+          x: currentRotation.x,
+          y: currentRotation.y,
+          z: rotationAngle // Already in degrees
+        });
+      }
+    });
+
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+      name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+      var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+      var results = regex.exec(location.search);
+      return results === null
+        ? ""
+        : decodeURIComponent(results[1].replace(/\+/g, " ")).toUpperCase();
+    }
+
+    // Function to check if image exists
+    function checkImageExists(url) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = url;
+      });
+    }
+
+    // Function to create image element in AR with animation
+    function createARImage(src, position, initialRotation, scale, marker, rotationPattern, index, letterData) {
+      const imageEl = document.createElement("a-image");
+      imageEl.setAttribute("src", src);
+      imageEl.setAttribute("position", position);
+      imageEl.setAttribute("rotation", initialRotation);
+      imageEl.setAttribute("width", scale);
+      imageEl.setAttribute("height", scale);
+
+      // Make image interactive (required for raycaster)
+      imageEl.setAttribute("class", "clickable");
+      imageEl.setAttribute("data-url", src); // Store URL in data attribute
+
+      // Store letter data on the element
+      if (letterData) {
+        imageEl.setAttribute("data-letter", JSON.stringify(letterData));
+      }
+
+      // Add click event listener (works with raycaster)
+      imageEl.addEventListener("click", function (evt) {
+        console.log("Image clicked, URL:", src);
+        if (letterData) {
+          // Dispatch custom event to open letter detail
+          const event = new CustomEvent('openLetterDetail', {
+            detail: {
+              letterData: letterData
+            }
           });
+          document.dispatchEvent(event);
         }
       });
 
-      // Function to get URL parameters
-      function getUrlParameter(name) {
-        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
-        var results = regex.exec(location.search);
-        return results === null
-          ? ""
-          : decodeURIComponent(results[1].replace(/\+/g, " ")).toUpperCase();
-      }
-
-      // Function to check if image exists
-      function checkImageExists(url) {
-        return new Promise((resolve) => {
-          const img = new Image();
-          img.onload = () => resolve(true);
-          img.onerror = () => resolve(false);
-          img.src = url;
-        });
-      }
-
-      // Function to create image element in AR with animation
-      function createARImage(src, position, initialRotation, scale, marker, rotationPattern, index, letterData) {
-        const imageEl = document.createElement("a-image");
-        imageEl.setAttribute("src", src);
-        imageEl.setAttribute("position", position);
-        imageEl.setAttribute("rotation", initialRotation);
-        imageEl.setAttribute("width", scale);
-        imageEl.setAttribute("height", scale);
-        
-        // Make image interactive (required for raycaster)
-        imageEl.setAttribute("class", "clickable");
-        imageEl.setAttribute("data-url", src); // Store URL in data attribute
-        
-        // Store letter data on the element
+      // Also handle touch events for mobile
+      imageEl.addEventListener("touchstart", function (evt) {
+        console.log("Image touched, URL:", src);
         if (letterData) {
-          imageEl.setAttribute("data-letter", JSON.stringify(letterData));
+          // Dispatch custom event to open letter detail
+          const event = new CustomEvent('openLetterDetail', {
+            detail: {
+              letterData: letterData
+            }
+          });
+          document.dispatchEvent(event);
         }
-        
-        // Add click event listener (works with raycaster)
-        imageEl.addEventListener("click", function(evt) {
-          console.log("Image clicked, URL:", src);
-          if (letterData) {
-            // Dispatch custom event to open letter detail
-            const event = new CustomEvent('openLetterDetail', { 
-              detail: { 
-                letterData: letterData
-              } 
-            });
-            document.dispatchEvent(event);
-          }
-        });
-        
-        // Also handle touch events for mobile
-        imageEl.addEventListener("touchstart", function(evt) {
-          console.log("Image touched, URL:", src);
-          if (letterData) {
-            // Dispatch custom event to open letter detail
-            const event = new CustomEvent('openLetterDetail', { 
-              detail: { 
-                letterData: letterData
-              } 
-            });
-            document.dispatchEvent(event);
-          }
-        });
-        
-        // Add rotation animation using custom component
-        // Animation oscillates around base rotation by maxAngle degrees
-        imageEl.setAttribute("rotate-animation", {
-          maxAngle: rotationPattern.maxAngle,
-          duration: rotationPattern.duration * 1000, // Convert to milliseconds
-          delay: Math.max(0, rotationPattern.delay * 1000) // Convert to milliseconds, ensure non-negative
-        });
-        marker.appendChild(imageEl);
-        return imageEl;
-      }
+      });
 
-      // Function to remove all images from marker
-      function clearMarkerImages(marker) {
-        const images = marker.querySelectorAll("a-image");
-        images.forEach((img) => img.remove());
-      }
+      // Add rotation animation using custom component
+      // Animation oscillates around base rotation by maxAngle degrees
+      imageEl.setAttribute("rotate-animation", {
+        maxAngle: rotationPattern.maxAngle,
+        duration: rotationPattern.duration * 1000, // Convert to milliseconds
+        delay: Math.max(0, rotationPattern.delay * 1000) // Convert to milliseconds, ensure non-negative
+      });
+      marker.appendChild(imageEl);
+      return imageEl;
+    }
 
-      document.addEventListener("DOMContentLoaded", function () {
-        const markerHighfive = document.getElementById("marker-highfive");
-        const markerSparkle = document.getElementById("marker-sparkle");
-        const markerNotFoundOverlay = document.getElementById("markerNotFoundOverlay");
-        let markerDetectedOnce = false;
+    // Function to remove all images from marker
+    function clearMarkerImages(marker) {
+      const images = marker.querySelectorAll("a-image");
+      images.forEach((img) => img.remove());
+    }
 
-        // Configure camera for best rear camera with highest resolution (not wide)
-        // Exactly like slamat-slimit-ar approach
-        const scene = document.querySelector('a-scene');
-        const configureCamera = async () => {
-          try {
-            const video = scene.querySelector('video');
-            if (video && video.srcObject) {
-              const stream = video.srcObject;
-              const videoTrack = stream.getVideoTracks()[0];
-              
-              if (videoTrack) {
-                // Check capabilities and apply autofocus if supported (exactly like slamat-slimit-ar)
-                const capabilities = videoTrack.getCapabilities();
-                console.log('Camera capabilities:', capabilities);
-                
-                if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-                  await videoTrack.applyConstraints({
-                    advanced: [{ focusMode: 'continuous' }]
-                  });
-                  console.log('Autofocus enabled');
-                }
-                
-                // Ensure HD resolution (exactly like slamat-slimit-ar)
-                const settings = videoTrack.getSettings();
-                console.log('Current camera resolution:', settings.width, 'x', settings.height);
-                
-                // Try to apply higher resolution constraints (exactly like slamat-slimit-ar)
-                try {
-                  await videoTrack.applyConstraints({
-                    width: { ideal: 1920, min: 1280 },
-                    height: { ideal: 1080, min: 720 }
-                  });
-                  console.log('HD resolution constraints applied');
-                } catch (err) {
-                  console.warn('Could not apply HD constraints:', err);
-                }
+    document.addEventListener("DOMContentLoaded", function () {
+      const markerHighfive = document.getElementById("marker-highfive");
+      const markerSparkle = document.getElementById("marker-sparkle");
+      const markerNotFoundOverlay = document.getElementById("markerNotFoundOverlay");
+      let markerDetectedOnce = false;
+
+      // Configure camera for best rear camera with highest resolution (not wide)
+      // Exactly like slamat-slimit-ar approach
+      const scene = document.querySelector('a-scene');
+      const configureCamera = async () => {
+        try {
+          const video = scene.querySelector('video');
+          if (video && video.srcObject) {
+            const stream = video.srcObject;
+            const videoTrack = stream.getVideoTracks()[0];
+
+            if (videoTrack) {
+              // Check capabilities and apply autofocus if supported (exactly like slamat-slimit-ar)
+              const capabilities = videoTrack.getCapabilities();
+              console.log('Camera capabilities:', capabilities);
+
+              if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                await videoTrack.applyConstraints({
+                  advanced: [{ focusMode: 'continuous' }]
+                });
+                console.log('Autofocus enabled');
+              }
+
+              // Ensure HD resolution (exactly like slamat-slimit-ar)
+              const settings = videoTrack.getSettings();
+              console.log('Current camera resolution:', settings.width, 'x', settings.height);
+
+              // Try to apply higher resolution constraints (exactly like slamat-slimit-ar)
+              try {
+                await videoTrack.applyConstraints({
+                  width: { ideal: 1920, min: 1280 },
+                  height: { ideal: 1080, min: 720 }
+                });
+                console.log('HD resolution constraints applied');
+              } catch (err) {
+                console.warn('Could not apply HD constraints:', err);
               }
             }
-          } catch (error) {
-            console.warn('Could not configure camera settings:', error);
           }
-        };
-        
-        if (scene) {
-          // Configure camera after AR session begins (like slamat-slimit-ar)
-          scene.addEventListener('loaded', () => {
-            // Wait a bit for AR.js to fully initialize
-            setTimeout(configureCamera, 1000);
-          });
-          // Also try on arjs-video-loaded event
-          scene.addEventListener('arjs-video-loaded', configureCamera);
-          // Fallback with multiple attempts
-          setTimeout(configureCamera, 2000);
-          setTimeout(configureCamera, 3000);
+        } catch (error) {
+          console.warn('Could not configure camera settings:', error);
+        }
+      };
+
+      if (scene) {
+        // Configure camera after AR session begins (like slamat-slimit-ar)
+        scene.addEventListener('loaded', () => {
+          // Wait a bit for AR.js to fully initialize
+          setTimeout(configureCamera, 1000);
+        });
+        // Also try on arjs-video-loaded event
+        scene.addEventListener('arjs-video-loaded', configureCamera);
+        // Fallback with multiple attempts
+        setTimeout(configureCamera, 2000);
+        setTimeout(configureCamera, 3000);
+      }
+
+      const orderID = getUrlParameter("orderID");
+      console.log("Fetching content for orderID:", orderID);
+
+      // Default face images (static fallback)
+      const defaultFaces = [
+        "./assets/face-1.png",
+        "./assets/face-2.png",
+        "./assets/face-3.png",
+        "./assets/face-4.png",
+      ];
+
+      // Initial setup with static faces
+      let faceUrls = [...defaultFaces];
+      let letterDataArray = []; // Store full letter data
+
+      // Rotation patterns (similar to slamat-slimit-ar)
+      const rotationPatterns = [
+        { maxAngle: 15, duration: 3, delay: 0 },      // rotate-snap-1
+        { maxAngle: -18, duration: 3.5, delay: 0 },    // rotate-snap-2
+        { maxAngle: 12, duration: 4, delay: -1 },     // rotate-snap-3
+        { maxAngle: -20, duration: 3.2, delay: -0.5 } // rotate-snap-4
+      ];
+
+      // Function to setup images in AR
+      function setupARImages(urls, marker, baseRotation, dataArray = []) {
+        clearMarkerImages(marker);
+
+        // Only show as many images as we have URLs (no duplication)
+        const faceCount = urls.length;
+
+        // Position configuration for images - dynamically calculate spacing based on count
+        // X spacing - evenly spaced from -3.5 to 0
+        const xMin = -3.5;
+        const xMax = 0;
+        const xCenter = -1.75; // Center of -3.5 to 0
+
+        for (let i = 0; i < faceCount; i++) {
+          const faceUrl = urls[i]; // Use actual URL, no cycling
+          const letterData = dataArray[i] || null; // Get corresponding letter data
+
+          // Calculate position - start from center (-2) and spread evenly
+          let baseX;
+          if (faceCount === 1) {
+            baseX = xCenter; // Single image at center
+          } else {
+            // Spread evenly from -3.5 to 0
+            const xRange = xMax - xMin; // 3.5
+            const xSpacing = xRange / (faceCount - 1);
+            baseX = xMin + (i * xSpacing);
+          }
+          const xOffset = (Math.random() - 0.5) * 0.2;
+          const initialX = baseX + xOffset;
+          // Position images right on the marker plane
+          const initialZ = 0; // Right on marker
+          const initialY = 0; // Right on marker
+
+          // Random base rotation
+          const rotationZ = (Math.random() - 0.5) * 20; // -10 to 10 degrees
+
+          // Scale - make images smaller (200% of original)
+          const scale = 3.0;
+
+          // Get rotation pattern for this image
+          const rotationPattern = rotationPatterns[i % rotationPatterns.length];
+
+          // Create image with specified base rotation and animation
+          createARImage(
+            faceUrl,
+            `${initialX} ${initialY} ${initialZ}`,
+            `${baseRotation} ${rotationZ} 0`,
+            scale,
+            marker,
+            rotationPattern,
+            i,
+            letterData
+          );
+        }
+      }
+
+      // Initial setup with static faces
+      // Highfive marker uses -80 rotation, Sparkle marker uses -90 rotation
+      setupARImages(faceUrls, markerHighfive, -80, letterDataArray);
+      setupARImages(faceUrls, markerSparkle, -90, letterDataArray);
+
+
+      // Function to render letters in horizontal story list (circular buttons with letter SVGs)
+      async function renderLettersBottomLeft(lettersData) {
+        const lettersListBottom = document.getElementById('letters-list-bottom');
+        if (!lettersListBottom) return;
+
+        // Clear existing letters
+        lettersListBottom.innerHTML = '';
+
+        if (!lettersData || lettersData.length === 0) {
+          return;
         }
 
-        const orderID = getUrlParameter("orderID");
-        console.log("Fetching content for orderID:", orderID);
+        // Import createSVGComponent dynamically
+        const { createSVGComponent } = await import('./svg-component.js');
 
-        // Default face images (static fallback)
-        const defaultFaces = [
-          "./assets/face-1.png",
-          "./assets/face-2.png",
-          "./assets/face-3.png",
-          "./assets/face-4.png",
+        // Color palette for sequential assignment
+        const colorPalette = [
+          '90FF77',
+          'FF5627',
+          '008177',
+          'FFC61C',
+          'FF443D',
+          '8142FF',
+          '28B7FF',
+          'FF7ADC'
         ];
 
-        // Initial setup with static faces
-        let faceUrls = [...defaultFaces];
-        let letterDataArray = []; // Store full letter data
+        lettersData.forEach((letter, i) => {
+          // Create unique ID for filter IDs
+          const uniqueId = `letter_story_${i}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-        // Rotation patterns (similar to slamat-slimit-ar)
-        const rotationPatterns = [
-          { maxAngle: 15, duration: 3, delay: 0 },      // rotate-snap-1
-          { maxAngle: -18, duration: 3.5, delay: 0 },    // rotate-snap-2
-          { maxAngle: 12, duration: 4, delay: -1 },     // rotate-snap-3
-          { maxAngle: -20, duration: 3.2, delay: -0.5 } // rotate-snap-4
-        ];
+          // Get sequential color from palette
+          const colorIndex = i % colorPalette.length;
+          const selectedColor = colorPalette[colorIndex];
 
-        // Function to setup images in AR
-        function setupARImages(urls, marker, baseRotation, dataArray = []) {
-          clearMarkerImages(marker);
-          
-          // Only show as many images as we have URLs (no duplication)
-          const faceCount = urls.length;
-          
-          // Position configuration for images - dynamically calculate spacing based on count
-          // X spacing - evenly spaced from -3.5 to 0
-          const xMin = -3.5;
-          const xMax = 0;
-          const xCenter = -1.75; // Center of -3.5 to 0
-          
-          for (let i = 0; i < faceCount; i++) {
-            const faceUrl = urls[i]; // Use actual URL, no cycling
-            const letterData = dataArray[i] || null; // Get corresponding letter data
-            
-            // Calculate position - start from center (-2) and spread evenly
-            let baseX;
-            if (faceCount === 1) {
-              baseX = xCenter; // Single image at center
-            } else {
-              // Spread evenly from -3.5 to 0
-              const xRange = xMax - xMin; // 3.5
-              const xSpacing = xRange / (faceCount - 1);
-              baseX = xMin + (i * xSpacing);
-            }
-            const xOffset = (Math.random() - 0.5) * 0.2;
-            const initialX = baseX + xOffset;
-            // Position images right on the marker plane
-            const initialZ = 0; // Right on marker
-            const initialY = 0; // Right on marker
-            
-            // Random base rotation
-            const rotationZ = (Math.random() - 0.5) * 20; // -10 to 10 degrees
-            
-            // Scale - make images smaller (200% of original)
-            const scale = 3.0;
-            
-            // Get rotation pattern for this image
-            const rotationPattern = rotationPatterns[i % rotationPatterns.length];
-            
-            // Create image with specified base rotation and animation
-            createARImage(
-              faceUrl,
-              `${initialX} ${initialY} ${initialZ}`,
-              `${baseRotation} ${rotationZ} 0`,
-              scale,
-              marker,
-              rotationPattern,
-              i,
-              letterData
-            );
-          }
-        }
+          // Create SVG with sequential color
+          const svg = createSVGComponent(selectedColor, uniqueId);
 
-        // Initial setup with static faces
-        // Highfive marker uses -80 rotation, Sparkle marker uses -90 rotation
-        setupARImages(faceUrls, markerHighfive, -80, letterDataArray);
-        setupARImages(faceUrls, markerSparkle, -90, letterDataArray);
+          // Create circular story button (like in provided HTML) - bigger size
+          const storyButton = document.createElement('div');
+          storyButton.className = 'story-button';
+          storyButton.style.height = 'auto';
+          storyButton.style.minWidth = '80px';
+          storyButton.style.width = '80px';
+          storyButton.style.overflow = 'visible';
+          storyButton.style.position = 'relative';
+          storyButton.style.cursor = 'pointer';
+          storyButton.style.transition = 'transform 0.3s ease';
 
-
-        // Function to render letters in horizontal story list (circular buttons with letter SVGs)
-        async function renderLettersBottomLeft(lettersData) {
-          const lettersListBottom = document.getElementById('letters-list-bottom');
-          if (!lettersListBottom) return;
-          
-          // Clear existing letters
-          lettersListBottom.innerHTML = '';
-          
-          if (!lettersData || lettersData.length === 0) {
-            return;
-          }
-          
-          // Import createSVGComponent dynamically
-          const { createSVGComponent } = await import('./svg-component.js');
-          
-          // Color palette for sequential assignment
-          const colorPalette = [
-            '90FF77',
-            'FF5627',
-            '008177',
-            'FFC61C',
-            'FF443D',
-            '8142FF',
-            '28B7FF',
-            'FF7ADC'
-          ];
-          
-          lettersData.forEach((letter, i) => {
-            // Create unique ID for filter IDs
-            const uniqueId = `letter_story_${i}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            
-            // Get sequential color from palette
-            const colorIndex = i % colorPalette.length;
-            const selectedColor = colorPalette[colorIndex];
-            
-            // Create SVG with sequential color
-            const svg = createSVGComponent(selectedColor, uniqueId);
-            
-            // Create circular story button (like in provided HTML) - bigger size
-            const storyButton = document.createElement('div');
-            storyButton.className = 'story-button';
-            storyButton.style.height = 'auto';
-            storyButton.style.minWidth = '80px';
-            storyButton.style.width = '80px';
-            storyButton.style.overflow = 'visible';
-            storyButton.style.position = 'relative';
-            storyButton.style.cursor = 'pointer';
-            storyButton.style.transition = 'transform 0.3s ease';
-            
-            // Store letter data
-            storyButton.dataset.letterData = JSON.stringify({
-              video_url: letter.video_url || '',
-              audio_url: letter.audio_url || '',
-              message: letter.message || '',
-              name: letter.name || 'Anonymous',
-              photo_url: letter.photo_url || ''
-            });
-            
-            // Make SVG fit in circular container - bigger
-            svg.style.width = '100%';
-            svg.style.height = '100%';
-            svg.style.display = 'block';
-            svg.style.objectFit = 'cover';
-            // svg.style.borderRadius = '50%';
-            
-            // Create wrapper for SVG to contain it
-            const svgWrapper = document.createElement('div');
-            svgWrapper.style.width = '100%';
-            svgWrapper.style.height = '100%';
-            // svgWrapper.style.borderRadius = '50%';
-            svgWrapper.style.overflow = 'hidden';
-            svgWrapper.style.position = 'relative';
-            svgWrapper.appendChild(svg);
-            
-            // Add name text at bottom right (overlay on SVG)
-            const nameText = document.createElement('div');
-            nameText.textContent = letter.name || 'Anonymous';
-            nameText.style.fontFamily = "'Playpen Sans', cursive";
-            nameText.style.position = 'absolute';
-            nameText.style.bottom = '8%';
-            nameText.style.right = '8%';
-            nameText.style.fontSize = '11px';
-            nameText.style.fontWeight = '600';
-            nameText.style.color = '#000000';
-            nameText.style.pointerEvents = 'none';
-            nameText.style.zIndex = '10';
-            nameText.style.whiteSpace = 'nowrap';
-            nameText.style.textShadow = '0 1px 2px rgba(255, 255, 255, 0.8)';
-            nameText.style.maxWidth = '70%';
-            nameText.style.overflow = 'hidden';
-            nameText.style.textOverflow = 'ellipsis';
-            
-            // Append SVG wrapper and name
-            storyButton.appendChild(svgWrapper);
-            storyButton.appendChild(nameText);
-            
-            // Add click handler
-            storyButton.addEventListener('click', (e) => {
-              e.stopPropagation();
-              // Remove active class from all buttons
-              document.querySelectorAll('.story-button').forEach((btn) => btn.classList.remove('active'));
-              // Add active class to clicked button
-              storyButton.classList.add('active');
-              
-              const letterData = JSON.parse(storyButton.dataset.letterData);
-              
-              // Dispatch custom event to open letter detail
-              const event = new CustomEvent('openLetterDetail', { 
-                detail: { 
-                  letterData: {
-                    video_url: letterData.video_url,
-                    audio_url: letterData.audio_url,
-                    message: letterData.message,
-                    name: letterData.name,
-                    photo_url: letterData.photo_url
-                  }
-                } 
-              });
-              document.dispatchEvent(event);
-            });
-            
-            lettersListBottom.appendChild(storyButton);
+          // Store letter data
+          storyButton.dataset.letterData = JSON.stringify({
+            video_url: letter.video_url || '',
+            audio_url: letter.audio_url || '',
+            message: letter.message || '',
+            name: letter.name || 'Anonymous',
+            photo_url: letter.photo_url || ''
           });
-        }
 
-        // Function to render letters in mailbox container (same design as gallery.html)
-        async function renderLettersInMailbox(lettersData) {
-          const lettersContainer = document.getElementById('letters-container');
-          if (!lettersContainer) return;
-          
-          // Clear existing letters
-          lettersContainer.innerHTML = '';
-          
-          if (!lettersData || lettersData.length === 0) {
-            return;
-          }
+          // Make SVG fit in circular container - bigger
+          svg.style.width = '100%';
+          svg.style.height = '100%';
+          svg.style.display = 'block';
+          svg.style.objectFit = 'cover';
+          // svg.style.borderRadius = '50%';
 
-          // Import createSVGComponent dynamically
-          const { createSVGComponent } = await import('./svg-component.js');
-          
-          const numLetters = lettersData.length;
-          const columns = 2;
-          
-          // Color palette for sequential assignment
-          const colorPalette = [
-            '90FF77',
-            'FF5627',
-            '008177',
-            'FFC61C',
-            'FF443D',
-            '8142FF',
-            '28B7FF',
-            'FF7ADC'
-          ];
-          
-          lettersData.forEach((letter, i) => {
-            // Create unique ID for filter IDs
-            const uniqueId = `letter_${i}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            
-            // Get sequential color from palette (cycle through if more letters than colors)
-            const colorIndex = i % colorPalette.length;
-            const selectedColor = colorPalette[colorIndex];
-            
-            // Create SVG with sequential color
-            const svg = createSVGComponent(selectedColor, uniqueId);
-            
-            // Create wrapper div for positioning and styling
-            const wrapper = document.createElement('div');
-            wrapper.style.width = `${100 / columns}%`;
-            wrapper.style.position = 'relative';
-            wrapper.style.boxSizing = 'border-box';
-            wrapper.style.padding = '1svh';
-            
-            // Set z-index (decreasing: first letter has highest z-index)
-            const zIndex = numLetters - i;
-            wrapper.style.zIndex = zIndex;
-            
-            // Add cursor pointer
-            wrapper.style.cursor = 'pointer';
-            
-            // Add drop shadow using filter (works better with SVGs)
-            wrapper.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))';
-            
-            // Random rotation between -15 and 15 degrees
-            const rotation = (Math.random() - 0.5) * 30;
-            
-            // Make SVG responsive - maintain aspect ratio
-            svg.style.width = '100%';
-            svg.style.height = 'auto';
-            svg.style.display = 'block';
-            svg.style.maxWidth = '100%';
-            
-            // Create inner container that will rotate and scale together
-            const innerContainer = document.createElement('div');
-            innerContainer.style.position = 'relative';
-            innerContainer.style.display = 'inline-block';
-            innerContainer.style.width = '100%';
-            innerContainer.style.transform = `rotate(${rotation}deg) scale(1.2)`;
-            innerContainer.style.transformOrigin = 'center';
-            innerContainer.style.transition = 'transform 0.3s ease';
-            
-            // Store initial rotation and letter data
-            innerContainer.dataset.initialRotation = rotation;
-            innerContainer.dataset.isOpen = 'false';
-            wrapper.dataset.letterIndex = i;
-            wrapper.dataset.letterData = JSON.stringify({
-              video_url: letter.video_url || '',
-              audio_url: letter.audio_url || '',
-              message: letter.message || '',
-              name: letter.name || 'Anonymous',
-              photo_url: letter.photo_url || ''
-            });
-            
-            // Add name text in bottom right (use name from data)
-            const nameText = document.createElement('div');
-            nameText.textContent = letter.name || 'Anonymous';
-            nameText.style.fontFamily = "'Playpen Sans', cursive";
-            nameText.style.position = 'absolute';
-            nameText.style.bottom = '15%';
-            nameText.style.right = '15%';
-            nameText.style.color = '#000000';
-            nameText.style.fontSize = 'clamp(1.8svh, 3vw, 3svh)';
-            nameText.style.fontWeight = '600';
-            nameText.style.pointerEvents = 'none';
-            nameText.style.zIndex = '10';
-            nameText.style.whiteSpace = 'nowrap';
-            
-            // Append SVG and name text to inner container
-            innerContainer.appendChild(svg);
-            innerContainer.appendChild(nameText);
-            
-            // Append inner container to wrapper
-            wrapper.appendChild(innerContainer);
-            
-            // Add hover effect - rotate on hover
-            wrapper.addEventListener('mouseenter', () => {
-              const currentRotation = parseFloat(innerContainer.dataset.initialRotation);
-              const isOpen = innerContainer.dataset.isOpen === 'true';
-              if (!isOpen) {
-                // Rotate more on hover (add 10 degrees)
-                innerContainer.style.transform = `rotate(${currentRotation + 10}deg) scale(1.2)`;
-              }
-            });
-            
-            wrapper.addEventListener('mouseleave', () => {
-              const currentRotation = parseFloat(innerContainer.dataset.initialRotation);
-              const isOpen = innerContainer.dataset.isOpen === 'true';
-              if (!isOpen) {
-                // Return to initial rotation
-                innerContainer.style.transform = `rotate(${currentRotation}deg) scale(1.2)`;
-              }
-            });
-            
-            // Add click handler to open letter detail and rotate
-            wrapper.addEventListener('click', (e) => {
-              e.stopPropagation();
-              const currentRotation = parseFloat(innerContainer.dataset.initialRotation);
-              // Rotate more when opened (add 15 degrees)
-              innerContainer.style.transform = `rotate(${currentRotation + 15}deg) scale(1.2)`;
-              innerContainer.dataset.isOpen = 'true';
-              
-              const letterData = JSON.parse(wrapper.dataset.letterData);
-              
-              // Dispatch custom event to open letter detail with letter data
-              const event = new CustomEvent('openLetterDetail', { 
-                detail: { 
-                  letterWrapper: wrapper, 
-                  innerContainer: innerContainer,
-                  letterData: {
-                    video_url: letterData.video_url,
-                    audio_url: letterData.audio_url,
-                    message: letterData.message,
-                    name: letterData.name,
-                    photo_url: letterData.photo_url
-                  },
-                  letterIndex: i
-                } 
-              });
-              document.dispatchEvent(event);
-            });
-            
-            lettersContainer.appendChild(wrapper);
-          });
-        }
+          // Create wrapper for SVG to contain it
+          const svgWrapper = document.createElement('div');
+          svgWrapper.style.width = '100%';
+          svgWrapper.style.height = '100%';
+          // svgWrapper.style.borderRadius = '50%';
+          svgWrapper.style.overflow = 'hidden';
+          svgWrapper.style.position = 'relative';
+          svgWrapper.appendChild(svg);
 
-        // Fetch content from API if orderID exists
-        if (orderID) {
-          fetch(`https://slamatslimit.byc.plus/api/gallery?order_id=${orderID}`)
-            .then((response) => {
-              console.log("API Response status:", response.status);
-              return response.json();
-            })
-            .then(async (data) => {
-              console.log("API Response data:", data);
-              
-              if (data && data.length > 0) {
-                // Filter items with photo_url and store full data
-                const validItems = data.filter((item) => item.photo_url && item.photo_url.trim() !== "");
-                
-                console.log("Valid items with photos:", validItems);
-                
-                // Check which images exist and store corresponding data
-                const existingUrls = [];
-                const existingData = [];
-                for (const item of validItems) {
-                  const exists = await checkImageExists(item.photo_url);
-                  if (exists) {
-                    existingUrls.push(item.photo_url);
-                    existingData.push(item); // Store full letter data
-                  } else {
-                    console.log("Image does not exist:", item.photo_url);
-                  }
+          // Add name text at bottom right (overlay on SVG)
+          const nameText = document.createElement('div');
+          nameText.textContent = letter.name || 'Anonymous';
+          nameText.style.fontFamily = "'Playpen Sans', cursive";
+          nameText.style.position = 'absolute';
+          nameText.style.bottom = '8%';
+          nameText.style.right = '8%';
+          nameText.style.fontSize = '11px';
+          nameText.style.fontWeight = '600';
+          nameText.style.color = '#000000';
+          nameText.style.pointerEvents = 'none';
+          nameText.style.zIndex = '10';
+          nameText.style.whiteSpace = 'nowrap';
+          nameText.style.textShadow = '0 1px 2px rgba(255, 255, 255, 0.8)';
+          nameText.style.maxWidth = '70%';
+          nameText.style.overflow = 'hidden';
+          nameText.style.textOverflow = 'ellipsis';
+
+          // Append SVG wrapper and name
+          storyButton.appendChild(svgWrapper);
+          storyButton.appendChild(nameText);
+
+          // Add click handler
+          storyButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Remove active class from all buttons
+            document.querySelectorAll('.story-button').forEach((btn) => btn.classList.remove('active'));
+            // Add active class to clicked button
+            storyButton.classList.add('active');
+
+            const letterData = JSON.parse(storyButton.dataset.letterData);
+
+            // Dispatch custom event to open letter detail
+            const event = new CustomEvent('openLetterDetail', {
+              detail: {
+                letterData: {
+                  video_url: letterData.video_url,
+                  audio_url: letterData.audio_url,
+                  message: letterData.message,
+                  name: letterData.name,
+                  photo_url: letterData.photo_url
                 }
-                
-                // Use API photos if available, otherwise use static faces
-                if (existingUrls.length > 0) {
-                  faceUrls = existingUrls;
-                  letterDataArray = existingData; // Store full data array
-                  console.log("Using API photos:", faceUrls);
-                  console.log("Letter data array:", letterDataArray);
+              }
+            });
+            document.dispatchEvent(event);
+          });
+
+          lettersListBottom.appendChild(storyButton);
+        });
+      }
+
+      // Function to render letters in mailbox container (same design as gallery.html)
+      async function renderLettersInMailbox(lettersData) {
+        const lettersContainer = document.getElementById('letters-container');
+        if (!lettersContainer) return;
+
+        // Clear existing letters
+        lettersContainer.innerHTML = '';
+
+        if (!lettersData || lettersData.length === 0) {
+          return;
+        }
+
+        // Import createSVGComponent dynamically
+        const { createSVGComponent } = await import('./svg-component.js');
+
+        const numLetters = lettersData.length;
+        const columns = 2;
+
+        // Color palette for sequential assignment
+        const colorPalette = [
+          '90FF77',
+          'FF5627',
+          '008177',
+          'FFC61C',
+          'FF443D',
+          '8142FF',
+          '28B7FF',
+          'FF7ADC'
+        ];
+
+        lettersData.forEach((letter, i) => {
+          // Create unique ID for filter IDs
+          const uniqueId = `letter_${i}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+          // Get sequential color from palette (cycle through if more letters than colors)
+          const colorIndex = i % colorPalette.length;
+          const selectedColor = colorPalette[colorIndex];
+
+          // Create SVG with sequential color
+          const svg = createSVGComponent(selectedColor, uniqueId);
+
+          // Create wrapper div for positioning and styling
+          const wrapper = document.createElement('div');
+          wrapper.style.width = `${100 / columns}%`;
+          wrapper.style.position = 'relative';
+          wrapper.style.boxSizing = 'border-box';
+          wrapper.style.padding = '1svh';
+
+          // Set z-index (decreasing: first letter has highest z-index)
+          const zIndex = numLetters - i;
+          wrapper.style.zIndex = zIndex;
+
+          // Add cursor pointer
+          wrapper.style.cursor = 'pointer';
+
+          // Add drop shadow using filter (works better with SVGs)
+          wrapper.style.filter = 'drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))';
+
+          // Random rotation between -15 and 15 degrees
+          const rotation = (Math.random() - 0.5) * 30;
+
+          // Make SVG responsive - maintain aspect ratio
+          svg.style.width = '100%';
+          svg.style.height = 'auto';
+          svg.style.display = 'block';
+          svg.style.maxWidth = '100%';
+
+          // Create inner container that will rotate and scale together
+          const innerContainer = document.createElement('div');
+          innerContainer.style.position = 'relative';
+          innerContainer.style.display = 'inline-block';
+          innerContainer.style.width = '100%';
+          innerContainer.style.transform = `rotate(${rotation}deg) scale(1.2)`;
+          innerContainer.style.transformOrigin = 'center';
+          innerContainer.style.transition = 'transform 0.3s ease';
+
+          // Store initial rotation and letter data
+          innerContainer.dataset.initialRotation = rotation;
+          innerContainer.dataset.isOpen = 'false';
+          wrapper.dataset.letterIndex = i;
+          wrapper.dataset.letterData = JSON.stringify({
+            video_url: letter.video_url || '',
+            audio_url: letter.audio_url || '',
+            message: letter.message || '',
+            name: letter.name || 'Anonymous',
+            photo_url: letter.photo_url || ''
+          });
+
+          // Add name text in bottom right (use name from data)
+          const nameText = document.createElement('div');
+          nameText.textContent = letter.name || 'Anonymous';
+          nameText.style.fontFamily = "'Playpen Sans', cursive";
+          nameText.style.position = 'absolute';
+          nameText.style.bottom = '15%';
+          nameText.style.right = '15%';
+          nameText.style.color = '#000000';
+          nameText.style.fontSize = 'clamp(1.8svh, 3vw, 3svh)';
+          nameText.style.fontWeight = '600';
+          nameText.style.pointerEvents = 'none';
+          nameText.style.zIndex = '10';
+          nameText.style.whiteSpace = 'nowrap';
+
+          // Append SVG and name text to inner container
+          innerContainer.appendChild(svg);
+          innerContainer.appendChild(nameText);
+
+          // Append inner container to wrapper
+          wrapper.appendChild(innerContainer);
+
+          // Add hover effect - rotate on hover
+          wrapper.addEventListener('mouseenter', () => {
+            const currentRotation = parseFloat(innerContainer.dataset.initialRotation);
+            const isOpen = innerContainer.dataset.isOpen === 'true';
+            if (!isOpen) {
+              // Rotate more on hover (add 10 degrees)
+              innerContainer.style.transform = `rotate(${currentRotation + 10}deg) scale(1.2)`;
+            }
+          });
+
+          wrapper.addEventListener('mouseleave', () => {
+            const currentRotation = parseFloat(innerContainer.dataset.initialRotation);
+            const isOpen = innerContainer.dataset.isOpen === 'true';
+            if (!isOpen) {
+              // Return to initial rotation
+              innerContainer.style.transform = `rotate(${currentRotation}deg) scale(1.2)`;
+            }
+          });
+
+          // Add click handler to open letter detail and rotate
+          wrapper.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const currentRotation = parseFloat(innerContainer.dataset.initialRotation);
+            // Rotate more when opened (add 15 degrees)
+            innerContainer.style.transform = `rotate(${currentRotation + 15}deg) scale(1.2)`;
+            innerContainer.dataset.isOpen = 'true';
+
+            const letterData = JSON.parse(wrapper.dataset.letterData);
+
+            // Dispatch custom event to open letter detail with letter data
+            const event = new CustomEvent('openLetterDetail', {
+              detail: {
+                letterWrapper: wrapper,
+                innerContainer: innerContainer,
+                letterData: {
+                  video_url: letterData.video_url,
+                  audio_url: letterData.audio_url,
+                  message: letterData.message,
+                  name: letterData.name,
+                  photo_url: letterData.photo_url
+                },
+                letterIndex: i
+              }
+            });
+            document.dispatchEvent(event);
+          });
+
+          lettersContainer.appendChild(wrapper);
+        });
+      }
+
+      // Fetch content from API if orderID exists
+      if (orderID) {
+        fetch(`https://slamatslimit.byc.plus/api/gallery?order_id=${orderID}`)
+          .then((response) => {
+            console.log("API Response status:", response.status);
+            return response.json();
+          })
+          .then(async (data) => {
+            console.log("API Response data:", data);
+
+            if (data && data.length > 0) {
+              // Filter items with photo_url and store full data
+              const validItems = data.filter((item) => item.photo_url && item.photo_url.trim() !== "");
+
+              console.log("Valid items with photos:", validItems);
+
+              // Check which images exist and store corresponding data
+              const existingUrls = [];
+              const existingData = [];
+              for (const item of validItems) {
+                const exists = await checkImageExists(item.photo_url);
+                if (exists) {
+                  existingUrls.push(item.photo_url);
+                  existingData.push(item); // Store full letter data
                 } else {
-                  console.log("No valid API photos, using static faces");
-                  faceUrls = defaultFaces;
-                  letterDataArray = [];
+                  console.log("Image does not exist:", item.photo_url);
                 }
-                
-                // Update AR images
-                // Highfive marker uses -80 rotation, Sparkle marker uses -90 rotation
-                setupARImages(faceUrls, markerHighfive, -80, letterDataArray);
-                setupARImages(faceUrls, markerSparkle, -90, letterDataArray);
-                
-                // Also render letters in bottom left list (use all data, not just those with photos)
-                renderLettersBottomLeft(data);
+              }
+
+              // Use API photos if available, otherwise use static faces
+              if (existingUrls.length > 0) {
+                faceUrls = existingUrls;
+                letterDataArray = existingData; // Store full data array
+                console.log("Using API photos:", faceUrls);
+                console.log("Letter data array:", letterDataArray);
               } else {
-                console.log("No data received, using static faces");
+                console.log("No valid API photos, using static faces");
+                faceUrls = defaultFaces;
+                letterDataArray = [];
               }
-            })
-            .catch((error) => {
-              console.error("Error fetching content:", error);
-              // Keep using static faces on error
-            });
-        }
 
-        // Setup mailbox button - opens gallery.html
-        const mailboxBtn = document.getElementById("mailbox-btn");
-        
-        if (mailboxBtn) {
-          mailboxBtn.addEventListener("click", () => {
-            if (orderID) {
-              window.location.href = `./gallery.html?orderID=${orderID}`;
+              // Update AR images
+              // Highfive marker uses -80 rotation, Sparkle marker uses -90 rotation
+              setupARImages(faceUrls, markerHighfive, -80, letterDataArray);
+              setupARImages(faceUrls, markerSparkle, -90, letterDataArray);
+
+              // Also render letters in bottom left list (use all data, not just those with photos)
+              renderLettersBottomLeft(data);
             } else {
-              window.location.href = './gallery.html';
+              console.log("No data received, using static faces");
             }
+          })
+          .catch((error) => {
+            console.error("Error fetching content:", error);
+            // Keep using static faces on error
           });
-        }
+      }
 
-        // Setup sound button (mute/unmute)
-        const soundBtn = document.getElementById("sound-btn");
-        const soundOn = document.getElementById("sound-on");
-        const soundOff = document.getElementById("sound-off");
-        
-        if (soundBtn && soundOn && soundOff) {
-          soundBtn.addEventListener("click", () => {
-            const bgMusic = document.getElementById('background-music');
-            if (soundOn.style.display === "none") {
-              // Turn sound on
-              soundOn.style.display = "block";
-              soundOff.style.display = "none";
-              // Unmute background music
-              if (bgMusic) {
-                bgMusic.muted = false;
-                if (bgMusic.paused) {
-                  bgMusic.play().catch(e => console.log('Background music play error:', e));
-                }
+      // Setup mailbox button - opens gallery.html
+      const mailboxBtn = document.getElementById("mailbox-btn");
+
+      if (mailboxBtn) {
+        mailboxBtn.addEventListener("click", () => {
+          if (orderID) {
+            window.location.href = `./gallery.html?orderID=${orderID}`;
+          } else {
+            window.location.href = './gallery.html';
+          }
+        });
+      }
+
+      // Setup sound button (mute/unmute)
+      const soundBtn = document.getElementById("sound-btn");
+      const soundOn = document.getElementById("sound-on");
+      const soundOff = document.getElementById("sound-off");
+
+      if (soundBtn && soundOn && soundOff) {
+        soundBtn.addEventListener("click", () => {
+          const bgMusic = document.getElementById('background-music');
+          if (soundOn.style.display === "none") {
+            // Turn sound on
+            soundOn.style.display = "block";
+            soundOff.style.display = "none";
+            // Unmute background music
+            if (bgMusic) {
+              bgMusic.muted = false;
+              if (bgMusic.paused) {
+                bgMusic.play().catch(e => console.log('Background music play error:', e));
+              }
+            }
+          } else {
+            // Turn sound off
+            soundOn.style.display = "none";
+            soundOff.style.display = "block";
+            // Mute background music
+            if (bgMusic) {
+              bgMusic.muted = true;
+              bgMusic.pause();
+            }
+          }
+        });
+      }
+
+      // Letter detail modal functionality
+      const lettersDetail = document.getElementById('letters-detail');
+      const lettersDetailOverlay = document.getElementById('letters-detail-overlay');
+      const videoComponent = document.getElementById('video-component');
+      const letterComponent = document.getElementById('letter-component');
+      const ruryVideo = document.getElementById('rury-video');
+      const ruryAudio = document.getElementById('rury-audio');
+      const audioIcon = document.getElementById('audio-icon');
+
+      // Component z-index management
+      const baseZIndexes = {
+        video: 81,
+        letter: 83
+      };
+      const pinZIndex = 100; // Pin always stays on top
+
+      // Stacking system - tracks click order
+      let componentStack = ['letter', 'video']; // Initial order (letter on top)
+
+      // Ensure pin always stays on top
+      const pinSvg = document.getElementById('pin-svg');
+      if (pinSvg) {
+        pinSvg.style.zIndex = pinZIndex;
+      }
+
+      // Function to update component stack and z-indexes
+      function updateStack(componentId) {
+        // Remove component from stack if it exists
+        componentStack = componentStack.filter(id => id !== componentId);
+        // Add to top of stack (most recent)
+        componentStack.push(componentId);
+
+        // Assign z-indexes based on stack position (last = highest)
+        componentStack.forEach((id, index) => {
+          const zIndex = 80 + (index * 5);
+          const isActive = index === componentStack.length - 1; // Top of stack is active
+
+          if (id === 'video') {
+            if (!videoComponent) return;
+            videoComponent.style.zIndex = zIndex;
+            // Add transform effects with scale (preserve base translateX(-50%))
+            if (isActive) {
+              videoComponent.style.transform = 'translate(calc(-50% - 2px), -5px) rotate(8deg) scale(1.05)';
+              videoComponent.style.transition = 'transform 0.3s ease';
+              // Play video/audio when active
+              if (ruryVideo && ruryVideo.style.display !== 'none') {
+                ruryVideo.play().catch(e => console.log('Video play error:', e));
+              }
+              if (ruryAudio && ruryAudio.style.display !== 'none') {
+                ruryAudio.muted = false;
+                ruryAudio.volume = 1.0;
+                ruryAudio.play().catch(e => console.log('Audio play error:', e));
               }
             } else {
-              // Turn sound off
-              soundOn.style.display = "none";
-              soundOff.style.display = "block";
-              // Mute background music
-              if (bgMusic) {
-                bgMusic.muted = true;
-                bgMusic.pause();
-              }
+              videoComponent.style.transform = 'translate(calc(-50% + 1px), 3px) rotate(4deg) scale(1)';
+              videoComponent.style.transition = 'transform 0.3s ease';
             }
-          });
-        }
+          } else if (id === 'letter') {
+            if (!letterComponent) return;
+            letterComponent.style.zIndex = zIndex;
+            // Add transform effects with scale (preserve base rotate(1deg))
+            const baseTransform = letterComponent.style.left === '50%'
+              ? 'translateX(-50%) rotate(1deg)'
+              : 'rotate(1deg)';
+            if (isActive) {
+              if (letterComponent.style.left === '50%') {
+                letterComponent.style.transform = 'translateX(-50%) translateY(-5px) rotate(1deg) scale(1.02)';
+              } else {
+                letterComponent.style.transform = 'translateY(-5px) rotate(1deg) scale(1.02)';
+              }
+              letterComponent.style.transition = 'transform 0.3s ease';
+            } else {
+              if (letterComponent.style.left === '50%') {
+                letterComponent.style.transform = 'translateX(-50%) translateY(3px) rotate(1deg) scale(1)';
+              } else {
+                letterComponent.style.transform = 'translateY(3px) rotate(1deg) scale(1)';
+              }
+              letterComponent.style.transition = 'transform 0.3s ease';
+            }
+          }
+        });
+      }
 
-        // Letter detail modal functionality
-        const lettersDetail = document.getElementById('letters-detail');
-        const lettersDetailOverlay = document.getElementById('letters-detail-overlay');
-        const videoComponent = document.getElementById('video-component');
-        const letterComponent = document.getElementById('letter-component');
-        const ruryVideo = document.getElementById('rury-video');
-        const ruryAudio = document.getElementById('rury-audio');
-        const audioIcon = document.getElementById('audio-icon');
-        
-        // Component z-index management
-        const baseZIndexes = {
-          video: 81,
-          letter: 83
-        };
-        const pinZIndex = 100; // Pin always stays on top
-        
-        // Stacking system - tracks click order
-        let componentStack = ['letter', 'video']; // Initial order (letter on top)
-        
-        // Ensure pin always stays on top
-        const pinSvg = document.getElementById('pin-svg');
-        if (pinSvg) {
-          pinSvg.style.zIndex = pinZIndex;
-        }
-        
-        // Function to update component stack and z-indexes
-        function updateStack(componentId) {
-          // Remove component from stack if it exists
-          componentStack = componentStack.filter(id => id !== componentId);
-          // Add to top of stack (most recent)
-          componentStack.push(componentId);
-          
-          // Assign z-indexes based on stack position (last = highest)
-          componentStack.forEach((id, index) => {
-            const zIndex = 80 + (index * 5);
-            const isActive = index === componentStack.length - 1; // Top of stack is active
-            
-            if (id === 'video') {
-              if (!videoComponent) return;
-              videoComponent.style.zIndex = zIndex;
-              // Add transform effects with scale (preserve base translateX(-50%))
-              if (isActive) {
-                videoComponent.style.transform = 'translate(calc(-50% - 2px), -5px) rotate(8deg) scale(1.05)';
-                videoComponent.style.transition = 'transform 0.3s ease';
-                // Play video/audio when active
-                if (ruryVideo && ruryVideo.style.display !== 'none') {
-                  ruryVideo.play().catch(e => console.log('Video play error:', e));
-                }
-                if (ruryAudio && ruryAudio.style.display !== 'none') {
+      // Initialize stack on load
+      updateStack('letter');
+
+      // Click handlers for components
+      if (videoComponent) {
+        videoComponent.addEventListener('click', () => updateStack('video'));
+      }
+      if (letterComponent) {
+        letterComponent.addEventListener('click', () => updateStack('letter'));
+      }
+
+      // Listen for letter detail open event
+      document.addEventListener('openLetterDetail', (e) => {
+        if (lettersDetail && e.detail && e.detail.letterData) {
+          const letterData = e.detail.letterData;
+
+          // Hide both video and audio initially
+          if (ruryVideo) {
+            ruryVideo.style.display = 'none';
+            ruryVideo.src = '';
+            ruryVideo.pause();
+          }
+          if (ruryAudio) {
+            ruryAudio.style.display = 'none';
+            ruryAudio.src = '';
+            ruryAudio.pause();
+          }
+          if (audioIcon) {
+            audioIcon.style.display = 'none';
+          }
+
+          // Update media component - prioritize video, then audio
+          // Support both video_url/audio_url (from API) and video/audio (from mailbox)
+          const hasVideo = (letterData.video_url && letterData.video_url.trim() !== '') ||
+            (letterData.video && letterData.video.trim() !== '');
+          const hasAudio = (letterData.audio_url && letterData.audio_url.trim() !== '') ||
+            (letterData.audio && letterData.audio.trim() !== '');
+
+          const videoUrl = letterData.video_url || letterData.video || '';
+          const audioUrl = letterData.audio_url || letterData.audio || '';
+
+          if (hasVideo && ruryVideo && videoUrl) {
+            if (audioIcon) audioIcon.style.display = 'none';
+            ruryVideo.src = videoUrl;
+            ruryVideo.style.display = 'block';
+            const playVideo = () => {
+              ruryVideo.play().catch(e => {
+                console.log('Video autoplay error:', e);
+                setTimeout(() => {
+                  ruryVideo.play().catch(err => console.log('Video retry error:', err));
+                }, 500);
+              });
+            };
+            if (ruryVideo.readyState >= 2) {
+              playVideo();
+            } else {
+              ruryVideo.addEventListener('canplay', playVideo, { once: true });
+              ruryVideo.load();
+            }
+          } else if (hasAudio && ruryAudio && audioUrl) {
+            if (ruryVideo) ruryVideo.style.display = 'none';
+            if (audioIcon) audioIcon.style.display = 'flex';
+            ruryAudio.muted = false;
+            ruryAudio.volume = 1.0;
+            ruryAudio.src = audioUrl;
+            ruryAudio.style.display = 'block';
+
+            const playAudio = () => {
+              ruryAudio.muted = false;
+              ruryAudio.volume = 1.0;
+              ruryAudio.play().then(() => {
+                console.log('Audio playing successfully');
+              }).catch(e => {
+                console.log('Audio autoplay error:', e);
+                setTimeout(() => {
                   ruryAudio.muted = false;
                   ruryAudio.volume = 1.0;
-                  ruryAudio.play().catch(e => console.log('Audio play error:', e));
-                }
-              } else {
-                videoComponent.style.transform = 'translate(calc(-50% + 1px), 3px) rotate(4deg) scale(1)';
-                videoComponent.style.transition = 'transform 0.3s ease';
-              }
-            } else if (id === 'letter') {
-              if (!letterComponent) return;
-              letterComponent.style.zIndex = zIndex;
-              // Add transform effects with scale (preserve base rotate(1deg))
-              const baseTransform = letterComponent.style.left === '50%' 
-                ? 'translateX(-50%) rotate(1deg)' 
-                : 'rotate(1deg)';
-              if (isActive) {
-                if (letterComponent.style.left === '50%') {
-                  letterComponent.style.transform = 'translateX(-50%) translateY(-5px) rotate(1deg) scale(1.02)';
-                } else {
-                  letterComponent.style.transform = 'translateY(-5px) rotate(1deg) scale(1.02)';
-                }
-                letterComponent.style.transition = 'transform 0.3s ease';
-              } else {
-                if (letterComponent.style.left === '50%') {
-                  letterComponent.style.transform = 'translateX(-50%) translateY(3px) rotate(1deg) scale(1)';
-                } else {
-                  letterComponent.style.transform = 'translateY(3px) rotate(1deg) scale(1)';
-                }
-                letterComponent.style.transition = 'transform 0.3s ease';
-              }
-            }
-          });
-        }
-        
-        // Initialize stack on load
-        updateStack('letter');
-        
-        // Click handlers for components
-        if (videoComponent) {
-          videoComponent.addEventListener('click', () => updateStack('video'));
-        }
-        if (letterComponent) {
-          letterComponent.addEventListener('click', () => updateStack('letter'));
-        }
+                  ruryAudio.play().catch(err => console.log('Audio retry error:', err));
+                }, 500);
+              });
+            };
 
-        // Listen for letter detail open event
-        document.addEventListener('openLetterDetail', (e) => {
-          if (lettersDetail && e.detail && e.detail.letterData) {
-            const letterData = e.detail.letterData;
-            
-            // Hide both video and audio initially
+            if (ruryAudio.readyState >= 2) {
+              playAudio();
+            } else {
+              ruryAudio.addEventListener('canplay', playAudio, { once: true });
+              ruryAudio.addEventListener('loadeddata', playAudio, { once: true });
+              ruryAudio.addEventListener('canplaythrough', playAudio, { once: true });
+              ruryAudio.load();
+            }
+          }
+
+          // Update photo component
+          const photoImg = document.getElementById('photo-component-img');
+          if (photoImg) {
+            const photoUrl = letterData.photo_url || letterData.photo || '';
+            if (photoUrl && photoUrl.trim() !== '') {
+              photoImg.src = photoUrl;
+              photoImg.style.display = 'block';
+            } else {
+              photoImg.style.display = 'none';
+            }
+          }
+
+          // Update sender name
+          const letterSender = document.getElementById('letter-component-sender');
+          if (letterSender) {
+            const senderName = letterData.name || letterData.senderName || '';
+            if (senderName && senderName.trim() !== '') {
+              letterSender.textContent = senderName;
+              letterSender.style.display = 'block';
+            } else {
+              letterSender.style.display = 'none';
+            }
+          }
+
+          // Update letter text component
+          const letterText = document.getElementById('letter-component-text');
+          if (letterText) {
+            const message = letterData.message || letterData.text || '';
+            if (message) {
+              letterText.textContent = message;
+            }
+          }
+
+          // Center letter if no video and no audio
+          if (!hasVideo && !hasAudio && letterComponent) {
+            letterComponent.style.left = '50%';
+            letterComponent.style.right = 'auto';
+            letterComponent.style.transform = 'translateX(-50%) rotate(1deg)';
+          } else if (letterComponent) {
+            letterComponent.style.left = '0';
+            letterComponent.style.right = '0';
+            letterComponent.style.transform = 'rotate(1deg)';
+          }
+
+          // Initialize stack when modal opens
+          componentStack = ['letter', 'video'];
+          updateStack('letter');
+
+          lettersDetail.style.display = 'block';
+        }
+      });
+
+      // Close modal when overlay is clicked
+      if (lettersDetailOverlay) {
+        lettersDetailOverlay.addEventListener('click', () => {
+          if (lettersDetail) {
+            // Stop video and audio when closing
             if (ruryVideo) {
-              ruryVideo.style.display = 'none';
-              ruryVideo.src = '';
+              ruryVideo.pause();
+              ruryVideo.currentTime = 0;
+            }
+            if (ruryAudio) {
+              ruryAudio.pause();
+              ruryAudio.currentTime = 0;
+            }
+
+            lettersDetail.style.display = 'none';
+          }
+        });
+      }
+
+      // Handle marker detection
+      const detectedMarkers = new Set();
+      const backgroundMusic = document.getElementById('background-music');
+      let backgroundMusicStarted = false;
+
+      // Setup background music
+      if (backgroundMusic) {
+        backgroundMusic.volume = 0.3; // Lower volume compared to modal audio (which is 1.0)
+        backgroundMusic.loop = true;
+      }
+
+      document.querySelectorAll("a-marker").forEach((marker) => {
+        marker.addEventListener("markerFound", function () {
+          console.log("Marker is found");
+          detectedMarkers.add(marker.id || marker);
+
+          // Show letters list when marker is found
+          const lettersListBottom = document.getElementById('letters-list-bottom');
+          if (lettersListBottom) {
+            lettersListBottom.style.display = 'flex';
+          }
+
+          // Play background music when marker is found for the first time
+          if (backgroundMusic && !backgroundMusicStarted) {
+            backgroundMusic.play().catch(e => {
+              console.log('Background music play error:', e);
+              // Retry after a short delay
+              setTimeout(() => {
+                backgroundMusic.play().catch(err => console.log('Background music retry error:', err));
+              }, 500);
+            });
+            backgroundMusicStarted = true;
+          } else if (backgroundMusic && backgroundMusicStarted) {
+            // Resume background music if it was paused (don't reset position)
+            if (backgroundMusic.paused) {
+              backgroundMusic.play().catch(e => console.log('Background music resume error:', e));
+            }
+          }
+
+          // Resume video/audio if modal is open when marker is found again
+          if (lettersDetail && lettersDetail.style.display === 'block') {
+            if (ruryVideo && ruryVideo.style.display !== 'none' && ruryVideo.src) {
+              ruryVideo.play().catch(e => console.log('Video resume error:', e));
+            }
+            if (ruryAudio && ruryAudio.style.display !== 'none' && ruryAudio.src) {
+              ruryAudio.muted = false;
+              ruryAudio.volume = 1.0;
+              ruryAudio.play().catch(e => console.log('Audio resume error:', e));
+            }
+          }
+
+          // Hide the overlay when any marker is found
+          if (markerNotFoundOverlay.style.display !== "none") {
+            markerNotFoundOverlay.style.transition = "opacity 0.5s ease";
+            markerNotFoundOverlay.style.opacity = "0";
+            setTimeout(() => {
+              markerNotFoundOverlay.style.display = "none";
+            }, 500);
+            markerDetectedOnce = true;
+          }
+        });
+
+        marker.addEventListener("markerLost", function () {
+          console.log("Marker is lost");
+          detectedMarkers.delete(marker.id || marker);
+
+          // Hide letters list when all markers are lost
+          if (detectedMarkers.size === 0) {
+            const lettersListBottom = document.getElementById('letters-list-bottom');
+            if (lettersListBottom) {
+              lettersListBottom.style.display = 'none';
+            }
+          }
+
+          // Pause background music when marker is lost
+          if (backgroundMusic && !backgroundMusic.paused) {
+            backgroundMusic.pause();
+          }
+
+          // Don't hide letter detail modal when marker is lost - keep it visible
+          // Only pause video/audio but don't hide the modal
+          if (lettersDetail && lettersDetail.style.display === 'block') {
+            // Pause video and audio when marker is lost, but keep modal visible
+            if (ruryVideo) {
               ruryVideo.pause();
             }
             if (ruryAudio) {
-              ruryAudio.style.display = 'none';
-              ruryAudio.src = '';
               ruryAudio.pause();
             }
-            if (audioIcon) {
-              audioIcon.style.display = 'none';
-            }
-            
-            // Update media component - prioritize video, then audio
-            // Support both video_url/audio_url (from API) and video/audio (from mailbox)
-            const hasVideo = (letterData.video_url && letterData.video_url.trim() !== '') || 
-                            (letterData.video && letterData.video.trim() !== '');
-            const hasAudio = (letterData.audio_url && letterData.audio_url.trim() !== '') || 
-                            (letterData.audio && letterData.audio.trim() !== '');
-            
-            const videoUrl = letterData.video_url || letterData.video || '';
-            const audioUrl = letterData.audio_url || letterData.audio || '';
-            
-            if (hasVideo && ruryVideo && videoUrl) {
-              if (audioIcon) audioIcon.style.display = 'none';
-              ruryVideo.src = videoUrl;
-              ruryVideo.style.display = 'block';
-              const playVideo = () => {
-                ruryVideo.play().catch(e => {
-                  console.log('Video autoplay error:', e);
-                  setTimeout(() => {
-                    ruryVideo.play().catch(err => console.log('Video retry error:', err));
-                  }, 500);
-                });
-              };
-              if (ruryVideo.readyState >= 2) {
-                playVideo();
-              } else {
-                ruryVideo.addEventListener('canplay', playVideo, { once: true });
-                ruryVideo.load();
-              }
-            } else if (hasAudio && ruryAudio && audioUrl) {
-              if (ruryVideo) ruryVideo.style.display = 'none';
-              if (audioIcon) audioIcon.style.display = 'flex';
-              ruryAudio.muted = false;
-              ruryAudio.volume = 1.0;
-              ruryAudio.src = audioUrl;
-              ruryAudio.style.display = 'block';
-              
-              const playAudio = () => {
-                ruryAudio.muted = false;
-                ruryAudio.volume = 1.0;
-                ruryAudio.play().then(() => {
-                  console.log('Audio playing successfully');
-                }).catch(e => {
-                  console.log('Audio autoplay error:', e);
-                  setTimeout(() => {
-                    ruryAudio.muted = false;
-                    ruryAudio.volume = 1.0;
-                    ruryAudio.play().catch(err => console.log('Audio retry error:', err));
-                  }, 500);
-                });
-              };
-              
-              if (ruryAudio.readyState >= 2) {
-                playAudio();
-              } else {
-                ruryAudio.addEventListener('canplay', playAudio, { once: true });
-                ruryAudio.addEventListener('loadeddata', playAudio, { once: true });
-                ruryAudio.addEventListener('canplaythrough', playAudio, { once: true });
-                ruryAudio.load();
-              }
-            }
-            
-            // Update photo component
-            const photoImg = document.getElementById('photo-component-img');
-            if (photoImg) {
-              const photoUrl = letterData.photo_url || letterData.photo || '';
-              if (photoUrl && photoUrl.trim() !== '') {
-                photoImg.src = photoUrl;
-                photoImg.style.display = 'block';
-              } else {
-                photoImg.style.display = 'none';
-              }
-            }
-            
-            // Update sender name
-            const letterSender = document.getElementById('letter-component-sender');
-            if (letterSender) {
-              const senderName = letterData.name || letterData.senderName || '';
-              if (senderName && senderName.trim() !== '') {
-                letterSender.textContent = senderName;
-                letterSender.style.display = 'block';
-              } else {
-                letterSender.style.display = 'none';
-              }
-            }
-            
-            // Update letter text component
-            const letterText = document.getElementById('letter-component-text');
-            if (letterText) {
-              const message = letterData.message || letterData.text || '';
-              if (message) {
-                letterText.textContent = message;
-              }
-            }
-            
-            // Center letter if no video and no audio
-            if (!hasVideo && !hasAudio && letterComponent) {
-              letterComponent.style.left = '50%';
-              letterComponent.style.right = 'auto';
-              letterComponent.style.transform = 'translateX(-50%) rotate(1deg)';
-            } else if (letterComponent) {
-              letterComponent.style.left = '0';
-              letterComponent.style.right = '0';
-              letterComponent.style.transform = 'rotate(1deg)';
-            }
-            
-            // Initialize stack when modal opens
-            componentStack = ['letter', 'video'];
-            updateStack('letter');
-            
-            lettersDetail.style.display = 'block';
+          }
+
+          // Only show the overlay when ALL markers are lost
+          if (detectedMarkers.size === 0) {
+            markerNotFoundOverlay.style.display = "flex";
+            markerNotFoundOverlay.style.opacity = "1";
           }
         });
-
-        // Close modal when overlay is clicked
-        if (lettersDetailOverlay) {
-          lettersDetailOverlay.addEventListener('click', () => {
-            if (lettersDetail) {
-              // Stop video and audio when closing
-              if (ruryVideo) {
-                ruryVideo.pause();
-                ruryVideo.currentTime = 0;
-              }
-              if (ruryAudio) {
-                ruryAudio.pause();
-                ruryAudio.currentTime = 0;
-              }
-              
-              lettersDetail.style.display = 'none';
-            }
-          });
-        }
-
-        // Handle marker detection
-        const detectedMarkers = new Set();
-        const backgroundMusic = document.getElementById('background-music');
-        let backgroundMusicStarted = false;
-        
-        // Setup background music
-        if (backgroundMusic) {
-          backgroundMusic.volume = 0.3; // Lower volume compared to modal audio (which is 1.0)
-          backgroundMusic.loop = true;
-        }
-        
-        document.querySelectorAll("a-marker").forEach((marker) => {
-          marker.addEventListener("markerFound", function () {
-            console.log("Marker is found");
-            detectedMarkers.add(marker.id || marker);
-            
-            // Show letters list when marker is found
-            const lettersListBottom = document.getElementById('letters-list-bottom');
-            if (lettersListBottom) {
-              lettersListBottom.style.display = 'flex';
-            }
-            
-            // Play background music when marker is found for the first time
-            if (backgroundMusic && !backgroundMusicStarted) {
-              backgroundMusic.play().catch(e => {
-                console.log('Background music play error:', e);
-                // Retry after a short delay
-                setTimeout(() => {
-                  backgroundMusic.play().catch(err => console.log('Background music retry error:', err));
-                }, 500);
-              });
-              backgroundMusicStarted = true;
-            } else if (backgroundMusic && backgroundMusicStarted) {
-              // Resume background music if it was paused (don't reset position)
-              if (backgroundMusic.paused) {
-                backgroundMusic.play().catch(e => console.log('Background music resume error:', e));
-              }
-            }
-            
-            // Resume video/audio if modal is open when marker is found again
-            if (lettersDetail && lettersDetail.style.display === 'block') {
-              if (ruryVideo && ruryVideo.style.display !== 'none' && ruryVideo.src) {
-                ruryVideo.play().catch(e => console.log('Video resume error:', e));
-              }
-              if (ruryAudio && ruryAudio.style.display !== 'none' && ruryAudio.src) {
-                ruryAudio.muted = false;
-                ruryAudio.volume = 1.0;
-                ruryAudio.play().catch(e => console.log('Audio resume error:', e));
-              }
-            }
-            
-            // Hide the overlay when any marker is found
-            if (markerNotFoundOverlay.style.display !== "none") {
-              markerNotFoundOverlay.style.transition = "opacity 0.5s ease";
-              markerNotFoundOverlay.style.opacity = "0";
-              setTimeout(() => {
-                markerNotFoundOverlay.style.display = "none";
-              }, 500);
-              markerDetectedOnce = true;
-            }
-          });
-
-          marker.addEventListener("markerLost", function () {
-            console.log("Marker is lost");
-            detectedMarkers.delete(marker.id || marker);
-            
-            // Hide letters list when all markers are lost
-            if (detectedMarkers.size === 0) {
-              const lettersListBottom = document.getElementById('letters-list-bottom');
-              if (lettersListBottom) {
-                lettersListBottom.style.display = 'none';
-              }
-            }
-            
-            // Pause background music when marker is lost
-            if (backgroundMusic && !backgroundMusic.paused) {
-              backgroundMusic.pause();
-            }
-            
-            // Don't hide letter detail modal when marker is lost - keep it visible
-            // Only pause video/audio but don't hide the modal
-            if (lettersDetail && lettersDetail.style.display === 'block') {
-              // Pause video and audio when marker is lost, but keep modal visible
-              if (ruryVideo) {
-                ruryVideo.pause();
-              }
-              if (ruryAudio) {
-                ruryAudio.pause();
-              }
-            }
-            
-            // Only show the overlay when ALL markers are lost
-            if (detectedMarkers.size === 0) {
-              markerNotFoundOverlay.style.display = "flex";
-              markerNotFoundOverlay.style.opacity = "1";
-            }
-          });
-        });
       });
-    </script>
-  </body>
+    });
+  </script>
+</body>
+
 </html>
