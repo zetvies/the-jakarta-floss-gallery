@@ -46,13 +46,13 @@
   <a-scene style="z-index: 1" embedded arjs="debugUIEnabled: false; patternRatio: 0.7;"
     device-orientation-permission-ui="enabled: false" vr-mode-ui="enabled: false">
     <!-- Define a marker using the pattern -->
-    <a-marker type="pattern" url="pattern-confetti-final.patt" id="marker-highfive">
+    <a-marker type="pattern" url="pattern-confetti-final.patt" id="marker-confetti" size="0.7">
       <!-- Images will be dynamically added here -->
     </a-marker>
-    <a-marker type="pattern" url="pattern-cake-final.patt" id="marker-highfive">
+    <a-marker type="pattern" url="pattern-cake-final.patt" id="marker-cake" size="0.7">
       <!-- Images will be dynamically added here -->
     </a-marker>
-    <a-marker type="pattern" url="pattern-ribbon-final.patt" id="marker-highfive">
+    <a-marker type="pattern" url="pattern-ribbon-final.patt" id="marker-ribbon" size="0.7">
       <!-- Images will be dynamically added here -->
     </a-marker>
     <!-- Add a camera with raycaster for interaction -->
@@ -357,8 +357,19 @@
     }
 
     document.addEventListener("DOMContentLoaded", function () {
-      const markerHighfive = document.getElementById("marker-highfive");
-      const markerSparkle = document.getElementById("marker-sparkle");
+      // Get all markers
+      const markerConfetti = document.getElementById("marker-confetti");
+      const markerCake = document.getElementById("marker-cake");
+      const markerRibbon = document.getElementById("marker-ribbon");
+      const allMarkers = [markerConfetti, markerCake, markerRibbon].filter(m => m !== null);
+      
+      console.log("Found markers:", {
+        confetti: markerConfetti ? markerConfetti.getAttribute("url") : "NOT FOUND",
+        cake: markerCake ? markerCake.getAttribute("url") : "NOT FOUND",
+        ribbon: markerRibbon ? markerRibbon.getAttribute("url") : "NOT FOUND",
+        total: allMarkers.length
+      });
+      
       const markerNotFoundOverlay = document.getElementById("markerNotFoundOverlay");
       let markerDetectedOnce = false;
 
@@ -497,10 +508,12 @@
         }
       }
 
-      // Initial setup with static faces
-      // Highfive marker uses -80 rotation, Sparkle marker uses -90 rotation
-      setupARImages(faceUrls, markerHighfive, -80, letterDataArray);
-      setupARImages(faceUrls, markerSparkle, -90, letterDataArray);
+      // Initial setup with static faces - set up images on all markers
+      allMarkers.forEach(marker => {
+        if (marker) {
+          setupARImages(faceUrls, marker, -80, letterDataArray);
+        }
+      });
 
 
       // Function to render letters in horizontal story list (circular buttons with letter SVGs)
@@ -829,10 +842,12 @@
                 letterDataArray = [];
               }
 
-              // Update AR images
-              // Highfive marker uses -80 rotation, Sparkle marker uses -90 rotation
-              setupARImages(faceUrls, markerHighfive, -80, letterDataArray);
-              setupARImages(faceUrls, markerSparkle, -90, letterDataArray);
+              // Update AR images - set up images on all markers
+              allMarkers.forEach(marker => {
+                if (marker) {
+                  setupARImages(faceUrls, marker, -80, letterDataArray);
+                }
+              });
 
               // Also render letters in bottom left list (use all data, not just those with photos)
               renderLettersBottomLeft(data);
@@ -1149,8 +1164,9 @@
       }
 
       document.querySelectorAll("a-marker").forEach((marker) => {
+        console.log("Setting up marker:", marker.id, "with pattern:", marker.getAttribute("url"));
         marker.addEventListener("markerFound", function () {
-          console.log("Marker is found");
+          console.log("Marker is found:", marker.id, "Pattern:", marker.getAttribute("url"));
           detectedMarkers.add(marker.id || marker);
 
           // Show letters list when marker is found
