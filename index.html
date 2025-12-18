@@ -183,44 +183,45 @@
           return 5 + rowIndex; // Row 0 = 5, Row 1 = 6, Row 2 = 7, etc.
         }
         
-        // Generate fill order: middle, left, right, outer left, outer right, etc.
+        // Generate fill order: center, left, right, outer left, outer right, etc.
+        // Fills each row completely before moving to next row
         function getFillOrder(rowIndex, rowSize) {
           const order = [];
           
           if (rowSize % 2 === 1) {
-            // Odd number of items: single middle
-            const middleIndex = Math.floor(rowSize / 2);
-            order.push(middleIndex);
+            // Odd number of items: single center
+            const centerIndex = Math.floor(rowSize / 2);
+            order.push(centerIndex); // Start with center
             
-            // Then fill left and right alternating outward
-            for (let offset = 1; offset <= middleIndex; offset++) {
-              // Left side
-              if (middleIndex - offset >= 0) {
-                order.push(middleIndex - offset);
+            // Then fill outward: left, right, outer left, outer right, etc.
+            for (let offset = 1; offset <= centerIndex; offset++) {
+              // Left side (closer to center first)
+              if (centerIndex - offset >= 0) {
+                order.push(centerIndex - offset);
               }
-              // Right side
-              if (middleIndex + offset < rowSize) {
-                order.push(middleIndex + offset);
+              // Right side (closer to center first)
+              if (centerIndex + offset < rowSize) {
+                order.push(centerIndex + offset);
               }
             }
           } else {
-            // Even number of items: two middle positions
-            const leftMiddle = Math.floor(rowSize / 2) - 1;
-            const rightMiddle = Math.floor(rowSize / 2);
+            // Even number of items: two center positions
+            const leftCenter = Math.floor(rowSize / 2) - 1;
+            const rightCenter = Math.floor(rowSize / 2);
             
-            // Start with left middle, then right middle
-            order.push(leftMiddle);
-            order.push(rightMiddle);
+            // Start with left center, then right center
+            order.push(leftCenter);
+            order.push(rightCenter);
             
-            // Then fill left and right alternating outward
+            // Then fill outward: left, right, outer left, outer right, etc.
             for (let offset = 1; offset < rowSize / 2; offset++) {
               // Left side
-              if (leftMiddle - offset >= 0) {
-                order.push(leftMiddle - offset);
+              if (leftCenter - offset >= 0) {
+                order.push(leftCenter - offset);
               }
               // Right side
-              if (rightMiddle + offset < rowSize) {
-                order.push(rightMiddle + offset);
+              if (rightCenter + offset < rowSize) {
+                order.push(rightCenter + offset);
               }
             }
           }
@@ -305,9 +306,10 @@
             
             if (markerUrl === 'pattern-ribbon-final.patt') {
               xOffset = -2; // Shift ribbon marker left by 2 units
-              dataCount = 4; // Ribbon marker shows only 4 images
+              dataCount = 11; // Ribbon marker shows 11 images
             } else if (markerUrl === 'pattern-cake-final.patt') {
               xOffset = -1; // Shift cake marker left by 1 unit
+              dataCount = 6; // Cake marker shows 6 images
             }
             // pattern-confetti-final.patt stays at 0 offset with 20 items
             
@@ -322,7 +324,7 @@
             
             generateImageGrid(marker, testData, xOffset);
           });
-          console.log('✅ Generated trapezium image grids for', markers.length, 'markers with', testData.length, 'items each');
+          console.log('✅ Generated trapezium image grids for', markers.length, 'markers');
         } else {
           console.warn('⚠️ No markers found, retrying...');
           setTimeout(initializeImageGrids, 100);
