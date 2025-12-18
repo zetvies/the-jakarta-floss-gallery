@@ -252,6 +252,113 @@
   <audio id="background-music" src="./assets/happy-birthday-orchestra.mp3" loop style="display: none;"></audio>
 
   <script>
+    // ===== CAMERA INTERCEPTION - MUST BE BEFORE AR.JS INITIALIZES =====
+    // Load selected camera from localStorage (persists across page reloads)
+    let selectedCameraDeviceId = localStorage.getItem('selectedCameraDeviceId');
+    if (selectedCameraDeviceId) {
+      console.log('Loaded selected camera from localStorage:', selectedCameraDeviceId);
+    }
+    
+    // Intercept getUserMedia IMMEDIATELY (before AR.js initializes)
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = async function(constraints) {
+        // Log ALL getUserMedia calls for debugging
+        console.log('📹 getUserMedia called with constraints:', JSON.stringify(constraints, null, 2));
+        console.log('📹 Selected camera deviceId:', selectedCameraDeviceId);
+        
+        // If we have a selected camera and constraints include video, inject our deviceId
+        if (selectedCameraDeviceId && constraints && constraints.video) {
+          console.log('🔷 INTERCEPTING getUserMedia - forcing camera:', selectedCameraDeviceId);
+          
+          // Make a copy of constraints to modify
+          const modifiedConstraints = JSON.parse(JSON.stringify(constraints));
+          
+          // If video is an object, add deviceId
+          if (typeof modifiedConstraints.video === 'object' && modifiedConstraints.video !== null) {
+            // Use EXACT to force the specific camera (not ideal)
+            modifiedConstraints.video.deviceId = { exact: selectedCameraDeviceId };
+            console.log('🔷 Set deviceId to exact:', selectedCameraDeviceId);
+            
+            // Remove facingMode completely (deviceId takes priority)
+            if (modifiedConstraints.video.facingMode) {
+              delete modifiedConstraints.video.facingMode;
+              console.log('🔷 Removed facingMode (deviceId takes priority)');
+            }
+            
+            // Make constraints more flexible to avoid OverconstrainedError
+            // Remove strict constraints that might conflict
+            if (modifiedConstraints.video.width && typeof modifiedConstraints.video.width === 'object') {
+              // Convert exact to ideal, remove min if it's too restrictive
+              if (modifiedConstraints.video.width.exact) {
+                modifiedConstraints.video.width = { ideal: modifiedConstraints.video.width.exact };
+              } else if (modifiedConstraints.video.width.min && modifiedConstraints.video.width.min > 1280) {
+                // Lower min if too high
+                modifiedConstraints.video.width.min = 640;
+              }
+            }
+            if (modifiedConstraints.video.height && typeof modifiedConstraints.video.height === 'object') {
+              if (modifiedConstraints.video.height.exact) {
+                modifiedConstraints.video.height = { ideal: modifiedConstraints.video.height.exact };
+              } else if (modifiedConstraints.video.height.min && modifiedConstraints.video.height.min > 720) {
+                modifiedConstraints.video.height.min = 480;
+              }
+            }
+            
+            // Remove focusMode constraint (can cause OverconstrainedError)
+            if (modifiedConstraints.video.focusMode) {
+              delete modifiedConstraints.video.focusMode;
+              console.log('🔷 Removed focusMode constraint');
+            }
+            
+            // Remove focusMode from advanced constraints if present
+            if (modifiedConstraints.video.advanced && Array.isArray(modifiedConstraints.video.advanced)) {
+              modifiedConstraints.video.advanced = modifiedConstraints.video.advanced.filter(
+                constraint => !constraint.focusMode
+              );
+            }
+            
+            console.log('🔷 Final modified constraints:', JSON.stringify(modifiedConstraints, null, 2));
+            
+            try {
+              const stream = await originalGetUserMedia(modifiedConstraints);
+              const track = stream.getVideoTracks()[0];
+              if (track) {
+                const settings = track.getSettings();
+                console.log('✅ Stream obtained - Device ID:', settings.deviceId);
+                console.log('✅ Resolution:', settings.width + 'x' + settings.height);
+                if (settings.deviceId !== selectedCameraDeviceId) {
+                  console.error('❌ WARNING: Device ID mismatch! Expected:', selectedCameraDeviceId, 'Got:', settings.deviceId);
+                } else {
+                  console.log('✅ Device ID matches! Camera switch successful.');
+                }
+              }
+              return stream;
+            } catch (error) {
+              console.error('❌ Error with modified constraints:', error);
+              // If exact deviceId fails, try with ideal as fallback
+              console.log('🔄 Retrying with ideal deviceId...');
+              modifiedConstraints.video.deviceId = { ideal: selectedCameraDeviceId };
+              return originalGetUserMedia(modifiedConstraints);
+            }
+          } else if (modifiedConstraints.video === true) {
+            // If video is just true, convert to object with deviceId
+            modifiedConstraints.video = {
+              deviceId: { exact: selectedCameraDeviceId }
+            };
+            console.log('🔷 Converted video:true to object with deviceId:', selectedCameraDeviceId);
+            return originalGetUserMedia(modifiedConstraints);
+          }
+        }
+        
+        // Otherwise, use original
+        console.log('📹 No selected camera, using original constraints');
+        return originalGetUserMedia(constraints);
+      };
+      console.log('✅ getUserMedia interception set up');
+    }
+    // ===== END CAMERA INTERCEPTION =====
+    
     // Register custom rotation animation component
     AFRAME.registerComponent('rotate-animation', {
       schema: {
@@ -398,6 +505,48 @@
       // Cache for best camera to avoid repeated enumeration
       let bestCameraCache = null;
       
+      // Back camera keywords in multiple languages
+      const backCameraKeywords = [
+        "rear",
+        "back",
+        "rück",
+        "arrière",
+        "trasera",
+        "trás",
+        "traseira",
+        "posteriore",
+        "后面",
+        "後面",
+        "背面",
+        "后置",
+        "後置",
+        "背置",
+        "задней",
+        "الخلفية",
+        "후",
+        "arka",
+        "achterzijde",
+        "หลัง",
+        "baksidan",
+        "bagside",
+        "sau",
+        "bak",
+        "tylny",
+        "takakamera",
+        "belakang",
+        "אחורית",
+        "πίσω",
+        "spate",
+        "hátsó",
+        "zadní",
+        "darrere",
+        "zadná",
+        "задня",
+        "stražnja",
+        "belakang",
+        "बैक"
+      ];
+      
       // Function to find the best back camera with highest resolution
       const findBestBackCamera = async (useCache = true) => {
         // Return cached result if available
@@ -416,17 +565,28 @@
           
           console.log('Found video input devices:', videoInputs.length);
           
+          // First, identify back cameras by label keywords
+          const backCameras = videoInputs.filter(camera => {
+            if (!camera.label) return false;
+            const lowercaseLabel = camera.label.toLowerCase();
+            return backCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
+          });
+          
+          console.log('Back cameras found by keywords:', backCameras.length);
+          
+          // If no back cameras found by keywords, try facingMode
+          const camerasToCheck = backCameras.length > 0 ? backCameras : videoInputs;
+          
           let bestCamera = null;
           let bestResolution = 0;
           
           // Check each camera to find the one with highest resolution
-          for (const device of videoInputs) {
+          for (const device of camerasToCheck) {
             try {
               // Get capabilities for this device
               const stream = await navigator.mediaDevices.getUserMedia({
                 video: {
-                  deviceId: { exact: device.deviceId },
-                  facingMode: { ideal: 'environment' }
+                  deviceId: { exact: device.deviceId }
                 }
               });
               
@@ -435,11 +595,12 @@
                 const capabilities = track.getCapabilities();
                 const settings = track.getSettings();
                 
-                // Check if it's a back camera
-                const isBackCamera = settings.facingMode === 'environment' || 
-                                    (capabilities.facingMode && capabilities.facingMode.includes('environment'));
+                // Check if it's a back camera (by facingMode or by label)
+                const isBackCameraByLabel = backCameras.includes(device);
+                const isBackCameraByFacing = settings.facingMode === 'environment' || 
+                                            (capabilities.facingMode && capabilities.facingMode.includes('environment'));
                 
-                if (isBackCamera) {
+                if (isBackCameraByLabel || isBackCameraByFacing) {
                   // Calculate resolution (width * height)
                   const maxWidth = capabilities.width?.max || settings.width || 0;
                   const maxHeight = capabilities.height?.max || settings.height || 0;
@@ -572,11 +733,8 @@
                 }
               }
 
-              // Add autofocus if supported
-              if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-                if (!constraints.advanced) constraints.advanced = [];
-                constraints.advanced.push({ focusMode: 'continuous' });
-              }
+              // Note: focusMode constraint removed to avoid OverconstrainedError
+              // Autofocus will be handled by the device automatically if supported
 
               // Apply all constraints
               try {
@@ -672,6 +830,26 @@
         });
         // Also try on arjs-video-loaded event
         scene.addEventListener('arjs-video-loaded', () => {
+          // Verify camera is correct
+          setTimeout(() => {
+            const video = scene.querySelector('video');
+            if (video && video.srcObject) {
+              const track = video.srcObject.getVideoTracks()[0];
+              if (track) {
+                const settings = track.getSettings();
+                console.log('🔍 AR.js video loaded - Current deviceId:', settings.deviceId);
+                console.log('🔍 Selected deviceId from localStorage:', selectedCameraDeviceId);
+                if (selectedCameraDeviceId && settings.deviceId !== selectedCameraDeviceId) {
+                  console.error('❌ CAMERA MISMATCH! Expected:', selectedCameraDeviceId, 'Got:', settings.deviceId);
+                  console.error('❌ The selected camera is NOT being used. AR.js may have cached the stream.');
+                  alert('Camera mismatch detected! Expected: ' + selectedCameraDeviceId + ' but got: ' + settings.deviceId + '. You may need to clear browser cache or restart the browser.');
+                } else if (selectedCameraDeviceId && settings.deviceId === selectedCameraDeviceId) {
+                  console.log('✅ Camera matches! Selected camera is active.');
+                }
+              }
+            }
+          }, 500);
+          
           setTimeout(configureCamera, 100);
           setTimeout(configureCamera, 500);
           setTimeout(configureCamera, 1000);
@@ -1175,6 +1353,47 @@
       const cameraInfo = document.getElementById("camera-info");
       let availableCameras = [];
       let currentCameraIndex = 0;
+      
+      // Load selected camera from localStorage (already loaded at script start, but refresh reference)
+      if (selectedCameraDeviceId) {
+        console.log('Using selected camera from localStorage:', selectedCameraDeviceId);
+      }
+      
+      // Debug helper functions (expose to console)
+      window.debugCamera = {
+        getSelected: () => {
+          const stored = localStorage.getItem('selectedCameraDeviceId');
+          console.log('Selected camera (localStorage):', stored);
+          console.log('Selected camera (global):', selectedCameraDeviceId);
+          return stored;
+        },
+        clear: () => {
+          localStorage.removeItem('selectedCameraDeviceId');
+          selectedCameraDeviceId = null;
+          console.log('✅ Cleared selected camera. Reload page to apply.');
+        },
+        verify: () => {
+          const video = scene.querySelector('video');
+          if (video && video.srcObject) {
+            const track = video.srcObject.getVideoTracks()[0];
+            if (track) {
+              const settings = track.getSettings();
+              const stored = localStorage.getItem('selectedCameraDeviceId');
+              console.log('Current camera deviceId:', settings.deviceId);
+              console.log('Selected camera (localStorage):', stored);
+              console.log('Match:', settings.deviceId === stored ? '✅ YES' : '❌ NO');
+              return {
+                current: settings.deviceId,
+                selected: stored,
+                match: settings.deviceId === stored
+              };
+            }
+          }
+          console.error('Video element or stream not found');
+          return null;
+        }
+      };
+      console.log('💡 Debug helpers available: window.debugCamera.getSelected(), window.debugCamera.clear(), window.debugCamera.verify()');
 
       // Function to get all available cameras
       const getAvailableCameras = async () => {
@@ -1234,20 +1453,31 @@
       // Function to switch to a specific camera
       const switchCamera = async (deviceId) => {
         try {
+          // Store selected camera globally and in localStorage (persists across reloads)
+          selectedCameraDeviceId = deviceId;
+          localStorage.setItem('selectedCameraDeviceId', deviceId);
+          console.log('✅ Stored selected camera deviceId:', deviceId);
+          console.log('✅ Saved to localStorage - will be used on next page load');
+          
           const scene = document.querySelector('a-scene');
-          const video = scene.querySelector('video');
           
-          if (!video || !video.srcObject) {
-            console.warn('Video element or stream not found');
-            return;
+          // Find video element - AR.js might have it in different places
+          let video = scene.querySelector('video');
+          if (!video) {
+            // Try to find video in the scene's shadow DOM or directly in body
+            video = document.querySelector('video');
           }
-
-          const oldStream = video.srcObject;
-          const oldTrack = oldStream.getVideoTracks()[0];
           
-          // Stop old track
-          if (oldTrack) {
-            oldTrack.stop();
+          if (!video) {
+            console.warn('Video element not found, waiting for AR.js to initialize...');
+            // Wait a bit and try again
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            video = scene.querySelector('video') || document.querySelector('video');
+          }
+          
+          if (!video) {
+            alert('Video element not found. Please wait for AR to initialize.');
+            return;
           }
 
           // Get camera info
@@ -1255,41 +1485,229 @@
           const maxWidth = camera?.maxWidth || 1920;
           const maxHeight = camera?.maxHeight || 1080;
 
-          // Request new camera with high resolution
-          const newStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              deviceId: { exact: deviceId },
-              width: { ideal: maxWidth, min: 1280 },
-              height: { ideal: maxHeight, min: 720 },
-              facingMode: { ideal: 'environment' }
-            }
-          });
+          console.log(`Switching to camera: ${camera?.label || deviceId}`);
+          console.log(`Requesting resolution: ${maxWidth}x${maxHeight}`);
 
-          // Replace stream
-          video.srcObject = newStream;
+          // Get current stream and track
+          const oldStream = video.srcObject;
+          const oldTrack = oldStream ? oldStream.getVideoTracks()[0] : null;
+          const oldDeviceId = oldTrack ? oldTrack.getSettings().deviceId : null;
           
-          // Update AR.js if needed (this might require AR.js to reinitialize)
-          const newTrack = newStream.getVideoTracks()[0];
-          if (newTrack) {
-            const settings = newTrack.getSettings();
-            console.log(`Switched to camera: ${camera?.label || deviceId}`);
-            console.log(`Resolution: ${settings.width}x${settings.height}`);
-            console.log(`Facing mode: ${settings.facingMode}`);
-            
-            // Update camera info display
-            if (cameraInfo) {
-              cameraInfo.textContent = `${settings.width}x${settings.height}`;
-              cameraInfo.style.display = 'block';
+          // Check if we're already using this camera
+          if (oldDeviceId === deviceId) {
+            console.log('Already using this camera, just updating resolution...');
+            // Just update resolution if same camera
+            if (oldTrack) {
+              try {
+                await oldTrack.applyConstraints({
+                  width: { ideal: maxWidth, min: 1280 },
+                  height: { ideal: maxHeight, min: 720 }
+                });
+                const settings = oldTrack.getSettings();
+                console.log(`Resolution updated: ${settings.width}x${settings.height}`);
+                if (cameraInfo) {
+                  cameraInfo.textContent = `${settings.width}x${settings.height}`;
+                  cameraInfo.style.display = 'block';
+                }
+                if (cameraSelectionModal) {
+                  cameraSelectionModal.style.display = 'none';
+                }
+                return;
+              } catch (e) {
+                console.warn('Could not update resolution:', e);
+              }
             }
           }
+          
+          // We need to replace the stream to change deviceId (applyConstraints can't change deviceId)
+          console.log('Replacing video stream to switch camera...');
+          console.log(`Old deviceId: ${oldDeviceId}`);
+          console.log(`New deviceId: ${deviceId}`);
+          
+          // Request new camera with flexible constraints to avoid OverconstrainedError
+          // Start with just deviceId, then try to apply resolution constraints separately
+          let newStream;
+          try {
+            // First try with deviceId and ideal resolution (most flexible)
+            newStream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                deviceId: { ideal: deviceId }, // Use ideal instead of exact for flexibility
+                width: { ideal: maxWidth },
+                height: { ideal: maxHeight }
+              }
+            });
+          } catch (err) {
+            console.warn('First attempt failed, trying with just deviceId:', err);
+            // If that fails, try with just deviceId
+            try {
+              newStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                  deviceId: { ideal: deviceId }
+                }
+              });
+              // Then try to apply resolution constraints
+              const track = newStream.getVideoTracks()[0];
+              if (track) {
+                try {
+                  await track.applyConstraints({
+                    width: { ideal: maxWidth, min: 640 },
+                    height: { ideal: maxHeight, min: 480 }
+                  });
+                } catch (constraintErr) {
+                  console.warn('Could not apply resolution constraints:', constraintErr);
+                }
+              }
+            } catch (err2) {
+              console.error('Failed to get camera stream:', err2);
+              throw err2;
+            }
+          }
+
+          // Get new track before replacing
+          const newTrack = newStream.getVideoTracks()[0];
+          if (!newTrack) {
+            throw new Error('No video track in new stream');
+          }
+          
+          // Verify the deviceId matches what we requested
+          const newSettings = newTrack.getSettings();
+          if (newSettings.deviceId !== deviceId) {
+            console.warn(`Warning: Requested deviceId ${deviceId} but got ${newSettings.deviceId}`);
+          }
+          
+          // Stop old track first
+          if (oldTrack) {
+            oldTrack.stop();
+            console.log('Old track stopped');
+          }
+          
+          // Replace stream on video element
+          video.srcObject = newStream;
+          console.log('Stream replaced on video element');
+          
+          // Wait a moment for the stream to be applied
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Verify the switch worked
+          const verifySettings = newTrack.getSettings();
+          console.log(`Switched to camera: ${camera?.label || deviceId}`);
+          console.log(`Resolution: ${verifySettings.width}x${verifySettings.height}`);
+          console.log(`Facing mode: ${verifySettings.facingMode}`);
+          console.log(`Device ID: ${verifySettings.deviceId}`);
+          
+          // Check if deviceId actually changed
+          if (oldDeviceId && verifySettings.deviceId === oldDeviceId) {
+            console.error('ERROR: DeviceId did not change! Camera switch may have failed.');
+            alert('Camera switch failed - deviceId did not change. You may need to refresh the page.');
+          } else {
+            console.log('✓ Camera switch successful!');
+          }
+          
+          // Update camera info display
+          if (cameraInfo) {
+            cameraInfo.textContent = `${verifySettings.width}x${verifySettings.height}`;
+            cameraInfo.style.display = 'block';
+          }
+          
+          // Force video to reload and play
+          video.load();
+          video.play().catch(e => console.warn('Video play error:', e));
+          
+          // Trigger events that AR.js might be listening to
+          video.dispatchEvent(new Event('loadedmetadata'));
+          video.dispatchEvent(new Event('canplay'));
+          video.dispatchEvent(new Event('playing'));
+          
+          // Try to access AR.js system and update it
+          if (scene && scene.hasLoaded) {
+            try {
+              // AR.js stores video in different places, try to find and update
+              const arjsSystem = scene.systems?.arjs;
+              if (arjsSystem) {
+                console.log('AR.js system found, attempting to update...');
+                
+                // Check if AR.js has its own video reference
+                if (arjsSystem._video) {
+                  console.log('Updating AR.js video reference...');
+                  arjsSystem._video.srcObject = newStream;
+                }
+                
+                // Update video texture if it exists
+                if (arjsSystem._videoTexture) {
+                  console.log('AR.js has video texture, may need reinitialization');
+                  // The texture should update automatically when video srcObject changes
+                }
+                
+                // Try to find video in AR.js source
+                if (arjsSystem._arSource) {
+                  console.log('AR.js source found');
+                  // AR.js source might have its own video reference
+                  if (arjsSystem._arSource.domElement) {
+                    arjsSystem._arSource.domElement.srcObject = newStream;
+                    console.log('Updated AR.js source video');
+                  }
+                }
+              }
+              
+              // Also try to trigger AR.js video loaded event
+              scene.emit('arjs-video-loaded');
+              
+              // Try to find all video elements and update them
+              const allVideos = scene.querySelectorAll('video');
+              allVideos.forEach(v => {
+                if (v !== video) {
+                  v.srcObject = newStream;
+                  console.log('Updated additional video element');
+                }
+              });
+            } catch (e) {
+              console.warn('Could not update AR.js system:', e);
+            }
+          }
+          
+          // Double-check after a delay
+          setTimeout(() => {
+            const finalTrack = video.srcObject?.getVideoTracks()[0];
+            if (finalTrack) {
+              const finalSettings = finalTrack.getSettings();
+              console.log('Final verification - Device ID:', finalSettings.deviceId);
+              if (finalSettings.deviceId !== deviceId) {
+                console.error('WARNING: After delay, deviceId still does not match!');
+              }
+            }
+          }, 1000);
 
           // Close modal
           if (cameraSelectionModal) {
             cameraSelectionModal.style.display = 'none';
           }
+          
+          // Note: AR.js may need page reload to pick up new camera
+          console.log('Camera switched. Selected camera stored:', selectedCameraDeviceId);
+          console.log('If AR.js is still showing the old camera, reload the page.');
+          
+          // Ask user if they want to reload (AR.js might be using cached stream)
+          setTimeout(() => {
+            if (confirm('Camera switched. AR.js may need to reload to use the new camera. Reload page now?')) {
+              window.location.reload();
+            }
+          }, 500);
         } catch (error) {
           console.error('Error switching camera:', error);
-          alert('Failed to switch camera: ' + error.message);
+          
+          // Provide more helpful error message for OverconstrainedError
+          let errorMsg = 'Failed to switch camera: ' + error.message;
+          if (error.name === 'OverconstrainedError') {
+            errorMsg += '\n\nThis usually means the camera doesn\'t support the requested settings.';
+            errorMsg += '\nThe camera selection has been saved and will be used on page reload.';
+            errorMsg += '\n\nWould you like to reload the page now to apply the change?';
+            
+            if (confirm(errorMsg)) {
+              window.location.reload();
+            }
+          } else {
+            alert(errorMsg);
+          }
         }
       };
 
@@ -1303,16 +1721,26 @@
           return;
         }
 
-        // Get current camera
+        // Get current camera - check multiple locations for video element
         const scene = document.querySelector('a-scene');
-        const video = scene.querySelector('video');
+        let video = scene ? scene.querySelector('video') : null;
+        if (!video) {
+          video = document.querySelector('video');
+        }
         let currentDeviceId = null;
         if (video && video.srcObject) {
-          const track = video.srcObject.getVideoTracks()[0];
-          if (track) {
-            const settings = track.getSettings();
-            currentDeviceId = settings.deviceId;
+          try {
+            const track = video.srcObject.getVideoTracks()[0];
+            if (track) {
+              const settings = track.getSettings();
+              currentDeviceId = settings.deviceId;
+              console.log('Current camera deviceId:', currentDeviceId);
+            }
+          } catch (e) {
+            console.warn('Could not get current camera settings:', e);
           }
+        } else {
+          console.log('Video element or stream not found yet');
         }
 
         availableCameras.forEach((camera, index) => {
