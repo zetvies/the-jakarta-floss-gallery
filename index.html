@@ -582,6 +582,15 @@
       imageEl.setAttribute("width", scale);
       imageEl.setAttribute("height", scale);
 
+      // Fix glitch with transparent parts - use alphaTest to discard transparent pixels
+      imageEl.setAttribute("material", {
+        transparent: true,
+        alphaTest: 0.1, // Discard pixels with alpha < 0.1 to prevent transparent part glitches
+        depthTest: true,
+        depthWrite: true,
+        side: "double" // Render both sides to prevent flickering
+      });
+
       // Make image interactive (required for raycaster)
       imageEl.setAttribute("class", "clickable");
       imageEl.setAttribute("data-url", src); // Store URL in data attribute
@@ -1424,7 +1433,7 @@
             const xSpacing = xRange / (faceCount - 1);
             baseX = xMin + (i * xSpacing);
           }
-          const xOffset = (Math.random() - 0.5) * 0.2;
+          const xOffset = Math.random() * 0.2; // Offset from 0 to 0.2
           const initialX = baseX + xOffset;
           // Position images right on the marker plane
           const initialZ = 0; // Right on marker
