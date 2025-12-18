@@ -158,9 +158,9 @@
       vr-mode-ui="enabled: false"
     >
       <!-- Define markers - images will be generated dynamically -->
-      <a-marker type="pattern" url="pattern-confetti-final.patt" id="marker-confetti"></a-marker>
-      <a-marker type="pattern" url="pattern-cake-final.patt" id="marker-cake"></a-marker>
-      <a-marker type="pattern" url="pattern-ribbon-final.patt" id="marker-ribbon"></a-marker>
+      <a-marker type="pattern" url="pattern-confetti-final.patt"></a-marker>
+      <a-marker type="pattern" url="pattern-cake-final.patt"></a-marker>
+      <a-marker type="pattern" url="pattern-ribbon-final.patt"></a-marker>
       <!-- Add a camera -->
       <a-entity camera></a-entity>
     </a-scene>
@@ -218,13 +218,11 @@
         const scene = document.querySelector('a-scene');
         
         scene.addEventListener('loaded', function() {
-          const markerConfetti = document.getElementById('marker-confetti');
-          const markerCake = document.getElementById('marker-cake');
-          const markerRibbon = document.getElementById('marker-ribbon');
+          const markers = document.querySelectorAll('a-marker');
           
-          if (markerConfetti) generateImageGrid(markerConfetti);
-          if (markerCake) generateImageGrid(markerCake);
-          if (markerRibbon) generateImageGrid(markerRibbon);
+          markers.forEach(function(marker) {
+            generateImageGrid(marker);
+          });
         });
       });
     </script>
@@ -260,6 +258,41 @@
         gap: 16px;
       "
     ></div>
+    <div
+      id="showMessageButton"
+      style="
+        background-color: white;
+        border-radius: 30px;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0px 16px;
+        color: #046511;
+        position: fixed;
+        bottom: 24.3svh;
+        left: 50%;
+        font-family: Inter;
+        transform: translateX(-50%);
+        z-index: 20;
+        cursor: pointer;
+      "
+    >
+      <p>Buka Pesan</p>
+      <svg
+        width="24"
+        height="24"
+        viewBox="0 0 24 24"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6ZM20 6L12 10.99L4 6H20ZM20 18H4V8L12 13L20 8V18Z"
+          fill="#046511"
+        />
+      </svg>
+    </div>
+
     <div
       id="messageModal"
       style="
@@ -705,10 +738,10 @@
             // Set initial video source
             if (stories.length > 0) {
               videoElement.src = stories[0].video;
-              }
-            })
-            .catch((error) => {
-              console.error("Error fetching content:", error);
+            }
+          })
+          .catch((error) => {
+            console.error("Error fetching content:", error);
             // console.log("Redirecting due to error...");
             // window.location.href =
             //   "https://moonmuffin.byc.plus/experience-app/ar";
@@ -723,6 +756,7 @@
           "#92ED00",
         ];
 
+        const showMessageButton = document.getElementById("showMessageButton");
         const messageModal = document.getElementById("messageModal");
         const modalMessage = document.getElementById("modalMessage");
 
@@ -815,7 +849,7 @@
             }
           });
         }
-        
+
             // Update the signature dynamically
             const signatureImg = document.querySelector("#signatureImg");
             if (signatureImg) {
@@ -837,6 +871,20 @@
         // Initially hide the stories
         storiesElement.style.display = "none";
 
+        // Initially hide the showMessageButton
+        showMessageButton.style.display = "none";
+
+        // Show message modal if the active story is clicked
+        showMessageButton.addEventListener("click", () => {
+          const activeButton = document.querySelector(".story-button.active");
+          if (activeButton) {
+            const message = activeButton.dataset.message;
+            if (message) {
+              modalMessage.innerHTML = message.replace(/\n/g, "<br>");
+              messageModal.style.display = "flex";
+              }
+            }
+          });
 
         // Add event listener to close the modal when clicking on the overlay
         messageModal.addEventListener("click", (event) => {
@@ -903,6 +951,9 @@
             // Show the stories when the marker is found
             storiesElement.style.display = "flex";
 
+            // Show the showMessageButton when the marker is found
+            showMessageButton.style.display = "flex";
+
             // Hide the overlay when the marker is found
             const markerNotFoundOverlay = document.getElementById(
               "markerNotFoundOverlay"
@@ -931,6 +982,9 @@
               "markerNotFoundOverlay"
             );
             markerNotFoundOverlay.style.display = "block";
+
+            // Hide the showMessageButton when the marker is lost
+            showMessageButton.style.display = "none";
           });
         });
       });
