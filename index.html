@@ -153,110 +153,82 @@
     <a-scene
       style="z-index: 1"
       embedded
-      arjs="debugUIEnabled: false; patternRatio: 0.7; sourceType: webcam;"
-      device-orientation-permission-ui="enabled: false"
+      arjs="sourceType: webcam; patternRatio: 0.75; trackingMethod: best; maxDetectionRate: 60; detectionMode: mono"
+      renderer="antialias: true; alpha: true; precision: medium"
       vr-mode-ui="enabled: false"
+      stats
     >
-      <!-- Define a marker with 5x4 grid of images -->
-      <a-marker type="pattern" url="pattern-confetti-final.patt">
-        <!-- 5x4 Grid of images, rotated to lie flat -->
-        <!-- After rotation -90 on X: X=horizontal, Y=depth, Z=vertical -->
-        <!-- 0,0,0 is at bottom right, everything else is to the left (negative X) and top (positive Z) -->
-        <!-- Y starts at 0 for row 1 (bottom) and increments by 1, X spacing is 1.0, Z increments by 0.3, height is 2x1 (tall) -->
-        <!-- Y varies slightly in each row -->
-        <!-- Images cycle through face-1.png to face-4.png -->
-        <!-- Row 1 (bottom, Z=0, base Y=0) -->
-        <a-image src="/assets/face-1.png" width="1" height="2" position="0 0.05 0" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-2.png" width="1" height="2" position="-1 -0.08 0" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-3.png" width="1" height="2" position="-2 0.12 0" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-4.png" width="1" height="2" position="-3 -0.05 0" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-1.png" width="1" height="2" position="-4 0.08 0" rotation="-90 0 0" character-animation></a-image>
-        <!-- Row 2 (Z=0.3, base Y=1) -->
-        <a-image src="/assets/face-2.png" width="1" height="2" position="0 1.12 0.3" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-3.png" width="1" height="2" position="-1 0.95 0.3" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-4.png" width="1" height="2" position="-2 1.08 0.3" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-1.png" width="1" height="2" position="-3 0.92 0.3" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-2.png" width="1" height="2" position="-4 1.15 0.3" rotation="-90 0 0" character-animation></a-image>
-        <!-- Row 3 (Z=0.6, base Y=2) -->
-        <a-image src="/assets/face-3.png" width="1" height="2" position="0 2.05 0.6" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-4.png" width="1" height="2" position="-1 1.92 0.6" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-1.png" width="1" height="2" position="-2 2.12 0.6" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-2.png" width="1" height="2" position="-3 1.95 0.6" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-3.png" width="1" height="2" position="-4 2.08 0.6" rotation="-90 0 0" character-animation></a-image>
-        <!-- Row 4 (top, Z=0.9, base Y=3) -->
-        <a-image src="/assets/face-4.png" width="1" height="2" position="0 3.12 0.9" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-1.png" width="1" height="2" position="-1 2.95 0.9" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-2.png" width="1" height="2" position="-2 3.08 0.9" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-3.png" width="1" height="2" position="-3 2.92 0.9" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-4.png" width="1" height="2" position="-4 3.15 0.9" rotation="-90 0 0" character-animation></a-image>
-      </a-marker>
-      <a-marker type="pattern" url="pattern-cake-final.patt">
-        <!-- 5x4 Grid of images, rotated to lie flat -->
-        <!-- After rotation -90 on X: X=horizontal, Y=depth, Z=vertical -->
-        <!-- 0,0,0 is at bottom right, everything else is to the left (negative X) and top (positive Z) -->
-        <!-- Y starts at 0 for row 1 (bottom) and increments by 1, X spacing is 1.0, Z increments by 0.3, height is 2x1 (tall) -->
-        <!-- Y varies slightly in each row -->
-        <!-- Images cycle through face-1.png to face-4.png -->
-        <!-- Row 1 (bottom, Z=0, base Y=0) -->
-        <a-image src="/assets/face-1.png" width="1" height="2" position="0 0.05 0" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-2.png" width="1" height="2" position="-1 -0.08 0" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-3.png" width="1" height="2" position="-2 0.12 0" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-4.png" width="1" height="2" position="-3 -0.05 0" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-1.png" width="1" height="2" position="-4 0.08 0" rotation="-90 0 0" character-animation></a-image>
-        <!-- Row 2 (Z=0.3, base Y=1) -->
-        <a-image src="/assets/face-2.png" width="1" height="2" position="0 1.12 0.3" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-3.png" width="1" height="2" position="-1 0.95 0.3" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-4.png" width="1" height="2" position="-2 1.08 0.3" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-1.png" width="1" height="2" position="-3 0.92 0.3" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-2.png" width="1" height="2" position="-4 1.15 0.3" rotation="-90 0 0" character-animation></a-image>
-        <!-- Row 3 (Z=0.6, base Y=2) -->
-        <a-image src="/assets/face-3.png" width="1" height="2" position="0 2.05 0.6" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-4.png" width="1" height="2" position="-1 1.92 0.6" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-1.png" width="1" height="2" position="-2 2.12 0.6" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-2.png" width="1" height="2" position="-3 1.95 0.6" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-3.png" width="1" height="2" position="-4 2.08 0.6" rotation="-90 0 0" character-animation></a-image>
-        <!-- Row 4 (top, Z=0.9, base Y=3) -->
-        <a-image src="/assets/face-4.png" width="1" height="2" position="0 3.12 0.9" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-1.png" width="1" height="2" position="-1 2.95 0.9" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-2.png" width="1" height="2" position="-2 3.08 0.9" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-3.png" width="1" height="2" position="-3 2.92 0.9" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-4.png" width="1" height="2" position="-4 3.15 0.9" rotation="-90 0 0" character-animation></a-image>
-      </a-marker>
-      <a-marker type="pattern" url="pattern-ribbon-final.patt">
-        <!-- 5x4 Grid of images, rotated to lie flat -->
-        <!-- After rotation -90 on X: X=horizontal, Y=depth, Z=vertical -->
-        <!-- 0,0,0 is at bottom right, everything else is to the left (negative X) and top (positive Z) -->
-        <!-- Y starts at 0 for row 1 (bottom) and increments by 1, X spacing is 1.0, Z increments by 0.3, height is 2x1 (tall) -->
-        <!-- Y varies slightly in each row -->
-        <!-- Images cycle through face-1.png to face-4.png -->
-        <!-- Row 1 (bottom, Z=0, base Y=0) -->
-        <a-image src="/assets/face-1.png" width="1" height="2" position="0 0.05 0" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-2.png" width="1" height="2" position="-1 -0.08 0" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-3.png" width="1" height="2" position="-2 0.12 0" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-4.png" width="1" height="2" position="-3 -0.05 0" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-1.png" width="1" height="2" position="-4 0.08 0" rotation="-90 0 0" character-animation></a-image>
-        <!-- Row 2 (Z=0.3, base Y=1) -->
-        <a-image src="/assets/face-2.png" width="1" height="2" position="0 1.12 0.3" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-3.png" width="1" height="2" position="-1 0.95 0.3" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-4.png" width="1" height="2" position="-2 1.08 0.3" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-1.png" width="1" height="2" position="-3 0.92 0.3" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-2.png" width="1" height="2" position="-4 1.15 0.3" rotation="-90 0 0" character-animation></a-image>
-        <!-- Row 3 (Z=0.6, base Y=2) -->
-        <a-image src="/assets/face-3.png" width="1" height="2" position="0 2.05 0.6" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-4.png" width="1" height="2" position="-1 1.92 0.6" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-1.png" width="1" height="2" position="-2 2.12 0.6" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-2.png" width="1" height="2" position="-3 1.95 0.6" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-3.png" width="1" height="2" position="-4 2.08 0.6" rotation="-90 0 0" character-animation></a-image>
-        <!-- Row 4 (top, Z=0.9, base Y=3) -->
-        <a-image src="/assets/face-4.png" width="1" height="2" position="0 3.12 0.9" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-1.png" width="1" height="2" position="-1 2.95 0.9" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-2.png" width="1" height="2" position="-2 3.08 0.9" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-3.png" width="1" height="2" position="-3 2.92 0.9" rotation="-90 0 0" character-animation></a-image>
-        <a-image src="/assets/face-4.png" width="1" height="2" position="-4 3.15 0.9" rotation="-90 0 0" character-animation></a-image>
-      </a-marker>
+      <!-- Define markers - images will be generated dynamically -->
+      <a-marker vidhandler preset="custom" type="pattern" url="pattern-confetti-final.patt" id="marker-confetti" smoothCount="0" smoothTolerance="0.0001"></a-marker>
+      <a-marker vidhandler preset="custom" type="pattern" url="pattern-cake-final.patt" id="marker-cake" smoothCount="0" smoothTolerance="0.0001"></a-marker>
+      <a-marker vidhandler preset="custom" type="pattern" url="pattern-ribbon-final.patt" id="marker-ribbon" smoothCount="0" smoothTolerance="0.0001"></a-marker>
       <!-- Add a camera -->
       <a-entity camera></a-entity>
     </a-scene>
+
+    <script>
+      // Function to generate 5x4 grid of images for a marker
+      function generateImageGrid(marker) {
+        const cols = 5;
+        const rows = 4;
+        
+        // Grid configuration
+        const xSpacing = 1.0; // X increments by 1
+        const zIncrement = 0.3; // Z increments by 0.3
+        const yIncrement = 1.0; // Y increments by 1
+        const width = 1;
+        const height = 2;
+        
+        // Y variations for each row (slight random offsets)
+        const yVariations = [
+          [0.05, -0.08, 0.12, -0.05, 0.08], // Row 1
+          [0.12, -0.05, 0.08, -0.08, 0.15], // Row 2
+          [0.05, -0.08, 0.12, -0.05, 0.08], // Row 3
+          [0.12, -0.05, 0.08, -0.08, 0.15]  // Row 4
+        ];
+        
+        for (let row = 0; row < rows; row++) {
+          const baseZ = row * zIncrement; // 0, 0.3, 0.6, 0.9
+          const baseY = row * yIncrement; // 0, 1, 2, 3
+          
+          for (let col = 0; col < cols; col++) {
+            const x = -col * xSpacing; // 0, -1, -2, -3, -4
+            const y = baseY + yVariations[row][col];
+            const z = baseZ;
+            
+            // Cycle through face-1.png to face-4.png
+            const faceIndex = ((row * cols + col) % 4) + 1;
+            const faceSrc = `/assets/face-${faceIndex}.png`;
+            
+            // Create image element
+            const imageEl = document.createElement('a-image');
+            imageEl.setAttribute('src', faceSrc);
+            imageEl.setAttribute('width', width);
+            imageEl.setAttribute('height', height);
+            imageEl.setAttribute('position', `${x} ${y} ${z}`);
+            imageEl.setAttribute('rotation', '-90 0 0');
+            imageEl.setAttribute('character-animation', '');
+            
+            marker.appendChild(imageEl);
+          }
+        }
+      }
+      
+      // Generate images for all markers when scene is ready
+      document.addEventListener('DOMContentLoaded', function() {
+        const scene = document.querySelector('a-scene');
+        
+        scene.addEventListener('loaded', function() {
+          const markerConfetti = document.getElementById('marker-confetti');
+          const markerCake = document.getElementById('marker-cake');
+          const markerRibbon = document.getElementById('marker-ribbon');
+          
+          if (markerConfetti) generateImageGrid(markerConfetti);
+          if (markerCake) generateImageGrid(markerCake);
+          if (markerRibbon) generateImageGrid(markerRibbon);
+        });
+      });
+    </script>
 
     <video
       id="arsa-video"
@@ -289,41 +261,6 @@
         gap: 16px;
       "
     ></div>
-    <div
-      id="showMessageButton"
-      style="
-        background-color: white;
-        border-radius: 30px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 0px 16px;
-        color: #046511;
-        position: fixed;
-        bottom: 24.3svh;
-        left: 50%;
-        font-family: Inter;
-        transform: translateX(-50%);
-        z-index: 20;
-        cursor: pointer;
-      "
-    >
-      <p>Buka Pesan</p>
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6ZM20 6L12 10.99L4 6H20ZM20 18H4V8L12 13L20 8V18Z"
-          fill="#046511"
-        />
-      </svg>
-    </div>
-
     <div
       id="messageModal"
       style="
@@ -769,10 +706,10 @@
             // Set initial video source
             if (stories.length > 0) {
               videoElement.src = stories[0].video;
-            }
-          })
-          .catch((error) => {
-            console.error("Error fetching content:", error);
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching content:", error);
             // console.log("Redirecting due to error...");
             // window.location.href =
             //   "https://moonmuffin.byc.plus/experience-app/ar";
@@ -787,7 +724,6 @@
           "#92ED00",
         ];
 
-        const showMessageButton = document.getElementById("showMessageButton");
         const messageModal = document.getElementById("messageModal");
         const modalMessage = document.getElementById("modalMessage");
 
@@ -880,7 +816,7 @@
             }
           });
         }
-
+        
             // Update the signature dynamically
             const signatureImg = document.querySelector("#signatureImg");
             if (signatureImg) {
@@ -902,20 +838,6 @@
         // Initially hide the stories
         storiesElement.style.display = "none";
 
-        // Initially hide the showMessageButton
-        showMessageButton.style.display = "none";
-
-        // Show message modal if the active story is clicked
-        showMessageButton.addEventListener("click", () => {
-          const activeButton = document.querySelector(".story-button.active");
-          if (activeButton) {
-            const message = activeButton.dataset.message;
-            if (message) {
-              modalMessage.innerHTML = message.replace(/\n/g, "<br>");
-              messageModal.style.display = "flex";
-              }
-            }
-          });
 
         // Add event listener to close the modal when clicking on the overlay
         messageModal.addEventListener("click", (event) => {
@@ -982,9 +904,6 @@
             // Show the stories when the marker is found
             storiesElement.style.display = "flex";
 
-            // Show the showMessageButton when the marker is found
-            showMessageButton.style.display = "flex";
-
             // Hide the overlay when the marker is found
             const markerNotFoundOverlay = document.getElementById(
               "markerNotFoundOverlay"
@@ -1013,9 +932,6 @@
               "markerNotFoundOverlay"
             );
             markerNotFoundOverlay.style.display = "block";
-
-            // Hide the showMessageButton when the marker is lost
-            showMessageButton.style.display = "none";
           });
         });
       });
