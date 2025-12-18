@@ -5,13 +5,79 @@
     <link rel="icon" type="image/x-icon" href="/icon.ico" />
     <link rel="stylesheet" href="/styles.css" />
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script>
+      // Intercept getUserMedia BEFORE AR.js initializes to request maximum resolution
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+        navigator.mediaDevices.getUserMedia = async function(constraints) {
+          console.log('📹 getUserMedia called with constraints:', JSON.stringify(constraints, null, 2));
+          
+          if (constraints && constraints.video) {
+            const modifiedConstraints = JSON.parse(JSON.stringify(constraints));
+            
+            if (typeof modifiedConstraints.video === 'object' && modifiedConstraints.video !== null) {
+              // Remove any width/height limits to allow maximum resolution
+              delete modifiedConstraints.video.width;
+              delete modifiedConstraints.video.height;
+              
+              // Request maximum resolution by using ideal with very high values
+              modifiedConstraints.video.width = { ideal: 4096, min: 1920 };
+              modifiedConstraints.video.height = { ideal: 2160, min: 1080 };
+              
+              console.log('🔷 Modified constraints for max resolution:', JSON.stringify(modifiedConstraints, null, 2));
+              
+              try {
+                const stream = await originalGetUserMedia(modifiedConstraints);
+                const track = stream.getVideoTracks()[0];
+                if (track) {
+                  const settings = track.getSettings();
+                  const capabilities = track.getCapabilities();
+                  console.log('✅ Stream obtained - Resolution:', settings.width + 'x' + settings.height);
+                  console.log('📊 Max Available Resolution:', 
+                    (capabilities.width?.max || 'unknown') + 'x' + (capabilities.height?.max || 'unknown'));
+                  
+                  // Try to upgrade to maximum if we got less than max
+                  if (capabilities.width?.max && capabilities.height?.max) {
+                    const maxWidth = capabilities.width.max;
+                    const maxHeight = capabilities.height.max;
+                    
+                    if (settings.width < maxWidth || settings.height < maxHeight) {
+                      console.log(`🔄 Attempting to upgrade to max resolution: ${maxWidth}x${maxHeight}`);
+                      try {
+                        await track.applyConstraints({
+                          width: { ideal: maxWidth },
+                          height: { ideal: maxHeight }
+                        });
+                        const newSettings = track.getSettings();
+                        console.log(`✅ Upgraded to: ${newSettings.width}x${newSettings.height}`);
+                      } catch (upgradeErr) {
+                        console.warn('⚠️ Could not upgrade to max resolution:', upgradeErr);
+                      }
+                    }
+                  }
+                }
+                return stream;
+              } catch (error) {
+                console.warn('⚠️ Error with max resolution constraints, falling back to original:', error);
+                // Fall back to original constraints if max resolution fails
+                return originalGetUserMedia(constraints);
+              }
+            }
+          }
+          
+          // No video constraints or video is just true - use original
+          return originalGetUserMedia(constraints);
+        };
+        console.log('✅ getUserMedia interception set up for max resolution');
+      }
+    </script>
     <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
   </head>
   <body style="margin: 0; overflow: hidden; z-index: 0">
     <a-scene
       style="z-index: 1"
       embedded
-      arjs="debugUIEnabled: false; patternRatio: 0.7;"
+      arjs="debugUIEnabled: false; patternRatio: 0.7; sourceType: webcam;"
       device-orientation-permission-ui="enabled: false"
       vr-mode-ui="enabled: false"
     >
