@@ -246,8 +246,8 @@
           const colInFillOrder = currentRowFillOrder[currentRowPosition];
           
           // Calculate X position (center is 0, left is negative, right is positive)
-          // Apply xOffset to shift the entire grid
-          const x = ((colInFillOrder - Math.floor(currentRowSize / 2)) * xSpacing) + xOffset;
+          // Apply xOffset to shift the entire grid, plus one character width to the right
+          const x = ((colInFillOrder - Math.floor(currentRowSize / 2)) * xSpacing) + xOffset + width;
           
           // Calculate Z and Y positions
           const baseZ = currentRow * zIncrement;
@@ -267,6 +267,15 @@
           imageEl.setAttribute('position', `${x} ${y} ${z}`);
           imageEl.setAttribute('rotation', '-90 0 0');
           imageEl.setAttribute('character-animation', '');
+          
+          // Add material properties to prevent overlap glitches
+          imageEl.setAttribute('material', {
+            transparent: true,
+            alphaTest: 0.1, // Discard pixels with alpha < 0.1 to prevent transparent part glitches
+            depthTest: true,
+            depthWrite: true,
+            side: 'double' // Render both sides to prevent flickering
+          });
           
           // Store any additional data attributes
           if (data.id) imageEl.setAttribute('data-id', data.id);
