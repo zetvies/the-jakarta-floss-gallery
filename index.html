@@ -179,9 +179,9 @@
       </svg>
     </button>
 
-    <!-- Camera Switch Button (Temporary for testing) -->
+    <!-- Camera Switch Button -->
     <button id="camera-switch-btn"
-      style="display: none; align-items: center; justify-content: center; width: 5svh; height: 5svh; background-color: #28B7FF; border-radius: 50%; cursor: pointer; z-index: 50; border: none; padding: 0; position: relative;">
+      style="display: flex; align-items: center; justify-content: center; width: 5svh; height: 5svh; background-color: #28B7FF; border-radius: 50%; cursor: pointer; z-index: 50; border: none; padding: 0; position: relative;">
       <svg style="width: 60%; height: 60%;" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
         <path d="M0 0h24v24H0z" fill="none" />
         <path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 11.5V13H9v2.5L5.5 12 9 8.5V11h6V8.5l3.5 3.5-3.5 3.5z" fill="#FFFFFF" />
@@ -267,12 +267,24 @@
 
   <script>
     // ===== CAMERA INTERCEPTION - MUST BE BEFORE AR.JS INITIALIZES =====
-    // Reset previous selection - we'll auto-select the best camera
-    localStorage.removeItem('selectedCameraDeviceId');
-    let selectedCameraDeviceId = null;
+    // Check if user has manually selected a camera - if so, respect that choice
+    let selectedCameraDeviceId = localStorage.getItem('selectedCameraDeviceId');
+    const hasManualSelection = selectedCameraDeviceId !== null;
+    
+    if (hasManualSelection) {
+      console.log('✅ Using manually selected camera:', selectedCameraDeviceId);
+    } else {
+      console.log('🔍 No manual selection - will auto-select best camera');
+    }
     
     // Function to automatically find and select the best camera (back camera first, then front)
+    // Only runs if user hasn't manually selected a camera
     const autoSelectBestCamera = async () => {
+      // If user has manually selected a camera, skip auto-selection
+      if (hasManualSelection) {
+        console.log('⏭️ Skipping auto-selection - using manual selection');
+        return null;
+      }
       // Add timeout to prevent hanging
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Camera selection timeout')), 5000);
@@ -355,13 +367,8 @@
             "ampli", "largo", "geniş açı", "rộng", "szeroki", "széles"
           ];
           
-          // Detect Samsung devices
-          const isSamsung = /samsung/i.test(navigator.userAgent);
-          console.log(`📱 Device: ${isSamsung ? 'Samsung' : 'Other'}`);
-          
-          // Collect all back cameras first
-          const backCameras = [];
-          const frontCameras = [];
+          let bestBackCamera = null;
+          let bestFrontCamera = null;
           
           // Identify cameras by label only (don't access them - that requires permissions)
           for (const device of videoInputs) {
@@ -371,7 +378,7 @@
             
             const lowercaseLabel = device.label.toLowerCase();
             
-            // Skip wide-angle cameras (if keyword is present)
+            // Skip wide-angle cameras
             const isWideAngle = wideAngleKeywords.some(keyword => lowercaseLabel.includes(keyword));
             if (isWideAngle) {
               console.log(`🚫 Skipping wide-angle camera: ${device.label}`);
@@ -381,37 +388,20 @@
             const isBackByLabel = backCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
             const isFrontByLabel = frontCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
             
-            if (isBackByLabel) {
-              backCameras.push({
+            if (isBackByLabel && !bestBackCamera) {
+              bestBackCamera = {
                 deviceId: device.deviceId,
                 label: device.label
-              });
-              console.log(`📷 Found back camera: ${device.label}`);
-            } else if (isFrontByLabel) {
-              frontCameras.push({
+              };
+              console.log(`📷 Found back camera (non-wide): ${device.label}`);
+            } else if (isFrontByLabel && !bestFrontCamera) {
+              bestFrontCamera = {
                 deviceId: device.deviceId,
                 label: device.label
-              });
-              console.log(`📷 Found front camera: ${device.label}`);
+              };
+              console.log(`📷 Found front camera (non-wide): ${device.label}`);
             }
           }
-          
-          // Select back camera: on Samsung, skip first (wide-angle) and use second
-          let bestBackCamera = null;
-          if (backCameras.length > 0) {
-            if (isSamsung && backCameras.length > 1) {
-              // Samsung: use 2nd back camera (skip first which is wide-angle)
-              bestBackCamera = backCameras[1];
-              console.log(`✅ Samsung device: Selected 2nd back camera (skipping 1st wide-angle): ${bestBackCamera.label}`);
-            } else {
-              // Other devices or only one back camera: use first
-              bestBackCamera = backCameras[0];
-              console.log(`✅ Selected back camera: ${bestBackCamera.label}`);
-            }
-          }
-          
-          // Select front camera (always first)
-          const bestFrontCamera = frontCameras.length > 0 ? frontCameras[0] : null;
           
           // Select back camera if available, otherwise front camera
           const selectedCamera = bestBackCamera || bestFrontCamera;
@@ -455,6 +445,14 @@
       navigator.mediaDevices.getUserMedia = async function(constraints) {
         // Log ALL getUserMedia calls for debugging
         console.log('📹 getUserMedia called with constraints:', JSON.stringify(constraints, null, 2));
+        
+        // Always check localStorage first (in case manual selection was made)
+        if (!selectedCameraDeviceId) {
+          selectedCameraDeviceId = localStorage.getItem('selectedCameraDeviceId');
+          if (selectedCameraDeviceId) {
+            console.log('📹 Loaded manual camera selection from localStorage:', selectedCameraDeviceId);
+          }
+        }
         
         // Wait for auto-selection to complete if it hasn't finished yet (with timeout)
         // But don't block if it's taking too long - let AR.js proceed
@@ -884,14 +882,10 @@
             });
           }
           
-          // Detect Samsung devices
-          const isSamsung = /samsung/i.test(navigator.userAgent);
-          console.log(`📱 Device: ${isSamsung ? 'Samsung' : 'Other'}`);
+          let bestCamera = null;
+          let bestResolution = 0;
           
-          // Collect all back cameras with their resolutions
-          const backCameraList = [];
-          
-          // Check each camera to find back cameras and their resolutions
+          // Check each camera to find the one with highest resolution
           for (const device of camerasToCheck) {
             try {
               // Get capabilities for this device
@@ -928,13 +922,17 @@
                   
                   console.log(`Camera ${device.label || device.deviceId}: ${maxWidth}x${maxHeight} (${resolution} pixels)`);
                   
-                  backCameraList.push({
-                    deviceId: device.deviceId,
-                    label: device.label,
-                    maxWidth: maxWidth,
-                    maxHeight: maxHeight,
-                    resolution: resolution
-                  });
+                  // Keep track of the best camera
+                  if (resolution > bestResolution) {
+                    bestResolution = resolution;
+                    bestCamera = {
+                      deviceId: device.deviceId,
+                      label: device.label,
+                      maxWidth: maxWidth,
+                      maxHeight: maxHeight,
+                      resolution: resolution
+                    };
+                  }
                 }
                 
                 // Stop the track to release the camera
@@ -942,25 +940,6 @@
               }
             } catch (err) {
               console.warn(`Could not access camera ${device.deviceId}:`, err);
-            }
-          }
-          
-          // Select best camera based on device type
-          let bestCamera = null;
-          
-          if (backCameraList.length > 0) {
-            if (isSamsung && backCameraList.length > 1) {
-              // Samsung: skip first (wide-angle) and select 2nd, or highest resolution from remaining
-              const camerasAfterFirst = backCameraList.slice(1); // Skip first camera
-              // Sort by resolution descending and take the best
-              camerasAfterFirst.sort((a, b) => b.resolution - a.resolution);
-              bestCamera = camerasAfterFirst[0];
-              console.log(`✅ Samsung device: Selected 2nd back camera (skipped 1st wide-angle): ${bestCamera.label} (${bestCamera.maxWidth}x${bestCamera.maxHeight})`);
-            } else {
-              // Other devices or only one camera: select highest resolution
-              backCameraList.sort((a, b) => b.resolution - a.resolution);
-              bestCamera = backCameraList[0];
-              console.log(`✅ Selected back camera: ${bestCamera.label} (${bestCamera.maxWidth}x${bestCamera.maxHeight})`);
             }
           }
           
@@ -2405,12 +2384,51 @@
         });
       };
 
-      // Setup camera switch button click
+      // Setup camera switch button click - cycle through cameras and refresh
       if (cameraSwitchBtn) {
         cameraSwitchBtn.addEventListener('click', async () => {
-          if (cameraSelectionModal) {
-            cameraSelectionModal.style.display = 'flex';
-            await populateCameraList();
+          try {
+            console.log('🔄 Switching camera...');
+            
+            // Get current camera from localStorage (source of truth)
+            const currentDeviceId = localStorage.getItem('selectedCameraDeviceId');
+            
+            // Get all available cameras (just device list, no access needed)
+            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+              console.warn('Device enumeration not supported');
+              return;
+            }
+            
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoInputs = devices.filter(device => device.kind === 'videoinput');
+            
+            if (videoInputs.length === 0) {
+              console.warn('No cameras found');
+              return;
+            }
+            
+            // Find current camera index
+            let currentIndex = -1;
+            if (currentDeviceId) {
+              currentIndex = videoInputs.findIndex(device => device.deviceId === currentDeviceId);
+            }
+            
+            // Cycle to next camera
+            const nextIndex = (currentIndex + 1) % videoInputs.length;
+            const nextCamera = videoInputs[nextIndex];
+            
+            console.log(`📷 Switching from camera ${currentIndex + 1} to ${nextIndex + 1} of ${videoInputs.length}`);
+            console.log(`📷 New camera: ${nextCamera.label || nextCamera.deviceId}`);
+            
+            // Save selected camera
+            selectedCameraDeviceId = nextCamera.deviceId;
+            localStorage.setItem('selectedCameraDeviceId', nextCamera.deviceId);
+            
+            // Refresh page to apply new camera
+            window.location.reload();
+          } catch (error) {
+            console.error('Error switching camera:', error);
+            alert('Failed to switch camera: ' + error.message);
           }
         });
       }
