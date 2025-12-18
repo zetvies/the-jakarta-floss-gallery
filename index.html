@@ -1524,42 +1524,75 @@
           console.log(`Old deviceId: ${oldDeviceId}`);
           console.log(`New deviceId: ${deviceId}`);
           
-          // Request new camera with flexible constraints to avoid OverconstrainedError
-          // Start with just deviceId, then try to apply resolution constraints separately
-          let newStream;
-          try {
-            // First try with deviceId and ideal resolution (most flexible)
-            newStream = await navigator.mediaDevices.getUserMedia({
-              video: {
-                deviceId: { ideal: deviceId }, // Use ideal instead of exact for flexibility
-                width: { ideal: maxWidth },
-                height: { ideal: maxHeight }
+          // On mobile, we need to be more careful about stopping the old stream
+          // Pause and clear the video element first
+          if (video) {
+            video.pause();
+            video.srcObject = null;
+            console.log('Video element paused and cleared');
+          }
+          
+          // Stop old track and wait for it to fully stop (important on mobile)
+          if (oldTrack) {
+            oldTrack.stop();
+            console.log('Old track stopped');
+            // Wait a bit for the track to fully release (mobile needs this)
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          
+          // Stop all tracks in the old stream
+          if (oldStream) {
+            oldStream.getTracks().forEach(track => {
+              if (track.readyState !== 'ended') {
+                track.stop();
               }
             });
+            await new Promise(resolve => setTimeout(resolve, 200));
+          }
+          
+          // Request new camera with very flexible constraints for mobile
+          let newStream;
+          try {
+            // First try with just deviceId (most compatible on mobile)
+            console.log('Requesting new camera stream with deviceId:', deviceId);
+            newStream = await navigator.mediaDevices.getUserMedia({
+              video: {
+                deviceId: { exact: deviceId } // Use exact on mobile to ensure correct camera
+              },
+              audio: false
+            });
+            console.log('✅ Got new stream');
+            
+            // Then try to apply resolution constraints separately (more reliable on mobile)
+            const track = newStream.getVideoTracks()[0];
+            if (track && maxWidth > 0 && maxHeight > 0) {
+              try {
+                // Try with ideal first
+                await track.applyConstraints({
+                  width: { ideal: maxWidth },
+                  height: { ideal: maxHeight }
+                });
+                console.log('✅ Applied resolution constraints');
+              } catch (constraintErr) {
+                console.warn('Could not apply resolution constraints, using default:', constraintErr);
+                // That's okay, we'll use whatever resolution the camera provides
+              }
+            }
           } catch (err) {
-            console.warn('First attempt failed, trying with just deviceId:', err);
-            // If that fails, try with just deviceId
+            console.error('Failed to get camera stream:', err);
+            // Try with ideal deviceId as fallback
             try {
+              console.log('Retrying with ideal deviceId...');
               newStream = await navigator.mediaDevices.getUserMedia({
                 video: {
                   deviceId: { ideal: deviceId }
-                }
+                },
+                audio: false
               });
-              // Then try to apply resolution constraints
-              const track = newStream.getVideoTracks()[0];
-              if (track) {
-                try {
-                  await track.applyConstraints({
-                    width: { ideal: maxWidth, min: 640 },
-                    height: { ideal: maxHeight, min: 480 }
-                  });
-                } catch (constraintErr) {
-                  console.warn('Could not apply resolution constraints:', constraintErr);
-                }
-              }
+              console.log('✅ Got stream with ideal deviceId');
             } catch (err2) {
-              console.error('Failed to get camera stream:', err2);
-              throw err2;
+              console.error('Both attempts failed:', err2);
+              throw new Error('Could not start video source: ' + err2.message);
             }
           }
 
@@ -1571,22 +1604,17 @@
           
           // Verify the deviceId matches what we requested
           const newSettings = newTrack.getSettings();
+          console.log('New stream settings:', newSettings);
           if (newSettings.deviceId !== deviceId) {
             console.warn(`Warning: Requested deviceId ${deviceId} but got ${newSettings.deviceId}`);
-          }
-          
-          // Stop old track first
-          if (oldTrack) {
-            oldTrack.stop();
-            console.log('Old track stopped');
           }
           
           // Replace stream on video element
           video.srcObject = newStream;
           console.log('Stream replaced on video element');
           
-          // Wait a moment for the stream to be applied
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Wait for video to be ready (mobile needs more time)
+          await new Promise(resolve => setTimeout(resolve, 300));
           
           // Verify the switch worked
           const verifySettings = newTrack.getSettings();
@@ -1609,9 +1637,32 @@
             cameraInfo.style.display = 'block';
           }
           
-          // Force video to reload and play
-          video.load();
-          video.play().catch(e => console.warn('Video play error:', e));
+          // Force video to reload and play (mobile-friendly)
+          try {
+            video.load();
+            
+            // Wait for video to be ready before playing (mobile needs this)
+            await new Promise((resolve) => {
+              const onCanPlay = () => {
+                video.removeEventListener('canplay', onCanPlay);
+                resolve();
+              };
+              video.addEventListener('canplay', onCanPlay);
+              // Timeout after 2 seconds
+              setTimeout(resolve, 2000);
+            });
+            
+            // Play the video
+            try {
+              await video.play();
+              console.log('✅ Video playing');
+            } catch (playErr) {
+              console.warn('Video play error (may need user interaction):', playErr);
+              // On mobile, autoplay might be blocked, but that's okay - AR.js will handle it
+            }
+          } catch (loadErr) {
+            console.warn('Video load error:', loadErr);
+          }
           
           // Trigger events that AR.js might be listening to
           video.dispatchEvent(new Event('loadedmetadata'));
@@ -1695,18 +1746,46 @@
         } catch (error) {
           console.error('Error switching camera:', error);
           
-          // Provide more helpful error message for OverconstrainedError
+          // Provide more helpful error message based on error type
           let errorMsg = 'Failed to switch camera: ' + error.message;
+          
           if (error.name === 'OverconstrainedError') {
-            errorMsg += '\n\nThis usually means the camera doesn\'t support the requested settings.';
+            errorMsg += '\n\nThe camera doesn\'t support the requested settings.';
             errorMsg += '\nThe camera selection has been saved and will be used on page reload.';
             errorMsg += '\n\nWould you like to reload the page now to apply the change?';
             
             if (confirm(errorMsg)) {
               window.location.reload();
             }
-          } else {
+          } else if (error.message && error.message.includes('could not start video source')) {
+            // Mobile-specific error - camera might be in use or not ready
+            errorMsg = 'Could not start video source.\n\n';
+            errorMsg += 'This usually happens on mobile when:\n';
+            errorMsg += '• The camera is already in use\n';
+            errorMsg += '• The old camera stream hasn\'t fully stopped\n';
+            errorMsg += '• Camera permissions are not granted\n\n';
+            errorMsg += 'The camera selection has been saved.\n';
+            errorMsg += 'Please reload the page to use the new camera.';
+            
+            if (confirm(errorMsg + '\n\nReload now?')) {
+              window.location.reload();
+            }
+          } else if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+            errorMsg = 'Camera permission denied.\n\nPlease allow camera access and try again.';
             alert(errorMsg);
+          } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+            errorMsg = 'Camera not found.\n\nThe selected camera may not be available.\n';
+            errorMsg += 'The camera selection has been saved and will be used on page reload.';
+            if (confirm(errorMsg + '\n\nReload now?')) {
+              window.location.reload();
+            }
+          } else {
+            // Generic error - suggest reload
+            errorMsg += '\n\nThe camera selection has been saved.';
+            errorMsg += '\nPlease reload the page to use the new camera.';
+            if (confirm(errorMsg + '\n\nReload now?')) {
+              window.location.reload();
+            }
           }
         }
       };
