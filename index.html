@@ -88,7 +88,7 @@
       border-radius: 2px;
     }
 
-    /* Ensure a-scene and canvas are full screen */
+    /* Ensure a-scene and canvas are full screen and properly aligned */
     a-scene {
       width: 100vw !important;
       height: 100vh !important;
@@ -101,6 +101,15 @@
       width: 100% !important;
       height: 100% !important;
       display: block !important;
+      object-fit: cover !important;
+      transform: none !important;
+    }
+    
+    /* Ensure AR.js video element maintains aspect ratio */
+    a-scene video {
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
     }
   </style>
 </head>
@@ -467,9 +476,23 @@
         imageEl.setAttribute("data-letter", JSON.stringify(letterData));
       }
 
-      // Add click event listener (works with raycaster)
-      imageEl.addEventListener("click", function (evt) {
-        console.log("Image clicked, URL:", src);
+      // Track if letter was already opened to prevent double-triggering
+      let letterOpened = false;
+      const openLetter = function(evt) {
+        if (letterOpened) {
+          return; // Prevent double-triggering
+        }
+        letterOpened = true;
+        setTimeout(() => {
+          letterOpened = false; // Reset after 500ms
+        }, 500);
+        
+        if (evt) {
+          evt.preventDefault();
+          evt.stopPropagation();
+        }
+        
+        console.log("Image clicked/touched, URL:", src);
         if (letterData) {
           // Dispatch custom event to open letter detail
           const event = new CustomEvent('openLetterDetail', {
@@ -479,21 +502,16 @@
           });
           document.dispatchEvent(event);
         }
-      });
+      };
 
-      // Also handle touch events for mobile
+      // Add click event listener (works with raycaster)
+      imageEl.addEventListener("click", openLetter);
+
+      // Also handle touch events for mobile (but prevent double-triggering)
       imageEl.addEventListener("touchstart", function (evt) {
-        console.log("Image touched, URL:", src);
-        if (letterData) {
-          // Dispatch custom event to open letter detail
-          const event = new CustomEvent('openLetterDetail', {
-            detail: {
-              letterData: letterData
-            }
-          });
-          document.dispatchEvent(event);
-        }
-      });
+        evt.preventDefault(); // Prevent click from also firing
+        openLetter(evt);
+      }, { passive: false });
 
       // Add rotation animation using custom component
       // Animation oscillates around base rotation by maxAngle degrees
