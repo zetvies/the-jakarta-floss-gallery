@@ -295,10 +295,21 @@
             return null;
           }
           
-          // On mobile, enumerate and find best camera
-          console.log('📱 Mobile detected - finding best camera...');
+          // On mobile, enumerate and find best camera by label only (don't access cameras before permissions)
+          console.log('📱 Mobile detected - finding best camera by label...');
           
-          const devices = await navigator.mediaDevices.enumerateDevices();
+          // First, try to enumerate devices (on mobile, labels are empty until permissions granted)
+          // We'll skip auto-selection if we can't enumerate or if labels aren't available
+          let devices;
+          try {
+            devices = await navigator.mediaDevices.enumerateDevices();
+          } catch (err) {
+            // If enumeration fails (e.g., permissions not granted), that's okay
+            // AR.js will request permissions, and we can select later
+            console.log('⚠️ Could not enumerate devices yet (permissions may not be granted):', err.message);
+            return null;
+          }
+          
           const videoInputs = devices.filter(device => device.kind === 'videoinput');
           
           if (videoInputs.length === 0) {
@@ -306,7 +317,16 @@
             return null;
           }
           
-          console.log('🔍 Auto-selecting best camera from', videoInputs.length, 'devices...');
+          // Check if we have labels (permissions granted)
+          const hasLabels = videoInputs.some(device => device.label && device.label.trim() !== '');
+          
+          if (!hasLabels) {
+            console.log('⚠️ Camera labels not available yet (permissions not granted) - will select after AR.js requests camera');
+            // Don't try to access cameras - let AR.js request permissions first
+            return null;
+          }
+          
+          console.log('🔍 Auto-selecting best camera from', videoInputs.length, 'devices by label...');
           
           // Back camera keywords
           const backCameraKeywords = [
@@ -328,70 +348,29 @@
           
           let bestBackCamera = null;
           let bestFrontCamera = null;
-          let bestBackResolution = 0;
-          let bestFrontResolution = 0;
           
-          // Check each camera with timeout per camera
+          // Identify cameras by label only (don't access them - that requires permissions)
           for (const device of videoInputs) {
-            try {
-              // Add timeout for each camera access
-              const cameraAccessPromise = navigator.mediaDevices.getUserMedia({
-                video: { deviceId: { exact: device.deviceId } }
-              });
-              
-              const timeout = new Promise((_, reject) => 
-                setTimeout(() => reject(new Error('Camera access timeout')), 2000)
-              );
-              
-              const stream = await Promise.race([cameraAccessPromise, timeout]);
-              
-              const track = stream.getVideoTracks()[0];
-              if (track) {
-                const capabilities = track.getCapabilities();
-                const settings = track.getSettings();
-                
-                const maxWidth = capabilities.width?.max || settings.width || 0;
-                const maxHeight = capabilities.height?.max || settings.height || 0;
-                const resolution = maxWidth * maxHeight;
-                
-                const lowercaseLabel = (device.label || '').toLowerCase();
-                const isBackByLabel = backCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
-                const isFrontByLabel = frontCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
-                const isBackByFacing = settings.facingMode === 'environment' || 
-                                      (capabilities.facingMode && capabilities.facingMode.includes('environment'));
-                const isFrontByFacing = settings.facingMode === 'user' || 
-                                       (capabilities.facingMode && capabilities.facingMode.includes('user'));
-                
-                const isBackCamera = isBackByLabel || (isBackByFacing && !isFrontByLabel);
-                const isFrontCamera = isFrontByLabel || (isFrontByFacing && !isBackByLabel);
-                
-                if (isBackCamera && resolution > bestBackResolution) {
-                  bestBackResolution = resolution;
-                  bestBackCamera = {
-                    deviceId: device.deviceId,
-                    label: device.label,
-                    maxWidth: maxWidth,
-                    maxHeight: maxHeight,
-                    resolution: resolution
-                  };
-                  console.log(`📷 Found back camera: ${device.label || device.deviceId} (${maxWidth}x${maxHeight})`);
-                } else if (isFrontCamera && resolution > bestFrontResolution) {
-                  bestFrontResolution = resolution;
-                  bestFrontCamera = {
-                    deviceId: device.deviceId,
-                    label: device.label,
-                    maxWidth: maxWidth,
-                    maxHeight: maxHeight,
-                    resolution: resolution
-                  };
-                  console.log(`📷 Found front camera: ${device.label || device.deviceId} (${maxWidth}x${maxHeight})`);
-                }
-                
-                track.stop();
-              }
-            } catch (err) {
-              // Silently skip cameras that fail or timeout
-              // console.warn(`Could not access camera ${device.deviceId}:`, err);
+            if (!device.label || device.label.trim() === '') {
+              continue; // Skip devices without labels
+            }
+            
+            const lowercaseLabel = device.label.toLowerCase();
+            const isBackByLabel = backCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
+            const isFrontByLabel = frontCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
+            
+            if (isBackByLabel && !bestBackCamera) {
+              bestBackCamera = {
+                deviceId: device.deviceId,
+                label: device.label
+              };
+              console.log(`📷 Found back camera by label: ${device.label}`);
+            } else if (isFrontByLabel && !bestFrontCamera) {
+              bestFrontCamera = {
+                deviceId: device.deviceId,
+                label: device.label
+              };
+              console.log(`📷 Found front camera by label: ${device.label}`);
             }
           }
           
@@ -400,10 +379,10 @@
           if (selectedCamera) {
             selectedCameraDeviceId = selectedCamera.deviceId;
             localStorage.setItem('selectedCameraDeviceId', selectedCameraDeviceId);
-            console.log(`✅ Auto-selected ${bestBackCamera ? 'BACK' : 'FRONT'} camera: ${selectedCamera.label || selectedCamera.deviceId} (${selectedCamera.maxWidth}x${selectedCamera.maxHeight})`);
+            console.log(`✅ Auto-selected ${bestBackCamera ? 'BACK' : 'FRONT'} camera by label: ${selectedCamera.label || selectedCamera.deviceId}`);
             return selectedCamera;
           } else {
-            console.log('⚠️ No suitable camera found - will use default');
+            console.log('⚠️ No suitable camera found by label - will use default');
             return null;
           }
         } catch (error) {
@@ -439,23 +418,24 @@
         console.log('📹 getUserMedia called with constraints:', JSON.stringify(constraints, null, 2));
         
         // Wait for auto-selection to complete if it hasn't finished yet (with timeout)
+        // But don't block if it's taking too long - let AR.js proceed
         if (!selectedCameraDeviceId) {
           const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
           
           if (isMobile) {
-            // On mobile, wait briefly for camera selection (max 2 seconds)
-            console.log('⏳ Waiting for camera auto-selection (mobile)...');
+            // On mobile, wait briefly for camera selection (max 1 second - don't block too long)
             try {
               await Promise.race([
                 cameraSelectionPromise,
-                new Promise(resolve => setTimeout(resolve, 2000))
+                new Promise(resolve => setTimeout(resolve, 1000)) // Reduced timeout
               ]);
               // Re-check after waiting
               if (!selectedCameraDeviceId) {
                 selectedCameraDeviceId = localStorage.getItem('selectedCameraDeviceId');
               }
             } catch (err) {
-              console.warn('Camera selection timeout or failed:', err);
+              // Silently continue - camera selection will happen later if permissions are granted
+              // console.warn('Camera selection not ready yet:', err);
             }
           } else {
             // On PC, don't wait - use default camera
