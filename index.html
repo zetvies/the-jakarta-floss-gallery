@@ -81,37 +81,38 @@
       device-orientation-permission-ui="enabled: false"
       vr-mode-ui="enabled: false"
     >
-      <!-- Define a marker with 5x4 grid of colored planes -->
+      <!-- Define a marker with 5x4 grid of images -->
       <a-marker type="pattern" url="pattern-confetti-final.patt">
-        <!-- 5x4 Grid of 1x1 planes with different colors, rotated to lie flat -->
+        <!-- 5x4 Grid of images, rotated to lie flat -->
         <!-- After rotation -90 on X: X=horizontal, Y=depth, Z=vertical -->
         <!-- 0,0,0 is at bottom right, everything else is to the left (negative X) and top (positive Z) -->
         <!-- Y starts at 0 for row 1 (bottom) and increments by 1, X spacing is 1.0, Z increments by 0.3, height is 2x1 (tall) -->
         <!-- Y varies slightly in each row -->
+        <!-- Images cycle through face-1.png to face-4.png -->
         <!-- Row 1 (bottom, Z=0, base Y=0) -->
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #FF6B6B" position="0 0.05 0" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #4ECDC4" position="-1 -0.08 0" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #45B7D1" position="-2 0.12 0" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #FFA07A" position="-3 -0.05 0" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #98D8C8" position="-4 0.08 0" rotation="-90 0 0"></a-plane>
+        <a-image src="/assets/face-1.png" width="1" height="2" position="0 0.05 0" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-2.png" width="1" height="2" position="-1 -0.08 0" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-3.png" width="1" height="2" position="-2 0.12 0" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-4.png" width="1" height="2" position="-3 -0.05 0" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-1.png" width="1" height="2" position="-4 0.08 0" rotation="-90 0 0"></a-image>
         <!-- Row 2 (Z=0.3, base Y=1) -->
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #F7DC6F" position="0 1.12 0.3" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #BB8FCE" position="-1 0.95 0.3" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #85C1E2" position="-2 1.08 0.3" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #F8B739" position="-3 0.92 0.3" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #52BE80" position="-4 1.15 0.3" rotation="-90 0 0"></a-plane>
+        <a-image src="/assets/face-2.png" width="1" height="2" position="0 1.12 0.3" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-3.png" width="1" height="2" position="-1 0.95 0.3" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-4.png" width="1" height="2" position="-2 1.08 0.3" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-1.png" width="1" height="2" position="-3 0.92 0.3" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-2.png" width="1" height="2" position="-4 1.15 0.3" rotation="-90 0 0"></a-image>
         <!-- Row 3 (Z=0.6, base Y=2) -->
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #EC7063" position="0 2.05 0.6" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #5DADE2" position="-1 1.92 0.6" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #58D68D" position="-2 2.12 0.6" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #F4D03F" position="-3 1.95 0.6" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #AF7AC5" position="-4 2.08 0.6" rotation="-90 0 0"></a-plane>
+        <a-image src="/assets/face-3.png" width="1" height="2" position="0 2.05 0.6" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-4.png" width="1" height="2" position="-1 1.92 0.6" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-1.png" width="1" height="2" position="-2 2.12 0.6" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-2.png" width="1" height="2" position="-3 1.95 0.6" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-3.png" width="1" height="2" position="-4 2.08 0.6" rotation="-90 0 0"></a-image>
         <!-- Row 4 (top, Z=0.9, base Y=3) -->
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #EB984E" position="0 3.12 0.9" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #76D7C4" position="-1 2.95 0.9" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #F1948A" position="-2 3.08 0.9" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #7FB3D3" position="-3 2.92 0.9" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 2" material="color: #F9E79F" position="-4 3.15 0.9" rotation="-90 0 0"></a-plane>
+        <a-image src="/assets/face-4.png" width="1" height="2" position="0 3.12 0.9" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-1.png" width="1" height="2" position="-1 2.95 0.9" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-2.png" width="1" height="2" position="-2 3.08 0.9" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-3.png" width="1" height="2" position="-3 2.92 0.9" rotation="-90 0 0"></a-image>
+        <a-image src="/assets/face-4.png" width="1" height="2" position="-4 3.15 0.9" rotation="-90 0 0"></a-image>
       </a-marker>
       <a-marker type="pattern" url="pattern-cake-final.patt">
         <!-- 5x4 Grid of 1x1 planes with different colors, rotated to lie flat -->
