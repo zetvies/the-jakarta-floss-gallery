@@ -4,6 +4,10 @@
 <head>
   <title>AR App | Moon Muffin</title>
   <link rel="icon" type="image/x-icon" href="./icon.ico" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@400;500;600;700&family=Barrio&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css" />
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
@@ -167,7 +171,7 @@
 
     <!-- Camera Switch Button (Temporary for testing) -->
     <button id="camera-switch-btn"
-      style="display: flex; align-items: center; justify-content: center; width: 5svh; height: 5svh; background-color: #28B7FF; border-radius: 50%; cursor: pointer; z-index: 50; border: none; padding: 0; position: relative;">
+      style="display: none; align-items: center; justify-content: center; width: 5svh; height: 5svh; background-color: #28B7FF; border-radius: 50%; cursor: pointer; z-index: 50; border: none; padding: 0; position: relative;">
       <svg style="width: 60%; height: 60%;" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
         <path d="M0 0h24v24H0z" fill="none" />
         <path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 11.5V13H9v2.5L5.5 12 9 8.5V11h6V8.5l3.5 3.5-3.5 3.5z" fill="#FFFFFF" />
@@ -253,11 +257,169 @@
 
   <script>
     // ===== CAMERA INTERCEPTION - MUST BE BEFORE AR.JS INITIALIZES =====
-    // Load selected camera from localStorage (persists across page reloads)
-    let selectedCameraDeviceId = localStorage.getItem('selectedCameraDeviceId');
-    if (selectedCameraDeviceId) {
-      console.log('Loaded selected camera from localStorage:', selectedCameraDeviceId);
-    }
+    // Reset previous selection - we'll auto-select the best camera
+    localStorage.removeItem('selectedCameraDeviceId');
+    let selectedCameraDeviceId = null;
+    
+    // Function to automatically find and select the best camera (back camera first, then front)
+    const autoSelectBestCamera = async () => {
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Camera selection timeout')), 5000);
+      });
+      
+      const selectionPromise = (async () => {
+        try {
+          // Detect if we're on mobile or PC
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          
+          if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            console.warn('Device enumeration not supported - will use default camera');
+            return null; // Will use default camera
+          }
+          
+          // On PC, just use default camera (webcam) - don't enumerate
+          if (!isMobile) {
+            console.log('💻 PC detected - using default webcam');
+            // Don't set selectedCameraDeviceId - let it use default
+            return null;
+          }
+          
+          // On mobile, enumerate and find best camera
+          console.log('📱 Mobile detected - finding best camera...');
+          
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoInputs = devices.filter(device => device.kind === 'videoinput');
+          
+          if (videoInputs.length === 0) {
+            console.warn('No video input devices found');
+            return null;
+          }
+          
+          console.log('🔍 Auto-selecting best camera from', videoInputs.length, 'devices...');
+          
+          // Back camera keywords
+          const backCameraKeywords = [
+            "rear", "back", "rück", "arrière", "trasera", "trás", "traseira", "posteriore",
+            "后面", "後面", "背面", "后置", "後置", "背置", "задней", "الخلفية", "후",
+            "arka", "achterzijde", "หลัง", "baksidan", "bagside", "sau", "bak", "tylny",
+            "takakamera", "belakang", "אחורית", "πίσω", "spate", "hátsó", "zadní", "darrere",
+            "zadná", "задня", "stražnja", "belakang", "बैक"
+          ];
+          
+          // Front camera keywords
+          const frontCameraKeywords = [
+            "front", "forward", "facing", "user", "selfie", "vorne", "avant", "delantera",
+            "frente", "anteriore", "前面", "前面", "前置", "前", "передней", "الأمامية",
+            "전면", "ön", "voor", "หน้า", "fram", "foran", "trước", "przód", "etukamera",
+            "depan", "קדמית", "μπροστινή", "față", "elülső", "přední", "davant", "predná",
+            "передня", "prednja", "depan", "सामने"
+          ];
+          
+          let bestBackCamera = null;
+          let bestFrontCamera = null;
+          let bestBackResolution = 0;
+          let bestFrontResolution = 0;
+          
+          // Check each camera with timeout per camera
+          for (const device of videoInputs) {
+            try {
+              // Add timeout for each camera access
+              const cameraAccessPromise = navigator.mediaDevices.getUserMedia({
+                video: { deviceId: { exact: device.deviceId } }
+              });
+              
+              const timeout = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Camera access timeout')), 2000)
+              );
+              
+              const stream = await Promise.race([cameraAccessPromise, timeout]);
+              
+              const track = stream.getVideoTracks()[0];
+              if (track) {
+                const capabilities = track.getCapabilities();
+                const settings = track.getSettings();
+                
+                const maxWidth = capabilities.width?.max || settings.width || 0;
+                const maxHeight = capabilities.height?.max || settings.height || 0;
+                const resolution = maxWidth * maxHeight;
+                
+                const lowercaseLabel = (device.label || '').toLowerCase();
+                const isBackByLabel = backCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
+                const isFrontByLabel = frontCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
+                const isBackByFacing = settings.facingMode === 'environment' || 
+                                      (capabilities.facingMode && capabilities.facingMode.includes('environment'));
+                const isFrontByFacing = settings.facingMode === 'user' || 
+                                       (capabilities.facingMode && capabilities.facingMode.includes('user'));
+                
+                const isBackCamera = isBackByLabel || (isBackByFacing && !isFrontByLabel);
+                const isFrontCamera = isFrontByLabel || (isFrontByFacing && !isBackByLabel);
+                
+                if (isBackCamera && resolution > bestBackResolution) {
+                  bestBackResolution = resolution;
+                  bestBackCamera = {
+                    deviceId: device.deviceId,
+                    label: device.label,
+                    maxWidth: maxWidth,
+                    maxHeight: maxHeight,
+                    resolution: resolution
+                  };
+                  console.log(`📷 Found back camera: ${device.label || device.deviceId} (${maxWidth}x${maxHeight})`);
+                } else if (isFrontCamera && resolution > bestFrontResolution) {
+                  bestFrontResolution = resolution;
+                  bestFrontCamera = {
+                    deviceId: device.deviceId,
+                    label: device.label,
+                    maxWidth: maxWidth,
+                    maxHeight: maxHeight,
+                    resolution: resolution
+                  };
+                  console.log(`📷 Found front camera: ${device.label || device.deviceId} (${maxWidth}x${maxHeight})`);
+                }
+                
+                track.stop();
+              }
+            } catch (err) {
+              // Silently skip cameras that fail or timeout
+              // console.warn(`Could not access camera ${device.deviceId}:`, err);
+            }
+          }
+          
+          // Select back camera if available, otherwise front camera
+          const selectedCamera = bestBackCamera || bestFrontCamera;
+          if (selectedCamera) {
+            selectedCameraDeviceId = selectedCamera.deviceId;
+            localStorage.setItem('selectedCameraDeviceId', selectedCameraDeviceId);
+            console.log(`✅ Auto-selected ${bestBackCamera ? 'BACK' : 'FRONT'} camera: ${selectedCamera.label || selectedCamera.deviceId} (${selectedCamera.maxWidth}x${selectedCamera.maxHeight})`);
+            return selectedCamera;
+          } else {
+            console.log('⚠️ No suitable camera found - will use default');
+            return null;
+          }
+        } catch (error) {
+          console.warn('Error auto-selecting camera:', error);
+          return null;
+        }
+      })();
+      
+      // Race between selection and timeout
+      try {
+        return await Promise.race([selectionPromise, timeoutPromise]);
+      } catch (error) {
+        if (error.message === 'Camera selection timeout') {
+          console.warn('⏱️ Camera selection timed out - will use default camera');
+        }
+        return null;
+      }
+    };
+    
+    // Auto-select best camera immediately (before AR.js initializes)
+    const cameraSelectionPromise = autoSelectBestCamera().then(camera => {
+      if (camera) {
+        console.log('🎥 Best camera selected and ready for AR.js');
+      }
+      return camera;
+    });
     
     // Intercept getUserMedia IMMEDIATELY (before AR.js initializes)
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -265,9 +427,36 @@
       navigator.mediaDevices.getUserMedia = async function(constraints) {
         // Log ALL getUserMedia calls for debugging
         console.log('📹 getUserMedia called with constraints:', JSON.stringify(constraints, null, 2));
-        console.log('📹 Selected camera deviceId:', selectedCameraDeviceId);
+        
+        // Wait for auto-selection to complete if it hasn't finished yet (with timeout)
+        if (!selectedCameraDeviceId) {
+          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          
+          if (isMobile) {
+            // On mobile, wait briefly for camera selection (max 2 seconds)
+            console.log('⏳ Waiting for camera auto-selection (mobile)...');
+            try {
+              await Promise.race([
+                cameraSelectionPromise,
+                new Promise(resolve => setTimeout(resolve, 2000))
+              ]);
+              // Re-check after waiting
+              if (!selectedCameraDeviceId) {
+                selectedCameraDeviceId = localStorage.getItem('selectedCameraDeviceId');
+              }
+            } catch (err) {
+              console.warn('Camera selection timeout or failed:', err);
+            }
+          } else {
+            // On PC, don't wait - use default camera
+            console.log('💻 PC detected - using default webcam (no selection needed)');
+          }
+        }
+        
+        console.log('📹 Selected camera deviceId:', selectedCameraDeviceId || 'default (none specified)');
         
         // If we have a selected camera and constraints include video, inject our deviceId
+        // On PC, selectedCameraDeviceId will be null, so we'll use default camera
         if (selectedCameraDeviceId && constraints && constraints.video) {
           console.log('🔷 INTERCEPTING getUserMedia - forcing camera:', selectedCameraDeviceId);
           

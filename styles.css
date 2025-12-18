@@ -1,9 +1,9 @@
 /* Define OtherHand font family */
 @font-face {
   font-family: "OtherHand";
-  src: url("./assets/fonts/OtherHand/OtherHand.otf") format("opentype"),
-    url("./assets/fonts/OtherHand/OtherHand-Medium.otf") format("opentype"),
-    url("./assets/fonts/OtherHand/OtherHand-Alt.otf") format("opentype");
+  src: url("/assets/fonts/OtherHand/OtherHand.otf") format("opentype"),
+    url("/assets/fonts/OtherHand/OtherHand-Medium.otf") format("opentype"),
+    url("/assets/fonts/OtherHand/OtherHand-Alt.otf") format("opentype");
   font-weight: normal;
   font-style: normal;
 }
@@ -11,9 +11,9 @@
 /* Define Inter font family */
 @font-face {
   font-family: "Inter";
-  src: url("./assets/fonts/Inter/Inter-Regular.otf") format("opentype"),
-    url("./assets/fonts/Inter/Inter-Bold.otf") format("opentype"),
-    url("./assets/fonts/Inter/Inter-Italic.otf") format("opentype");
+  src: url("/assets/fonts/Inter/Inter-Regular.otf") format("opentype"),
+    url("/assets/fonts/Inter/Inter-Bold.otf") format("opentype"),
+    url("/assets/fonts/Inter/Inter-Italic.otf") format("opentype");
   font-weight: normal;
   font-style: normal;
 }
