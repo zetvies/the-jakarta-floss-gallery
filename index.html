@@ -43,6 +43,16 @@
     .story-button.active {
       transform: scale(1.1);
     }
+
+    /* Hide scrollbar for letter component */
+    #letter-component {
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE and Edge */
+    }
+
+    #letter-component::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
+    }
   </style>
 </head>
 
