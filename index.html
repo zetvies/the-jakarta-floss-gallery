@@ -170,11 +170,12 @@
       // Fills from center outward: middle, left, right, outer left, outer right, etc.
       function generateImageGrid(marker, dataArray, xOffset = 0) {
         // Grid configuration
-        const xSpacing = 1.0; // X spacing between images
+        const width = 2; // 2x bigger (was 1)
+        const height = 4; // 2x bigger (was 2)
+        const xSpacing = width; // 1x the size (spacing equals width)
+        // Alternative: const xSpacing = width * 0.5; // 0.5x the size
         const zIncrement = 0.3; // Z increments by 0.3
         const yIncrement = 1.0; // Y increments by 1
-        const width = 1;
-        const height = 2;
         
         // Calculate trapezium structure
         // Row 1: 5 images, Row 2: 6 images, Row 3: 7 images, etc.
