@@ -166,49 +166,121 @@
     </a-scene>
 
     <script>
-      // Function to generate 5x4 grid of images for a marker
-      function generateImageGrid(marker) {
-        const cols = 5;
-        const rows = 4;
-        
+      // Function to generate trapezium grid of images for a marker
+      // Fills from center outward: middle, left, right, outer left, outer right, etc.
+      function generateImageGrid(marker, dataArray) {
         // Grid configuration
-        const xSpacing = 1.0; // X increments by 1
+        const xSpacing = 1.0; // X spacing between images
         const zIncrement = 0.3; // Z increments by 0.3
         const yIncrement = 1.0; // Y increments by 1
         const width = 1;
         const height = 2;
         
-        // Y variations for each row (slight random offsets)
-        const yVariations = [
-          [0.05, -0.08, 0.12, -0.05, 0.08], // Row 1
-          [0.12, -0.05, 0.08, -0.08, 0.15], // Row 2
-          [0.05, -0.08, 0.12, -0.05, 0.08], // Row 3
-          [0.12, -0.05, 0.08, -0.08, 0.15]  // Row 4
-        ];
+        // Calculate trapezium structure
+        // Row 1: 5 images, Row 2: 6 images, Row 3: 7 images, etc.
+        function getRowSize(rowIndex) {
+          return 5 + rowIndex; // Row 0 = 5, Row 1 = 6, Row 2 = 7, etc.
+        }
         
-        for (let row = 0; row < rows; row++) {
-          const baseZ = row * zIncrement; // 0, 0.3, 0.6, 0.9
-          const baseY = row * yIncrement; // 0, 1, 2, 3
+        // Generate fill order: middle, left, right, outer left, outer right, etc.
+        function getFillOrder(rowIndex, rowSize) {
+          const order = [];
           
-          for (let col = 0; col < cols; col++) {
-            const x = -col * xSpacing; // 0, -1, -2, -3, -4
-            const y = baseY + yVariations[row][col];
-            const z = baseZ;
+          if (rowSize % 2 === 1) {
+            // Odd number of items: single middle
+            const middleIndex = Math.floor(rowSize / 2);
+            order.push(middleIndex);
             
-            // Cycle through face-1.png to face-4.png
-            const faceIndex = ((row * cols + col) % 4) + 1;
-            const faceSrc = `/assets/face-${faceIndex}.png`;
+            // Then fill left and right alternating outward
+            for (let offset = 1; offset <= middleIndex; offset++) {
+              // Left side
+              if (middleIndex - offset >= 0) {
+                order.push(middleIndex - offset);
+              }
+              // Right side
+              if (middleIndex + offset < rowSize) {
+                order.push(middleIndex + offset);
+              }
+            }
+          } else {
+            // Even number of items: two middle positions
+            const leftMiddle = Math.floor(rowSize / 2) - 1;
+            const rightMiddle = Math.floor(rowSize / 2);
             
-            // Create image element
-            const imageEl = document.createElement('a-image');
-            imageEl.setAttribute('src', faceSrc);
-            imageEl.setAttribute('width', width);
-            imageEl.setAttribute('height', height);
-            imageEl.setAttribute('position', `${x} ${y} ${z}`);
-            imageEl.setAttribute('rotation', '-90 0 0');
-            imageEl.setAttribute('character-animation', '');
+            // Start with left middle, then right middle
+            order.push(leftMiddle);
+            order.push(rightMiddle);
             
-            marker.appendChild(imageEl);
+            // Then fill left and right alternating outward
+            for (let offset = 1; offset < rowSize / 2; offset++) {
+              // Left side
+              if (leftMiddle - offset >= 0) {
+                order.push(leftMiddle - offset);
+              }
+              // Right side
+              if (rightMiddle + offset < rowSize) {
+                order.push(rightMiddle + offset);
+              }
+            }
+          }
+          
+          return order;
+        }
+        
+        // Calculate which row and position for each item
+        let itemIndex = 0;
+        let currentRow = 0;
+        let currentRowPosition = 0;
+        let currentRowSize = getRowSize(currentRow);
+        let currentRowFillOrder = getFillOrder(currentRow, currentRowSize);
+        
+        // Y variations for slight randomness (reuse pattern)
+        const yVariationPattern = [0.05, -0.08, 0.12, -0.05, 0.08, 0.12, -0.05, 0.08, -0.08, 0.15];
+        
+        for (let i = 0; i < dataArray.length; i++) {
+          const data = dataArray[i];
+          
+          // Get position in current row's fill order
+          const colInFillOrder = currentRowFillOrder[currentRowPosition];
+          
+          // Calculate X position (center is 0, left is negative, right is positive)
+          const x = (colInFillOrder - Math.floor(currentRowSize / 2)) * xSpacing;
+          
+          // Calculate Z and Y positions
+          const baseZ = currentRow * zIncrement;
+          const baseY = currentRow * yIncrement;
+          const yVariation = yVariationPattern[itemIndex % yVariationPattern.length];
+          const y = baseY + yVariation;
+          const z = baseZ;
+          
+          // Get image source from data or default
+          const faceSrc = data.src || data.image || `/assets/face-${((itemIndex % 4) + 1)}.png`;
+          
+          // Create image element
+          const imageEl = document.createElement('a-image');
+          imageEl.setAttribute('src', faceSrc);
+          imageEl.setAttribute('width', width);
+          imageEl.setAttribute('height', height);
+          imageEl.setAttribute('position', `${x} ${y} ${z}`);
+          imageEl.setAttribute('rotation', '-90 0 0');
+          imageEl.setAttribute('character-animation', '');
+          
+          // Store any additional data attributes
+          if (data.id) imageEl.setAttribute('data-id', data.id);
+          if (data.class) imageEl.setAttribute('class', data.class);
+          
+          marker.appendChild(imageEl);
+          
+          // Move to next position
+          itemIndex++;
+          currentRowPosition++;
+          
+          // Check if we need to move to next row
+          if (currentRowPosition >= currentRowSize) {
+            currentRow++;
+            currentRowPosition = 0;
+            currentRowSize = getRowSize(currentRow);
+            currentRowFillOrder = getFillOrder(currentRow, currentRowSize);
           }
         }
       }
@@ -218,14 +290,23 @@
         const markers = document.querySelectorAll('a-marker');
         
         if (markers.length > 0) {
+          // Create test data array with 20 items
+          const testData = [];
+          for (let i = 0; i < 20; i++) {
+            testData.push({
+              id: i + 1,
+              src: `/assets/face-${((i % 4) + 1)}.png`
+            });
+          }
+          
           markers.forEach(function(marker) {
             // Clear any existing children first
             while (marker.firstChild) {
               marker.removeChild(marker.firstChild);
             }
-            generateImageGrid(marker);
+            generateImageGrid(marker, testData);
           });
-          console.log('✅ Generated image grids for', markers.length, 'markers');
+          console.log('✅ Generated trapezium image grids for', markers.length, 'markers with', testData.length, 'items each');
         } else {
           console.warn('⚠️ No markers found, retrying...');
           setTimeout(initializeImageGrids, 100);
