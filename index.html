@@ -13,6 +13,15 @@
   <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
   <script src="./svg-component.js" type="module"></script>
   <style>
+    /* Ensure full screen - fix white area after camera switch */
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
     @keyframes rotate-snap-1 {
 
       0%,
@@ -52,6 +61,46 @@
 
     #letter-component::-webkit-scrollbar {
       display: none; /* Chrome, Safari, Opera */
+    }
+
+    /* Hide horizontal scrollbar by default, show when scrolling */
+    #letters-list-bottom {
+      scrollbar-width: none; /* Firefox - hide by default */
+      -ms-overflow-style: none; /* IE and Edge */
+    }
+
+    #letters-list-bottom::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera - hide by default */
+    }
+
+    /* Show scrollbar when scrolling */
+    #letters-list-bottom.scrolling {
+      scrollbar-width: thin; /* Firefox - show when scrolling */
+    }
+
+    #letters-list-bottom.scrolling::-webkit-scrollbar {
+      display: block; /* Chrome, Safari, Opera - show when scrolling */
+      height: 4px;
+    }
+
+    #letters-list-bottom.scrolling::-webkit-scrollbar-thumb {
+      background-color: rgba(0, 0, 0, 0.3);
+      border-radius: 2px;
+    }
+
+    /* Ensure a-scene and canvas are full screen */
+    a-scene {
+      width: 100vw !important;
+      height: 100vh !important;
+      position: fixed !important;
+      top: 0 !important;
+      left: 0 !important;
+    }
+
+    a-scene canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block !important;
     }
   </style>
 </head>
@@ -1354,6 +1403,29 @@
       if (scene) {
         // Configure camera after AR session begins - multiple attempts for Android
         scene.addEventListener('loaded', () => {
+          // Force resize to ensure full screen (fix white area issue)
+          setTimeout(() => {
+            // Trigger window resize to ensure AR.js canvas is properly sized
+            window.dispatchEvent(new Event('resize'));
+            
+            // Also ensure body and html are full screen
+            document.body.style.width = '100vw';
+            document.body.style.height = '100vh';
+            document.body.style.margin = '0';
+            document.body.style.padding = '0';
+            document.body.style.overflow = 'hidden';
+            
+            // Ensure scene canvas is full screen
+            const canvas = scene.querySelector('canvas');
+            if (canvas) {
+              canvas.style.width = '100%';
+              canvas.style.height = '100%';
+              canvas.style.display = 'block';
+            }
+            
+            console.log('✅ Forced resize on scene loaded');
+          }, 100);
+          
           setTimeout(configureCamera, 500);
           setTimeout(configureCamera, 1000);
           setTimeout(configureCamera, 2000);
@@ -1371,6 +1443,42 @@
         });
         // Also try on arjs-video-loaded event
         scene.addEventListener('arjs-video-loaded', () => {
+          // Force resize to ensure full screen (fix white area issue)
+          setTimeout(() => {
+            // Trigger window resize to ensure AR.js canvas is properly sized
+            window.dispatchEvent(new Event('resize'));
+            
+            // Also ensure body and html are full screen
+            document.body.style.width = '100vw';
+            document.body.style.height = '100vh';
+            document.body.style.margin = '0';
+            document.body.style.padding = '0';
+            document.body.style.overflow = 'hidden';
+            
+            // Ensure scene canvas is full screen
+            const canvas = scene.querySelector('canvas');
+            if (canvas) {
+              canvas.style.width = '100%';
+              canvas.style.height = '100%';
+              canvas.style.display = 'block';
+            }
+            
+            // Force AR.js to resize
+            const arjsSystem = scene.systems?.arjs;
+            if (arjsSystem && arjsSystem._arSource) {
+              try {
+                // Trigger resize on AR.js source
+                if (arjsSystem._arSource.onResize) {
+                  arjsSystem._arSource.onResize();
+                }
+              } catch (e) {
+                console.warn('Could not trigger AR.js resize:', e);
+              }
+            }
+            
+            console.log('✅ Forced resize to ensure full screen');
+          }, 100);
+          
           // Verify camera is correct
           setTimeout(() => {
             const video = scene.querySelector('video');
@@ -1411,6 +1519,29 @@
           setInterval(checkAndUpgradeCamera, 2000);
         }, 8000);
       }
+
+      // Window resize handler to ensure full screen (fix white area after camera switch)
+      window.addEventListener('resize', () => {
+        const scene = document.querySelector('a-scene');
+        if (scene) {
+          const canvas = scene.querySelector('canvas');
+          if (canvas) {
+            canvas.style.width = '100%';
+            canvas.style.height = '100%';
+            canvas.style.display = 'block';
+          }
+          
+          // Ensure body is full screen
+          document.body.style.width = '100vw';
+          document.body.style.height = '100vh';
+          document.body.style.overflow = 'hidden';
+        }
+      });
+
+      // Also trigger resize after a short delay on page load (for camera switch scenario)
+      setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+      }, 500);
 
       const orderID = getUrlParameter("orderID");
       console.log("Fetching content for orderID:", orderID);
@@ -1466,7 +1597,9 @@
           const initialX = baseX + xOffset;
           // Position images right on the marker plane
           const initialZ = 0; // Right on marker
-          const initialY = 0; // Right on marker
+          // Vary Y position with random offset
+          const yOffset = (Math.random() - 0.5) * 0.4; // Vary Y by ±0.2
+          const initialY = yOffset;
 
           // Random base rotation
           const rotationZ = (Math.random() - 0.5) * 20; // -10 to 10 degrees
@@ -1503,6 +1636,19 @@
       async function renderLettersBottomLeft(lettersData) {
         const lettersListBottom = document.getElementById('letters-list-bottom');
         if (!lettersListBottom) return;
+
+        // Setup scrollbar visibility on scroll (only once)
+        if (!lettersListBottom.dataset.scrollbarSetup) {
+          let scrollTimeout;
+          lettersListBottom.addEventListener('scroll', () => {
+            lettersListBottom.classList.add('scrolling');
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+              lettersListBottom.classList.remove('scrolling');
+            }, 1000); // Hide scrollbar 1 second after scrolling stops
+          });
+          lettersListBottom.dataset.scrollbarSetup = 'true';
+        }
 
         // Clear existing letters
         lettersListBottom.innerHTML = '';
@@ -2424,8 +2570,40 @@
             selectedCameraDeviceId = nextCamera.deviceId;
             localStorage.setItem('selectedCameraDeviceId', nextCamera.deviceId);
             
-            // Refresh page to apply new camera
-            window.location.reload();
+            // Clean up current video streams before reload
+            try {
+              const scene = document.querySelector('a-scene');
+              if (scene) {
+                const video = scene.querySelector('video');
+                if (video && video.srcObject) {
+                  const stream = video.srcObject;
+                  stream.getTracks().forEach(track => {
+                    track.stop();
+                    console.log('Stopped video track before reload');
+                  });
+                  video.srcObject = null;
+                }
+                
+                // Stop AR.js if possible
+                const arjsSystem = scene.systems?.arjs;
+                if (arjsSystem && arjsSystem._arSource) {
+                  try {
+                    arjsSystem._arSource.stop();
+                    console.log('Stopped AR.js source');
+                  } catch (e) {
+                    console.warn('Could not stop AR.js source:', e);
+                  }
+                }
+              }
+            } catch (cleanupErr) {
+              console.warn('Error during cleanup:', cleanupErr);
+            }
+            
+            // Small delay to ensure cleanup completes, then reload
+            console.log('🔄 Reloading page in 300ms...');
+            setTimeout(() => {
+              window.location.reload();
+            }, 300);
           } catch (error) {
             console.error('Error switching camera:', error);
             alert('Failed to switch camera: ' + error.message);
