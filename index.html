@@ -85,30 +85,31 @@
       <a-marker type="pattern" url="pattern-ribbon-final.patt">
         <!-- 5x4 Grid of 1x1 planes with different colors, rotated to lie flat -->
         <!-- After rotation -90 on X: X=horizontal, Y=depth, Z=vertical -->
-        <!-- Row 1 (Z=1.5) -->
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #FF6B6B" position="-2 0 1.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #4ECDC4" position="-1 0 1.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #45B7D1" position="0 0 1.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #FFA07A" position="1 0 1.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #98D8C8" position="2 0 1.5" rotation="-90 0 0"></a-plane>
-        <!-- Row 2 (Z=0.5) -->
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F7DC6F" position="-2 0 0.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #BB8FCE" position="-1 0 0.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #85C1E2" position="0 0 0.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F8B739" position="1 0 0.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #52BE80" position="2 0 0.5" rotation="-90 0 0"></a-plane>
-        <!-- Row 3 (Z=-0.5) -->
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #EC7063" position="-2 0 -0.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #5DADE2" position="-1 0 -0.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #58D68D" position="0 0 -0.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F4D03F" position="1 0 -0.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #AF7AC5" position="2 0 -0.5" rotation="-90 0 0"></a-plane>
-        <!-- Row 4 (Z=-1.5) -->
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #EB984E" position="-2 0 -1.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #76D7C4" position="-1 0 -1.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F1948A" position="0 0 -1.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #7FB3D3" position="1 0 -1.5" rotation="-90 0 0"></a-plane>
-        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F9E79F" position="2 0 -1.5" rotation="-90 0 0"></a-plane>
+        <!-- 0,0,0 is at bottom right, everything else is to the left (negative X) and top (positive Z) -->
+        <!-- Row 1 (bottom, Z=0) -->
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #FF6B6B" position="0 0 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #4ECDC4" position="-1 0 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #45B7D1" position="-2 0 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #FFA07A" position="-3 0 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #98D8C8" position="-4 0 0" rotation="-90 0 0"></a-plane>
+        <!-- Row 2 (Z=1) -->
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F7DC6F" position="0 0 1" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #BB8FCE" position="-1 0 1" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #85C1E2" position="-2 0 1" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F8B739" position="-3 0 1" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #52BE80" position="-4 0 1" rotation="-90 0 0"></a-plane>
+        <!-- Row 3 (Z=2) -->
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #EC7063" position="0 0 2" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #5DADE2" position="-1 0 2" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #58D68D" position="-2 0 2" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F4D03F" position="-3 0 2" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #AF7AC5" position="-4 0 2" rotation="-90 0 0"></a-plane>
+        <!-- Row 4 (top, Z=3) -->
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #EB984E" position="0 0 3" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #76D7C4" position="-1 0 3" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F1948A" position="-2 0 3" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #7FB3D3" position="-3 0 3" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F9E79F" position="-4 0 3" rotation="-90 0 0"></a-plane>
       </a-marker>
       <!-- Add a camera -->
       <a-entity camera></a-entity>
