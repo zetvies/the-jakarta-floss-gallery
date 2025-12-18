@@ -153,15 +153,14 @@
     <a-scene
       style="z-index: 1"
       embedded
-      arjs="sourceType: webcam; patternRatio: 0.75; trackingMethod: best; maxDetectionRate: 60; detectionMode: mono"
-      renderer="antialias: true; alpha: true; precision: medium"
+      arjs="debugUIEnabled: false; patternRatio: 0.7; sourceType: webcam;"
+      device-orientation-permission-ui="enabled: false"
       vr-mode-ui="enabled: false"
-      stats
     >
       <!-- Define markers - images will be generated dynamically -->
-      <a-marker vidhandler preset="custom" type="pattern" url="pattern-confetti-final.patt" id="marker-confetti" smoothCount="0" smoothTolerance="0.0001"></a-marker>
-      <a-marker vidhandler preset="custom" type="pattern" url="pattern-cake-final.patt" id="marker-cake" smoothCount="0" smoothTolerance="0.0001"></a-marker>
-      <a-marker vidhandler preset="custom" type="pattern" url="pattern-ribbon-final.patt" id="marker-ribbon" smoothCount="0" smoothTolerance="0.0001"></a-marker>
+      <a-marker type="pattern" url="pattern-confetti-final.patt" id="marker-confetti"></a-marker>
+      <a-marker type="pattern" url="pattern-cake-final.patt" id="marker-cake"></a-marker>
+      <a-marker type="pattern" url="pattern-ribbon-final.patt" id="marker-ribbon"></a-marker>
       <!-- Add a camera -->
       <a-entity camera></a-entity>
     </a-scene>
