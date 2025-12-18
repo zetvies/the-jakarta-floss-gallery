@@ -291,30 +291,33 @@
         const markers = document.querySelectorAll('a-marker');
         
         if (markers.length > 0) {
-          // Create test data array with 20 items
-          const testData = [];
-          for (let i = 0; i < 20; i++) {
-            testData.push({
-              id: i + 1,
-              src: `/assets/face-${((i % 4) + 1)}.png`
-            });
-          }
-          
           markers.forEach(function(marker) {
             // Clear any existing children first
             while (marker.firstChild) {
               marker.removeChild(marker.firstChild);
             }
             
-            // Determine X offset based on marker pattern
+            // Determine X offset and data array size based on marker pattern
             let xOffset = 0;
+            let dataCount = 20; // Default to 20 items
             const markerUrl = marker.getAttribute('url');
+            
             if (markerUrl === 'pattern-ribbon-final.patt') {
               xOffset = -2; // Shift ribbon marker left by 2 units
+              dataCount = 4; // Ribbon marker shows only 4 images
             } else if (markerUrl === 'pattern-cake-final.patt') {
               xOffset = -1; // Shift cake marker left by 1 unit
             }
-            // pattern-confetti-final.patt stays at 0 offset
+            // pattern-confetti-final.patt stays at 0 offset with 20 items
+            
+            // Create test data array with specified count
+            const testData = [];
+            for (let i = 0; i < dataCount; i++) {
+              testData.push({
+                id: i + 1,
+                src: `/assets/face-${((i % 4) + 1)}.png`
+              });
+            }
             
             generateImageGrid(marker, testData, xOffset);
           });
