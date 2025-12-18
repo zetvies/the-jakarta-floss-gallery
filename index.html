@@ -168,7 +168,7 @@
     <script>
       // Function to generate trapezium grid of images for a marker
       // Fills from center outward: middle, left, right, outer left, outer right, etc.
-      function generateImageGrid(marker, dataArray) {
+      function generateImageGrid(marker, dataArray, xOffset = 0) {
         // Grid configuration
         const xSpacing = 1.0; // X spacing between images
         const zIncrement = 0.3; // Z increments by 0.3
@@ -244,7 +244,8 @@
           const colInFillOrder = currentRowFillOrder[currentRowPosition];
           
           // Calculate X position (center is 0, left is negative, right is positive)
-          const x = (colInFillOrder - Math.floor(currentRowSize / 2)) * xSpacing;
+          // Apply xOffset to shift the entire grid
+          const x = ((colInFillOrder - Math.floor(currentRowSize / 2)) * xSpacing) + xOffset;
           
           // Calculate Z and Y positions
           const baseZ = currentRow * zIncrement;
@@ -304,7 +305,18 @@
             while (marker.firstChild) {
               marker.removeChild(marker.firstChild);
             }
-            generateImageGrid(marker, testData);
+            
+            // Determine X offset based on marker pattern
+            let xOffset = 0;
+            const markerUrl = marker.getAttribute('url');
+            if (markerUrl === 'pattern-ribbon-final.patt') {
+              xOffset = -2; // Shift ribbon marker left by 2 units
+            } else if (markerUrl === 'pattern-cake-final.patt') {
+              xOffset = -1; // Shift cake marker left by 1 unit
+            }
+            // pattern-confetti-final.patt stays at 0 offset
+            
+            generateImageGrid(marker, testData, xOffset);
           });
           console.log('✅ Generated trapezium image grids for', markers.length, 'markers with', testData.length, 'items each');
         } else {
@@ -816,10 +828,10 @@
             // Set initial video source
             if (stories.length > 0) {
               videoElement.src = stories[0].video;
-            }
-          })
-          .catch((error) => {
-            console.error("Error fetching content:", error);
+              }
+            })
+            .catch((error) => {
+              console.error("Error fetching content:", error);
             // console.log("Redirecting due to error...");
             // window.location.href =
             //   "https://moonmuffin.byc.plus/experience-app/ar";
@@ -926,7 +938,7 @@
             }
           });
         }
-
+        
             // Update the signature dynamically
             const signatureImg = document.querySelector("#signatureImg");
             if (signatureImg) {
