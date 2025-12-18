@@ -214,17 +214,49 @@
       }
       
       // Generate images for all markers when scene is ready
-      document.addEventListener('DOMContentLoaded', function() {
-        const scene = document.querySelector('a-scene');
+      function initializeImageGrids() {
+        const markers = document.querySelectorAll('a-marker');
         
-        scene.addEventListener('loaded', function() {
-          const markers = document.querySelectorAll('a-marker');
-          
+        if (markers.length > 0) {
           markers.forEach(function(marker) {
+            // Clear any existing children first
+            while (marker.firstChild) {
+              marker.removeChild(marker.firstChild);
+            }
             generateImageGrid(marker);
           });
+          console.log('✅ Generated image grids for', markers.length, 'markers');
+        } else {
+          console.warn('⚠️ No markers found, retrying...');
+          setTimeout(initializeImageGrids, 100);
+        }
+      }
+      
+      // Try multiple initialization methods
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+          const scene = document.querySelector('a-scene');
+          if (scene && scene.hasLoaded) {
+            initializeImageGrids();
+          } else {
+            scene.addEventListener('loaded', initializeImageGrids);
+            // Fallback timeout
+            setTimeout(initializeImageGrids, 1000);
+          }
         });
-      });
+      } else {
+        // DOM already loaded
+        const scene = document.querySelector('a-scene');
+        if (scene && scene.hasLoaded) {
+          initializeImageGrids();
+        } else {
+          if (scene) {
+            scene.addEventListener('loaded', initializeImageGrids);
+          }
+          // Fallback timeout
+          setTimeout(initializeImageGrids, 1000);
+        }
+      }
     </script>
 
     <video
@@ -258,41 +290,6 @@
         gap: 16px;
       "
     ></div>
-    <div
-      id="showMessageButton"
-      style="
-        background-color: white;
-        border-radius: 30px;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        padding: 0px 16px;
-        color: #046511;
-        position: fixed;
-        bottom: 24.3svh;
-        left: 50%;
-        font-family: Inter;
-        transform: translateX(-50%);
-        z-index: 20;
-        cursor: pointer;
-      "
-    >
-      <p>Buka Pesan</p>
-      <svg
-        width="24"
-        height="24"
-        viewBox="0 0 24 24"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
-        <path
-          d="M22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6ZM20 6L12 10.99L4 6H20ZM20 18H4V8L12 13L20 8V18Z"
-          fill="#046511"
-        />
-      </svg>
-    </div>
-
     <div
       id="messageModal"
       style="
@@ -756,7 +753,6 @@
           "#92ED00",
         ];
 
-        const showMessageButton = document.getElementById("showMessageButton");
         const messageModal = document.getElementById("messageModal");
         const modalMessage = document.getElementById("modalMessage");
 
@@ -871,20 +867,6 @@
         // Initially hide the stories
         storiesElement.style.display = "none";
 
-        // Initially hide the showMessageButton
-        showMessageButton.style.display = "none";
-
-        // Show message modal if the active story is clicked
-        showMessageButton.addEventListener("click", () => {
-          const activeButton = document.querySelector(".story-button.active");
-          if (activeButton) {
-            const message = activeButton.dataset.message;
-            if (message) {
-              modalMessage.innerHTML = message.replace(/\n/g, "<br>");
-              messageModal.style.display = "flex";
-              }
-            }
-          });
 
         // Add event listener to close the modal when clicking on the overlay
         messageModal.addEventListener("click", (event) => {
@@ -951,8 +933,6 @@
             // Show the stories when the marker is found
             storiesElement.style.display = "flex";
 
-            // Show the showMessageButton when the marker is found
-            showMessageButton.style.display = "flex";
 
             // Hide the overlay when the marker is found
             const markerNotFoundOverlay = document.getElementById(
@@ -983,8 +963,6 @@
             );
             markerNotFoundOverlay.style.display = "block";
 
-            // Hide the showMessageButton when the marker is lost
-            showMessageButton.style.display = "none";
           });
         });
       });
