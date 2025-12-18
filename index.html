@@ -81,144 +81,33 @@
       device-orientation-permission-ui="enabled: false"
       vr-mode-ui="enabled: false"
     >
-      <!-- Define a marker using the Hiro pattern -->
+      <!-- Define a marker with 5x4 grid of colored planes -->
       <a-marker type="pattern" url="pattern-ribbon-final.patt">
-        <!-- Add a white plane as a container for the video -->
-        <a-plane
-          color="white"
-          width="2.2"
-          height="4"
-          position="0 0 -1"
-          rotation="-80 0 0"
-        ></a-plane>
-        <!-- Play a video on a plane with cropping effect -->
-        <a-video
-          src="#arsa-video"
-          width="1.8"
-          height="1.8"
-          position="0 0.2 -1.2"
-          rotation="-80 0 0"
-        ></a-video>
-        <!-- Overlay images in front of the video -->
-        <a-image
-          src="./assets/images/mosque.png"
-          width="1.2"
-          height="1.2"
-          position="1.3 0.4 0.7"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/ketupat.png"
-          width="0.8"
-          height="0.8"
-          position="-1.2 0.2 0.8"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/love.png"
-          width="1"
-          height="1"
-          position="1.2 0.6 -2.1"
-          rotation="-80 0 0"
-        ></a-image>
-
-        <a-image
-          src="./assets/images/star.png"
-          width="1.2"
-          height="1.2"
-          position="-1.5 0.4 -.8"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/sparkle.png"
-          width="0.7"
-          height="0.7"
-          position="1.3 0.4 -.7"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/moon.png"
-          width=".7"
-          height=".7"
-          position="-1.2 0.5 -2.4"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/moonmuffin.png"
-          width="1.2"
-          height="0.4"
-          position="0 0.1 .7"
-          rotation="-80 0 0"
-        ></a-image>
-      </a-marker>
-      <a-marker type="pattern" url="pattern-sparkle-black.patt">
-        <!-- Add a white plane as a container for the video -->
-        <a-plane
-          color="white"
-          width="6"
-          height="5"
-          position="-2.6 0 -3.4"
-          rotation="-90 0 0"
-        ></a-plane>
-        <!-- Play a video on a plane with cropping effect -->
-        <a-video
-          src="#arsa-video"
-          width="6.3"
-          height="5.3"
-          position="-2.7 0.4 -3.4"
-          rotation="-90 0 0"
-        ></a-video>
-        <!-- Overlay images in front of the video -->
-        <a-image
-          src="./assets/images/mosque.png"
-          width="2.4"
-          height="2.4"
-          position="0.5 0.8 -.5"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/ketupat.png"
-          width="1.6"
-          height="1.6"
-          position="-6.2 0.8 -.5"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/love.png"
-          width="2"
-          height="2"
-          position=".4 0.8 -6.1"
-          rotation="-80 0 0"
-        ></a-image>
-
-        <a-image
-          src="./assets/images/star.png"
-          width="2.4"
-          height="2.4"
-          position="-6 0.8 -3.3"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/sparkle.png"
-          width="1.4"
-          height="1.4"
-          position=".3 0.8 -3.5"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/moon.png"
-          width="1.4"
-          height="1.4"
-          position="-6 0.8 -6"
-          rotation="-80 0 0"
-        ></a-image>
-        <a-image
-          src="./assets/images/moonmuffin.png"
-          width="1.2"
-          height="0.4"
-          position="0 0.1 .7"
-          rotation="-80 0 0"
-        ></a-image>
+        <!-- 5x4 Grid of 1x1 planes with different colors, rotated to lie flat -->
+        <!-- Row 1 -->
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #FF6B6B" position="-2 1.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #4ECDC4" position="-1 1.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #45B7D1" position="0 1.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #FFA07A" position="1 1.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #98D8C8" position="2 1.5 0" rotation="-90 0 0"></a-plane>
+        <!-- Row 2 -->
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F7DC6F" position="-2 0.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #BB8FCE" position="-1 0.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #85C1E2" position="0 0.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F8B739" position="1 0.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #52BE80" position="2 0.5 0" rotation="-90 0 0"></a-plane>
+        <!-- Row 3 -->
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #EC7063" position="-2 -0.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #5DADE2" position="-1 -0.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #58D68D" position="0 -0.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F4D03F" position="1 -0.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #AF7AC5" position="2 -0.5 0" rotation="-90 0 0"></a-plane>
+        <!-- Row 4 -->
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #EB984E" position="-2 -1.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #76D7C4" position="-1 -1.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F1948A" position="0 -1.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #7FB3D3" position="1 -1.5 0" rotation="-90 0 0"></a-plane>
+        <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: #F9E79F" position="2 -1.5 0" rotation="-90 0 0"></a-plane>
       </a-marker>
       <!-- Add a camera -->
       <a-entity camera></a-entity>
@@ -622,9 +511,9 @@
                 "No data received, redirecting to order-specific URL..."
               );
               window.location.href = `https://moonmuffin.byc.plus/experience-app/ar/${orderID}`;
-              return;
-            }
-
+            return;
+          }
+          
             // Transform API data to match our stories structure
             const stories = data.map((item) => ({
               name: item.name,
@@ -674,11 +563,11 @@
 
               // Add click event listener
               storyButton.addEventListener("click", () => {
-                // Remove active class from all buttons
+              // Remove active class from all buttons
                 document
                   .querySelectorAll(".story-button")
                   .forEach((btn) => btn.classList.remove("active"));
-                // Add active class to clicked button
+              // Add active class to clicked button
                 storyButton.classList.add("active");
                 // Update content immediately
                 updateContent(index);
@@ -843,9 +732,9 @@
                     .catch((e) =>
                       console.log("Even muted autoplay failed:", e)
                     );
-                }
-              });
             }
+          });
+        }
 
             // Update the signature dynamically
             const signatureImg = document.querySelector("#signatureImg");
@@ -854,7 +743,7 @@
                 console.log("Setting signature URL:", signature);
                 signatureImg.src = signature;
                 signatureImg.style.display = "block";
-              } else {
+            } else {
                 console.log(
                   "No signature URL available, hiding signature image"
                 );
@@ -879,9 +768,9 @@
             if (message) {
               modalMessage.innerHTML = message.replace(/\n/g, "<br>");
               messageModal.style.display = "flex";
+              }
             }
-          }
-        });
+          });
 
         // Add event listener to close the modal when clicking on the overlay
         messageModal.addEventListener("click", (event) => {
@@ -906,7 +795,7 @@
             recordInner.style.borderRadius = "0";
             recordInner.style.width = "20px";
             recordInner.style.height = "20px";
-          } else {
+              } else {
             recordInner.style.borderRadius = "50%";
             recordInner.style.width = "30px";
             recordInner.style.height = "30px";
