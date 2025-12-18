@@ -109,19 +109,19 @@
   <a-scene style="z-index: 1" embedded arjs="debugUIEnabled: false; patternRatio: 0.7;"
     device-orientation-permission-ui="enabled: false" vr-mode-ui="enabled: false">
     <!-- Define a marker using the pattern -->
-    <a-marker type="pattern" url="pattern-confetti-final.patt" id="marker-confetti" size="0.7">
-      <!-- White plane at origin -->
-      <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: white" position="0 0 0"></a-plane>
+    <a-marker type="pattern" url="pattern-confetti-final.patt" id="marker-confetti">
+      <!-- White plane at origin - rotated to lie flat on marker -->
+      <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: white" position="0 0 0" rotation="-90 0 0"></a-plane>
       <!-- Images will be dynamically added here -->
     </a-marker>
-    <a-marker type="pattern" url="pattern-cake-final.patt" id="marker-cake" size="0.7">
-      <!-- White plane at origin -->
-      <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: white" position="0 0 0"></a-plane>
+    <a-marker type="pattern" url="pattern-cake-final.patt" id="marker-cake">
+      <!-- White plane at origin - rotated to lie flat on marker -->
+      <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: white" position="0 0 0" rotation="-90 0 0"></a-plane>
       <!-- Images will be dynamically added here -->
     </a-marker>
-    <a-marker type="pattern" url="pattern-ribbon-final.patt" id="marker-ribbon" size="0.7">
-      <!-- White plane at origin -->
-      <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: white" position="0 0 0"></a-plane>
+    <a-marker type="pattern" url="pattern-ribbon-final.patt" id="marker-ribbon">
+      <!-- White plane at origin - rotated to lie flat on marker -->
+      <a-plane geometry="primitive: plane; width: 1; height: 1" material="color: white" position="0 0 0" rotation="-90 0 0"></a-plane>
       <!-- Images will be dynamically added here -->
     </a-marker>
     <!-- Add a camera with raycaster for interaction -->
