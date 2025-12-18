@@ -346,8 +346,22 @@
             "передня", "prednja", "depan", "सामने"
           ];
           
-          let bestBackCamera = null;
-          let bestFrontCamera = null;
+          // Wide-angle camera keywords (to exclude)
+          const wideAngleKeywords = [
+            "wide", "ultra wide", "ultrawide", "uw", "uwc", "wide angle", "wide-angle",
+            "超广角", "超廣角", "广角", "廣角", "wideangle", "wide-angle", "wideangle",
+            "weitwinkel", "grand angle", "gran angular", "grandangolare", "широкоугольный",
+            "широкий угол", "واسع", "רחב", "ευρυγωνιακό", "széles szög", "širokoúhlý",
+            "ampli", "largo", "geniş açı", "rộng", "szeroki", "széles"
+          ];
+          
+          // Detect Samsung devices
+          const isSamsung = /samsung/i.test(navigator.userAgent);
+          console.log(`📱 Device: ${isSamsung ? 'Samsung' : 'Other'}`);
+          
+          // Collect all back cameras first
+          const backCameras = [];
+          const frontCameras = [];
           
           // Identify cameras by label only (don't access them - that requires permissions)
           for (const device of videoInputs) {
@@ -356,23 +370,48 @@
             }
             
             const lowercaseLabel = device.label.toLowerCase();
+            
+            // Skip wide-angle cameras (if keyword is present)
+            const isWideAngle = wideAngleKeywords.some(keyword => lowercaseLabel.includes(keyword));
+            if (isWideAngle) {
+              console.log(`🚫 Skipping wide-angle camera: ${device.label}`);
+              continue;
+            }
+            
             const isBackByLabel = backCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
             const isFrontByLabel = frontCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
             
-            if (isBackByLabel && !bestBackCamera) {
-              bestBackCamera = {
+            if (isBackByLabel) {
+              backCameras.push({
                 deviceId: device.deviceId,
                 label: device.label
-              };
-              console.log(`📷 Found back camera by label: ${device.label}`);
-            } else if (isFrontByLabel && !bestFrontCamera) {
-              bestFrontCamera = {
+              });
+              console.log(`📷 Found back camera: ${device.label}`);
+            } else if (isFrontByLabel) {
+              frontCameras.push({
                 deviceId: device.deviceId,
                 label: device.label
-              };
-              console.log(`📷 Found front camera by label: ${device.label}`);
+              });
+              console.log(`📷 Found front camera: ${device.label}`);
             }
           }
+          
+          // Select back camera: on Samsung, skip first (wide-angle) and use second
+          let bestBackCamera = null;
+          if (backCameras.length > 0) {
+            if (isSamsung && backCameras.length > 1) {
+              // Samsung: use 2nd back camera (skip first which is wide-angle)
+              bestBackCamera = backCameras[1];
+              console.log(`✅ Samsung device: Selected 2nd back camera (skipping 1st wide-angle): ${bestBackCamera.label}`);
+            } else {
+              // Other devices or only one back camera: use first
+              bestBackCamera = backCameras[0];
+              console.log(`✅ Selected back camera: ${bestBackCamera.label}`);
+            }
+          }
+          
+          // Select front camera (always first)
+          const bestFrontCamera = frontCameras.length > 0 ? frontCameras[0] : null;
           
           // Select back camera if available, otherwise front camera
           const selectedCamera = bestBackCamera || bestFrontCamera;
@@ -784,7 +823,16 @@
         "बैक"
       ];
       
-      // Function to find the best back camera with highest resolution
+      // Wide-angle camera keywords (to exclude)
+      const wideAngleKeywords = [
+        "wide", "ultra wide", "ultrawide", "uw", "uwc", "wide angle", "wide-angle",
+        "超广角", "超廣角", "广角", "廣角", "wideangle", "wide-angle", "wideangle",
+        "weitwinkel", "grand angle", "gran angular", "grandangolare", "широкоугольный",
+        "широкий угол", "واسع", "רחב", "ευρυγωνιακό", "széles szög", "širokoúhlý",
+        "ampli", "largo", "geniş açı", "rộng", "szeroki", "széles"
+      ];
+      
+      // Function to find the best back camera with highest resolution (excluding wide-angle)
       const findBestBackCamera = async (useCache = true) => {
         // Return cached result if available
         if (useCache && bestCameraCache) {
@@ -802,22 +850,48 @@
           
           console.log('Found video input devices:', videoInputs.length);
           
-          // First, identify back cameras by label keywords
+          // First, identify back cameras by label keywords (excluding wide-angle)
           const backCameras = videoInputs.filter(camera => {
             if (!camera.label) return false;
             const lowercaseLabel = camera.label.toLowerCase();
+            
+            // Exclude wide-angle cameras
+            const isWideAngle = wideAngleKeywords.some(keyword => lowercaseLabel.includes(keyword));
+            if (isWideAngle) {
+              console.log(`🚫 Excluding wide-angle camera: ${camera.label}`);
+              return false;
+            }
+            
             return backCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
           });
           
-          console.log('Back cameras found by keywords:', backCameras.length);
+          console.log('Back cameras found by keywords (non-wide):', backCameras.length);
           
-          // If no back cameras found by keywords, try facingMode
-          const camerasToCheck = backCameras.length > 0 ? backCameras : videoInputs;
+          // If no back cameras found by keywords, try facingMode (but still exclude wide-angle)
+          let camerasToCheck = backCameras.length > 0 ? backCameras : videoInputs;
           
-          let bestCamera = null;
-          let bestResolution = 0;
+          // Filter out wide-angle cameras from camerasToCheck if we're checking all cameras
+          if (backCameras.length === 0) {
+            camerasToCheck = camerasToCheck.filter(camera => {
+              if (!camera.label) return true; // Keep if no label (can't determine)
+              const lowercaseLabel = camera.label.toLowerCase();
+              const isWideAngle = wideAngleKeywords.some(keyword => lowercaseLabel.includes(keyword));
+              if (isWideAngle) {
+                console.log(`🚫 Excluding wide-angle camera: ${camera.label}`);
+                return false;
+              }
+              return true;
+            });
+          }
           
-          // Check each camera to find the one with highest resolution
+          // Detect Samsung devices
+          const isSamsung = /samsung/i.test(navigator.userAgent);
+          console.log(`📱 Device: ${isSamsung ? 'Samsung' : 'Other'}`);
+          
+          // Collect all back cameras with their resolutions
+          const backCameraList = [];
+          
+          // Check each camera to find back cameras and their resolutions
           for (const device of camerasToCheck) {
             try {
               // Get capabilities for this device
@@ -832,6 +906,15 @@
                 const capabilities = track.getCapabilities();
                 const settings = track.getSettings();
                 
+                // Double-check: exclude wide-angle by label (in case it wasn't filtered earlier)
+                const lowercaseLabel = (device.label || '').toLowerCase();
+                const isWideAngle = wideAngleKeywords.some(keyword => lowercaseLabel.includes(keyword));
+                if (isWideAngle) {
+                  console.log(`🚫 Skipping wide-angle camera: ${device.label}`);
+                  track.stop();
+                  continue;
+                }
+                
                 // Check if it's a back camera (by facingMode or by label)
                 const isBackCameraByLabel = backCameras.includes(device);
                 const isBackCameraByFacing = settings.facingMode === 'environment' || 
@@ -845,17 +928,13 @@
                   
                   console.log(`Camera ${device.label || device.deviceId}: ${maxWidth}x${maxHeight} (${resolution} pixels)`);
                   
-                  // Keep track of the best camera
-                  if (resolution > bestResolution) {
-                    bestResolution = resolution;
-                    bestCamera = {
-                      deviceId: device.deviceId,
-                      label: device.label,
-                      maxWidth: maxWidth,
-                      maxHeight: maxHeight,
-                      resolution: resolution
-                    };
-                  }
+                  backCameraList.push({
+                    deviceId: device.deviceId,
+                    label: device.label,
+                    maxWidth: maxWidth,
+                    maxHeight: maxHeight,
+                    resolution: resolution
+                  });
                 }
                 
                 // Stop the track to release the camera
@@ -863,6 +942,25 @@
               }
             } catch (err) {
               console.warn(`Could not access camera ${device.deviceId}:`, err);
+            }
+          }
+          
+          // Select best camera based on device type
+          let bestCamera = null;
+          
+          if (backCameraList.length > 0) {
+            if (isSamsung && backCameraList.length > 1) {
+              // Samsung: skip first (wide-angle) and select 2nd, or highest resolution from remaining
+              const camerasAfterFirst = backCameraList.slice(1); // Skip first camera
+              // Sort by resolution descending and take the best
+              camerasAfterFirst.sort((a, b) => b.resolution - a.resolution);
+              bestCamera = camerasAfterFirst[0];
+              console.log(`✅ Samsung device: Selected 2nd back camera (skipped 1st wide-angle): ${bestCamera.label} (${bestCamera.maxWidth}x${bestCamera.maxHeight})`);
+            } else {
+              // Other devices or only one camera: select highest resolution
+              backCameraList.sort((a, b) => b.resolution - a.resolution);
+              bestCamera = backCameraList[0];
+              console.log(`✅ Selected back camera: ${bestCamera.label} (${bestCamera.maxWidth}x${bestCamera.maxHeight})`);
             }
           }
           
