@@ -326,158 +326,12 @@
       console.log('🔍 No manual selection - will auto-select best camera');
     }
     
-    // Function to automatically find and select the best camera (back camera first, then front)
-    // Only runs if user hasn't manually selected a camera
+    // Function to automatically find and select the best camera - DISABLED
+    // Just use default camera instead of auto-selecting
     const autoSelectBestCamera = async () => {
-      // If user has manually selected a camera, skip auto-selection
-      if (hasManualSelection) {
-        console.log('⏭️ Skipping auto-selection - using manual selection');
-        return null;
-      }
-      // Add timeout to prevent hanging
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Camera selection timeout')), 5000);
-      });
-      
-      const selectionPromise = (async () => {
-        try {
-          // Detect if we're on mobile or PC
-          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-          
-          if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-            console.warn('Device enumeration not supported - will use default camera');
-            return null; // Will use default camera
-          }
-          
-          // On PC, just use default camera (webcam) - don't enumerate
-          if (!isMobile) {
-            console.log('💻 PC detected - using default webcam');
-            // Don't set selectedCameraDeviceId - let it use default
-            return null;
-          }
-          
-          // On mobile, enumerate and find best camera by label only (don't access cameras before permissions)
-          console.log('📱 Mobile detected - finding best camera by label...');
-          
-          // First, try to enumerate devices (on mobile, labels are empty until permissions granted)
-          // We'll skip auto-selection if we can't enumerate or if labels aren't available
-          let devices;
-          try {
-            devices = await navigator.mediaDevices.enumerateDevices();
-          } catch (err) {
-            // If enumeration fails (e.g., permissions not granted), that's okay
-            // AR.js will request permissions, and we can select later
-            console.log('⚠️ Could not enumerate devices yet (permissions may not be granted):', err.message);
-            return null;
-          }
-          
-          const videoInputs = devices.filter(device => device.kind === 'videoinput');
-          
-          if (videoInputs.length === 0) {
-            console.warn('No video input devices found');
-            return null;
-          }
-          
-          // Check if we have labels (permissions granted)
-          const hasLabels = videoInputs.some(device => device.label && device.label.trim() !== '');
-          
-          if (!hasLabels) {
-            console.log('⚠️ Camera labels not available yet (permissions not granted) - will select after AR.js requests camera');
-            // Don't try to access cameras - let AR.js request permissions first
-            return null;
-          }
-          
-          console.log('🔍 Auto-selecting best camera from', videoInputs.length, 'devices by label...');
-          
-          // Back camera keywords
-          const backCameraKeywords = [
-            "rear", "back", "rück", "arrière", "trasera", "trás", "traseira", "posteriore",
-            "后面", "後面", "背面", "后置", "後置", "背置", "задней", "الخلفية", "후",
-            "arka", "achterzijde", "หลัง", "baksidan", "bagside", "sau", "bak", "tylny",
-            "takakamera", "belakang", "אחורית", "πίσω", "spate", "hátsó", "zadní", "darrere",
-            "zadná", "задня", "stražnja", "belakang", "बैक"
-          ];
-          
-          // Front camera keywords
-          const frontCameraKeywords = [
-            "front", "forward", "facing", "user", "selfie", "vorne", "avant", "delantera",
-            "frente", "anteriore", "前面", "前面", "前置", "前", "передней", "الأمامية",
-            "전면", "ön", "voor", "หน้า", "fram", "foran", "trước", "przód", "etukamera",
-            "depan", "קדמית", "μπροστινή", "față", "elülső", "přední", "davant", "predná",
-            "передня", "prednja", "depan", "सामने"
-          ];
-          
-          // Wide-angle camera keywords (to exclude)
-          const wideAngleKeywords = [
-            "wide", "ultra wide", "ultrawide", "uw", "uwc", "wide angle", "wide-angle",
-            "超广角", "超廣角", "广角", "廣角", "wideangle", "wide-angle", "wideangle",
-            "weitwinkel", "grand angle", "gran angular", "grandangolare", "широкоугольный",
-            "широкий угол", "واسع", "רחב", "ευρυγωνιακό", "széles szög", "širokoúhlý",
-            "ampli", "largo", "geniş açı", "rộng", "szeroki", "széles"
-          ];
-          
-          let bestBackCamera = null;
-          let bestFrontCamera = null;
-          
-          // Identify cameras by label only (don't access them - that requires permissions)
-          for (const device of videoInputs) {
-            if (!device.label || device.label.trim() === '') {
-              continue; // Skip devices without labels
-            }
-            
-            const lowercaseLabel = device.label.toLowerCase();
-            
-            // Skip wide-angle cameras
-            const isWideAngle = wideAngleKeywords.some(keyword => lowercaseLabel.includes(keyword));
-            if (isWideAngle) {
-              console.log(`🚫 Skipping wide-angle camera: ${device.label}`);
-              continue;
-            }
-            
-            const isBackByLabel = backCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
-            const isFrontByLabel = frontCameraKeywords.some(keyword => lowercaseLabel.includes(keyword));
-            
-            if (isBackByLabel && !bestBackCamera) {
-              bestBackCamera = {
-                deviceId: device.deviceId,
-                label: device.label
-              };
-              console.log(`📷 Found back camera (non-wide): ${device.label}`);
-            } else if (isFrontByLabel && !bestFrontCamera) {
-              bestFrontCamera = {
-                deviceId: device.deviceId,
-                label: device.label
-              };
-              console.log(`📷 Found front camera (non-wide): ${device.label}`);
-            }
-          }
-          
-          // Select back camera if available, otherwise front camera
-          const selectedCamera = bestBackCamera || bestFrontCamera;
-          if (selectedCamera) {
-            selectedCameraDeviceId = selectedCamera.deviceId;
-            localStorage.setItem('selectedCameraDeviceId', selectedCameraDeviceId);
-            console.log(`✅ Auto-selected ${bestBackCamera ? 'BACK' : 'FRONT'} camera by label: ${selectedCamera.label || selectedCamera.deviceId}`);
-            return selectedCamera;
-          } else {
-            console.log('⚠️ No suitable camera found by label - will use default');
-            return null;
-          }
-        } catch (error) {
-          console.warn('Error auto-selecting camera:', error);
-          return null;
-        }
-      })();
-      
-      // Race between selection and timeout
-      try {
-        return await Promise.race([selectionPromise, timeoutPromise]);
-      } catch (error) {
-        if (error.message === 'Camera selection timeout') {
-          console.warn('⏱️ Camera selection timed out - will use default camera');
-        }
-        return null;
-      }
+      // Always skip auto-selection - use default camera
+      console.log('⏭️ Auto-selection disabled - using default camera');
+      return null;
     };
     
     // Auto-select best camera immediately (before AR.js initializes)
@@ -495,37 +349,14 @@
         // Log ALL getUserMedia calls for debugging
         console.log('📹 getUserMedia called with constraints:', JSON.stringify(constraints, null, 2));
         
-        // Always check localStorage first (in case manual selection was made)
+        // Only check for manual selection from localStorage (no auto-selection)
+        // If no manual selection, use default camera
         if (!selectedCameraDeviceId) {
           selectedCameraDeviceId = localStorage.getItem('selectedCameraDeviceId');
           if (selectedCameraDeviceId) {
-            console.log('📹 Loaded manual camera selection from localStorage:', selectedCameraDeviceId);
-          }
-        }
-        
-        // Wait for auto-selection to complete if it hasn't finished yet (with timeout)
-        // But don't block if it's taking too long - let AR.js proceed
-        if (!selectedCameraDeviceId) {
-          const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-          
-          if (isMobile) {
-            // On mobile, wait briefly for camera selection (max 1 second - don't block too long)
-            try {
-              await Promise.race([
-                cameraSelectionPromise,
-                new Promise(resolve => setTimeout(resolve, 1000)) // Reduced timeout
-              ]);
-              // Re-check after waiting
-              if (!selectedCameraDeviceId) {
-                selectedCameraDeviceId = localStorage.getItem('selectedCameraDeviceId');
-              }
-            } catch (err) {
-              // Silently continue - camera selection will happen later if permissions are granted
-              // console.warn('Camera selection not ready yet:', err);
-            }
+            console.log('📹 Using manually selected camera from localStorage:', selectedCameraDeviceId);
           } else {
-            // On PC, don't wait - use default camera
-            console.log('💻 PC detected - using default webcam (no selection needed)');
+            console.log('📹 No manual selection - using default camera');
           }
         }
         
@@ -2530,83 +2361,12 @@
         });
       };
 
-      // Setup camera switch button click - cycle through cameras and refresh
+      // Setup camera switch button click - open camera selection modal
       if (cameraSwitchBtn) {
         cameraSwitchBtn.addEventListener('click', async () => {
-          try {
-            console.log('🔄 Switching camera...');
-            
-            // Get current camera from localStorage (source of truth)
-            const currentDeviceId = localStorage.getItem('selectedCameraDeviceId');
-            
-            // Get all available cameras (just device list, no access needed)
-            if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-              console.warn('Device enumeration not supported');
-              return;
-            }
-            
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoInputs = devices.filter(device => device.kind === 'videoinput');
-            
-            if (videoInputs.length === 0) {
-              console.warn('No cameras found');
-              return;
-            }
-            
-            // Find current camera index
-            let currentIndex = -1;
-            if (currentDeviceId) {
-              currentIndex = videoInputs.findIndex(device => device.deviceId === currentDeviceId);
-            }
-            
-            // Cycle to next camera
-            const nextIndex = (currentIndex + 1) % videoInputs.length;
-            const nextCamera = videoInputs[nextIndex];
-            
-            console.log(`📷 Switching from camera ${currentIndex + 1} to ${nextIndex + 1} of ${videoInputs.length}`);
-            console.log(`📷 New camera: ${nextCamera.label || nextCamera.deviceId}`);
-            
-            // Save selected camera
-            selectedCameraDeviceId = nextCamera.deviceId;
-            localStorage.setItem('selectedCameraDeviceId', nextCamera.deviceId);
-            
-            // Clean up current video streams before reload
-            try {
-              const scene = document.querySelector('a-scene');
-              if (scene) {
-                const video = scene.querySelector('video');
-                if (video && video.srcObject) {
-                  const stream = video.srcObject;
-                  stream.getTracks().forEach(track => {
-                    track.stop();
-                    console.log('Stopped video track before reload');
-                  });
-                  video.srcObject = null;
-                }
-                
-                // Stop AR.js if possible
-                const arjsSystem = scene.systems?.arjs;
-                if (arjsSystem && arjsSystem._arSource) {
-                  try {
-                    arjsSystem._arSource.stop();
-                    console.log('Stopped AR.js source');
-                  } catch (e) {
-                    console.warn('Could not stop AR.js source:', e);
-                  }
-                }
-              }
-            } catch (cleanupErr) {
-              console.warn('Error during cleanup:', cleanupErr);
-            }
-            
-            // Small delay to ensure cleanup completes, then reload
-            console.log('🔄 Reloading page in 300ms...');
-            setTimeout(() => {
-              window.location.reload();
-            }, 300);
-          } catch (error) {
-            console.error('Error switching camera:', error);
-            alert('Failed to switch camera: ' + error.message);
+          if (cameraSelectionModal) {
+            cameraSelectionModal.style.display = 'flex';
+            await populateCameraList();
           }
         });
       }
