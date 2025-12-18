@@ -164,6 +164,25 @@
           fill="#000000" />
       </svg>
     </button>
+
+    <!-- Camera Switch Button (Temporary for testing) -->
+    <button id="camera-switch-btn"
+      style="display: flex; align-items: center; justify-content: center; width: 5svh; height: 5svh; background-color: #28B7FF; border-radius: 50%; cursor: pointer; z-index: 50; border: none; padding: 0; position: relative;">
+      <svg style="width: 60%; height: 60%;" xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
+        <path d="M0 0h24v24H0z" fill="none" />
+        <path d="M20 4h-3.17L15 2H9L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-5 11.5V13H9v2.5L5.5 12 9 8.5V11h6V8.5l3.5 3.5-3.5 3.5z" fill="#FFFFFF" />
+      </svg>
+      <div id="camera-info" style="position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); white-space: nowrap; font-size: 10px; color: white; background: rgba(0,0,0,0.7); padding: 2px 4px; border-radius: 3px; display: none;"></div>
+    </button>
+  </div>
+
+  <!-- Camera Selection Modal (Temporary) -->
+  <div id="camera-selection-modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.8); z-index: 200; display: none; align-items: center; justify-content: center;">
+    <div style="background-color: white; padding: 20px; border-radius: 10px; max-width: 90vw; max-height: 80vh; overflow-y: auto;">
+      <h2 style="margin-top: 0;">Select Camera</h2>
+      <div id="camera-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+      <button id="close-camera-modal" style="margin-top: 15px; padding: 10px 20px; background-color: #274044; color: white; border: none; border-radius: 5px; cursor: pointer;">Close</button>
+    </div>
   </div>
 
   <!-- Letter Detail Modal -->
@@ -374,40 +393,265 @@
       let markerDetectedOnce = false;
 
       // Configure camera for best rear camera with highest resolution (not wide)
-      // Exactly like slamat-slimit-ar approach
       const scene = document.querySelector('a-scene');
+      
+      // Cache for best camera to avoid repeated enumeration
+      let bestCameraCache = null;
+      
+      // Function to find the best back camera with highest resolution
+      const findBestBackCamera = async (useCache = true) => {
+        // Return cached result if available
+        if (useCache && bestCameraCache) {
+          console.log('Using cached best camera:', bestCameraCache);
+          return bestCameraCache;
+        }
+        try {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            console.warn('Device enumeration not supported');
+            return null;
+          }
+          
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoInputs = devices.filter(device => device.kind === 'videoinput');
+          
+          console.log('Found video input devices:', videoInputs.length);
+          
+          let bestCamera = null;
+          let bestResolution = 0;
+          
+          // Check each camera to find the one with highest resolution
+          for (const device of videoInputs) {
+            try {
+              // Get capabilities for this device
+              const stream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                  deviceId: { exact: device.deviceId },
+                  facingMode: { ideal: 'environment' }
+                }
+              });
+              
+              const track = stream.getVideoTracks()[0];
+              if (track) {
+                const capabilities = track.getCapabilities();
+                const settings = track.getSettings();
+                
+                // Check if it's a back camera
+                const isBackCamera = settings.facingMode === 'environment' || 
+                                    (capabilities.facingMode && capabilities.facingMode.includes('environment'));
+                
+                if (isBackCamera) {
+                  // Calculate resolution (width * height)
+                  const maxWidth = capabilities.width?.max || settings.width || 0;
+                  const maxHeight = capabilities.height?.max || settings.height || 0;
+                  const resolution = maxWidth * maxHeight;
+                  
+                  console.log(`Camera ${device.label || device.deviceId}: ${maxWidth}x${maxHeight} (${resolution} pixels)`);
+                  
+                  // Keep track of the best camera
+                  if (resolution > bestResolution) {
+                    bestResolution = resolution;
+                    bestCamera = {
+                      deviceId: device.deviceId,
+                      label: device.label,
+                      maxWidth: maxWidth,
+                      maxHeight: maxHeight,
+                      resolution: resolution
+                    };
+                  }
+                }
+                
+                // Stop the track to release the camera
+                track.stop();
+              }
+            } catch (err) {
+              console.warn(`Could not access camera ${device.deviceId}:`, err);
+            }
+          }
+          
+          if (bestCamera) {
+            console.log('Best back camera found:', bestCamera);
+            bestCameraCache = bestCamera; // Cache the result
+            return bestCamera;
+          } else {
+            console.warn('No back camera found, will use default');
+            return null;
+          }
+        } catch (error) {
+          console.warn('Error finding best camera:', error);
+          return null;
+        }
+      };
+      
+      // Function to check and upgrade camera resolution if needed
+      const checkAndUpgradeCamera = async () => {
+        try {
+          const video = scene.querySelector('video');
+          if (video && video.srcObject) {
+            const stream = video.srcObject;
+            const videoTrack = stream.getVideoTracks()[0];
+            
+            if (videoTrack) {
+              const settings = videoTrack.getSettings();
+              const currentWidth = settings.width || 0;
+              const currentHeight = settings.height || 0;
+              
+              // Get best camera info if available
+              const bestCamera = bestCameraCache || await findBestBackCamera(false);
+              
+              // Determine target resolution
+              let targetWidth = 1920;
+              let targetHeight = 1080;
+              if (bestCamera && bestCamera.maxWidth && bestCamera.maxHeight) {
+                targetWidth = bestCamera.maxWidth;
+                targetHeight = bestCamera.maxHeight;
+              }
+              
+              // If resolution is low, try to upgrade
+              if (currentWidth < targetWidth * 0.8 || currentHeight < targetHeight * 0.8) {
+                console.log(`Low resolution detected: ${currentWidth}x${currentHeight}, attempting upgrade to ${targetWidth}x${targetHeight}...`);
+                try {
+                  const constraints = {
+                    width: { ideal: targetWidth, min: Math.max(1280, targetWidth * 0.5) },
+                    height: { ideal: targetHeight, min: Math.max(720, targetHeight * 0.5) },
+                    facingMode: { ideal: 'environment' }
+                  };
+                  
+                  // Add deviceId if we have best camera
+                  if (bestCamera) {
+                    constraints.deviceId = { ideal: bestCamera.deviceId };
+                  }
+                  
+                  await videoTrack.applyConstraints(constraints);
+                  const newSettings = videoTrack.getSettings();
+                  console.log(`Upgraded to: ${newSettings.width}x${newSettings.height}`);
+                } catch (err) {
+                  console.warn('Could not upgrade camera resolution:', err);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          // Silently fail - this is a monitoring function
+        }
+      };
+      
       const configureCamera = async () => {
         try {
+          // First, find the best back camera
+          const bestCamera = await findBestBackCamera();
+          
           const video = scene.querySelector('video');
           if (video && video.srcObject) {
             const stream = video.srcObject;
             const videoTrack = stream.getVideoTracks()[0];
 
             if (videoTrack) {
-              // Check capabilities and apply autofocus if supported (exactly like slamat-slimit-ar)
+              // Check capabilities
               const capabilities = videoTrack.getCapabilities();
+              const settings = videoTrack.getSettings();
               console.log('Camera capabilities:', capabilities);
+              console.log('Current camera resolution:', settings.width, 'x', settings.height);
+              console.log('Current facingMode:', settings.facingMode);
+              console.log('Current deviceId:', settings.deviceId);
 
-              if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
-                await videoTrack.applyConstraints({
-                  advanced: [{ focusMode: 'continuous' }]
-                });
-                console.log('Autofocus enabled');
+              // Build comprehensive constraints
+              const constraints = {
+                width: { ideal: 1920, min: 1280 },
+                height: { ideal: 1080, min: 720 },
+                facingMode: { ideal: 'environment' }
+              };
+              
+              // If we found a best camera, use its deviceId and max resolution
+              if (bestCamera) {
+                constraints.deviceId = { ideal: bestCamera.deviceId };
+                // Request the maximum resolution from the best camera
+                if (bestCamera.maxWidth && bestCamera.maxHeight) {
+                  constraints.width = { ideal: bestCamera.maxWidth, min: Math.max(1280, bestCamera.maxWidth * 0.5) };
+                  constraints.height = { ideal: bestCamera.maxHeight, min: Math.max(720, bestCamera.maxHeight * 0.5) };
+                  console.log(`Requesting best camera resolution: ${bestCamera.maxWidth}x${bestCamera.maxHeight}`);
+                }
               }
 
-              // Ensure HD resolution (exactly like slamat-slimit-ar)
-              const settings = videoTrack.getSettings();
-              console.log('Current camera resolution:', settings.width, 'x', settings.height);
+              // Add autofocus if supported
+              if (capabilities.focusMode && capabilities.focusMode.includes('continuous')) {
+                if (!constraints.advanced) constraints.advanced = [];
+                constraints.advanced.push({ focusMode: 'continuous' });
+              }
 
-              // Try to apply higher resolution constraints (exactly like slamat-slimit-ar)
+              // Apply all constraints
               try {
-                await videoTrack.applyConstraints({
-                  width: { ideal: 1920, min: 1280 },
-                  height: { ideal: 1080, min: 720 }
-                });
-                console.log('HD resolution constraints applied');
+                await videoTrack.applyConstraints(constraints);
+                console.log('Camera constraints applied:', constraints);
+                
+                // Verify final settings
+                const newSettings = videoTrack.getSettings();
+                console.log('Final camera resolution:', newSettings.width, 'x', newSettings.height);
+                console.log('Final facingMode:', newSettings.facingMode);
+                
+                // If resolution is still low, try more aggressive approach
+                if (newSettings.width < 1280 || newSettings.height < 720) {
+                  console.warn('Resolution still low, trying exact constraints...');
+                  try {
+                    // Try exact values (may fail on some devices)
+                    await videoTrack.applyConstraints({
+                      width: { exact: 1920 },
+                      height: { exact: 1080 }
+                    });
+                    console.log('Exact HD resolution applied');
+                  } catch (exactErr) {
+                    // If exact fails, try with higher ideal values
+                    try {
+                      await videoTrack.applyConstraints({
+                        width: { ideal: 3840, min: 1920 },
+                        height: { ideal: 2160, min: 1080 }
+                      });
+                      console.log('Ultra HD constraints applied');
+                    } catch (ultraErr) {
+                      console.warn('Could not apply ultra HD constraints:', ultraErr);
+                    }
+                  }
+                }
+                
+                // Verify back camera
+                if (newSettings.facingMode !== 'environment') {
+                  console.warn('Not using back camera, attempting to force...');
+                  try {
+                    await videoTrack.applyConstraints({ facingMode: { exact: 'environment' } });
+                    console.log('Back camera forced');
+                  } catch (facingErr) {
+                    console.warn('Could not force back camera:', facingErr);
+                  }
+                }
+                
+                // Check if we're using the best camera
+                if (bestCamera && newSettings.deviceId !== bestCamera.deviceId) {
+                  console.warn(`Not using best camera! Current: ${newSettings.deviceId}, Best: ${bestCamera.deviceId} (${bestCamera.maxWidth}x${bestCamera.maxHeight})`);
+                  // Try to switch to best camera
+                  try {
+                    await videoTrack.applyConstraints({ 
+                      deviceId: { exact: bestCamera.deviceId },
+                      width: { ideal: bestCamera.maxWidth },
+                      height: { ideal: bestCamera.maxHeight }
+                    });
+                    console.log('Switched to best camera');
+                  } catch (switchErr) {
+                    console.warn('Could not switch to best camera (may require stream restart):', switchErr);
+                  }
+                } else if (bestCamera) {
+                  console.log(`Using best camera: ${bestCamera.maxWidth}x${bestCamera.maxHeight}`);
+                }
               } catch (err) {
-                console.warn('Could not apply HD constraints:', err);
+                console.warn('Could not apply all constraints:', err);
+                // Fallback: try just resolution
+                try {
+                  await videoTrack.applyConstraints({
+                    width: { ideal: 1920, min: 1280 },
+                    height: { ideal: 1080, min: 720 }
+                  });
+                  console.log('HD resolution constraints applied (fallback)');
+                } catch (fallbackErr) {
+                  console.warn('Could not apply HD constraints (fallback):', fallbackErr);
+                }
               }
             }
           }
@@ -417,16 +661,33 @@
       };
 
       if (scene) {
-        // Configure camera after AR session begins (like slamat-slimit-ar)
+        // Configure camera after AR session begins - multiple attempts for Android
         scene.addEventListener('loaded', () => {
-          // Wait a bit for AR.js to fully initialize
+          setTimeout(configureCamera, 500);
           setTimeout(configureCamera, 1000);
+          setTimeout(configureCamera, 2000);
+          setTimeout(configureCamera, 3000);
+          // Start periodic checks for camera resolution
+          setInterval(checkAndUpgradeCamera, 2000); // Check every 2 seconds
         });
         // Also try on arjs-video-loaded event
-        scene.addEventListener('arjs-video-loaded', configureCamera);
-        // Fallback with multiple attempts
+        scene.addEventListener('arjs-video-loaded', () => {
+          setTimeout(configureCamera, 100);
+          setTimeout(configureCamera, 500);
+          setTimeout(configureCamera, 1000);
+          // Start periodic checks
+          setInterval(checkAndUpgradeCamera, 2000);
+        });
+        // Fallback with multiple attempts (important for Android)
+        setTimeout(configureCamera, 1000);
         setTimeout(configureCamera, 2000);
         setTimeout(configureCamera, 3000);
+        setTimeout(configureCamera, 5000);
+        setTimeout(configureCamera, 7000);
+        // Start periodic monitoring after initial delays
+        setTimeout(() => {
+          setInterval(checkAndUpgradeCamera, 2000);
+        }, 8000);
       }
 
       const orderID = getUrlParameter("orderID");
@@ -905,6 +1166,214 @@
           }
         });
       }
+
+      // Setup camera switch button (temporary for testing)
+      const cameraSwitchBtn = document.getElementById("camera-switch-btn");
+      const cameraSelectionModal = document.getElementById("camera-selection-modal");
+      const cameraList = document.getElementById("camera-list");
+      const closeCameraModal = document.getElementById("close-camera-modal");
+      const cameraInfo = document.getElementById("camera-info");
+      let availableCameras = [];
+      let currentCameraIndex = 0;
+
+      // Function to get all available cameras
+      const getAvailableCameras = async () => {
+        try {
+          if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            console.warn('Device enumeration not supported');
+            return [];
+          }
+
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoInputs = devices.filter(device => device.kind === 'videoinput');
+          
+          // Get capabilities for each camera
+          const camerasWithInfo = [];
+          for (const device of videoInputs) {
+            try {
+              const stream = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: { exact: device.deviceId } }
+              });
+              const track = stream.getVideoTracks()[0];
+              if (track) {
+                const capabilities = track.getCapabilities();
+                const settings = track.getSettings();
+                camerasWithInfo.push({
+                  deviceId: device.deviceId,
+                  label: device.label || `Camera ${camerasWithInfo.length + 1}`,
+                  facingMode: settings.facingMode || 'unknown',
+                  maxWidth: capabilities.width?.max || settings.width || 0,
+                  maxHeight: capabilities.height?.max || settings.height || 0,
+                  currentWidth: settings.width || 0,
+                  currentHeight: settings.height || 0
+                });
+                track.stop();
+              }
+            } catch (err) {
+              console.warn(`Could not access camera ${device.deviceId}:`, err);
+              // Add without capabilities
+              camerasWithInfo.push({
+                deviceId: device.deviceId,
+                label: device.label || `Camera ${camerasWithInfo.length + 1}`,
+                facingMode: 'unknown',
+                maxWidth: 0,
+                maxHeight: 0,
+                currentWidth: 0,
+                currentHeight: 0
+              });
+            }
+          }
+          
+          return camerasWithInfo;
+        } catch (error) {
+          console.error('Error getting cameras:', error);
+          return [];
+        }
+      };
+
+      // Function to switch to a specific camera
+      const switchCamera = async (deviceId) => {
+        try {
+          const scene = document.querySelector('a-scene');
+          const video = scene.querySelector('video');
+          
+          if (!video || !video.srcObject) {
+            console.warn('Video element or stream not found');
+            return;
+          }
+
+          const oldStream = video.srcObject;
+          const oldTrack = oldStream.getVideoTracks()[0];
+          
+          // Stop old track
+          if (oldTrack) {
+            oldTrack.stop();
+          }
+
+          // Get camera info
+          const camera = availableCameras.find(c => c.deviceId === deviceId);
+          const maxWidth = camera?.maxWidth || 1920;
+          const maxHeight = camera?.maxHeight || 1080;
+
+          // Request new camera with high resolution
+          const newStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              deviceId: { exact: deviceId },
+              width: { ideal: maxWidth, min: 1280 },
+              height: { ideal: maxHeight, min: 720 },
+              facingMode: { ideal: 'environment' }
+            }
+          });
+
+          // Replace stream
+          video.srcObject = newStream;
+          
+          // Update AR.js if needed (this might require AR.js to reinitialize)
+          const newTrack = newStream.getVideoTracks()[0];
+          if (newTrack) {
+            const settings = newTrack.getSettings();
+            console.log(`Switched to camera: ${camera?.label || deviceId}`);
+            console.log(`Resolution: ${settings.width}x${settings.height}`);
+            console.log(`Facing mode: ${settings.facingMode}`);
+            
+            // Update camera info display
+            if (cameraInfo) {
+              cameraInfo.textContent = `${settings.width}x${settings.height}`;
+              cameraInfo.style.display = 'block';
+            }
+          }
+
+          // Close modal
+          if (cameraSelectionModal) {
+            cameraSelectionModal.style.display = 'none';
+          }
+        } catch (error) {
+          console.error('Error switching camera:', error);
+          alert('Failed to switch camera: ' + error.message);
+        }
+      };
+
+      // Function to populate camera list
+      const populateCameraList = async () => {
+        availableCameras = await getAvailableCameras();
+        cameraList.innerHTML = '';
+
+        if (availableCameras.length === 0) {
+          cameraList.innerHTML = '<p>No cameras found</p>';
+          return;
+        }
+
+        // Get current camera
+        const scene = document.querySelector('a-scene');
+        const video = scene.querySelector('video');
+        let currentDeviceId = null;
+        if (video && video.srcObject) {
+          const track = video.srcObject.getVideoTracks()[0];
+          if (track) {
+            const settings = track.getSettings();
+            currentDeviceId = settings.deviceId;
+          }
+        }
+
+        availableCameras.forEach((camera, index) => {
+          const isCurrent = camera.deviceId === currentDeviceId;
+          const button = document.createElement('button');
+          button.style.cssText = 'padding: 15px; text-align: left; border: 2px solid ' + (isCurrent ? '#28B7FF' : '#ddd') + '; border-radius: 5px; background: ' + (isCurrent ? '#e3f2fd' : 'white') + '; cursor: pointer;';
+          button.innerHTML = `
+            <strong>${camera.label}</strong><br>
+            <small>Facing: ${camera.facingMode}</small><br>
+            <small>Max: ${camera.maxWidth}x${camera.maxHeight}</small>
+            ${isCurrent ? '<br><small style="color: #28B7FF;">✓ Current</small>' : ''}
+          `;
+          button.addEventListener('click', () => switchCamera(camera.deviceId));
+          cameraList.appendChild(button);
+        });
+      };
+
+      // Setup camera switch button click
+      if (cameraSwitchBtn) {
+        cameraSwitchBtn.addEventListener('click', async () => {
+          if (cameraSelectionModal) {
+            cameraSelectionModal.style.display = 'flex';
+            await populateCameraList();
+          }
+        });
+      }
+
+      // Close modal
+      if (closeCameraModal) {
+        closeCameraModal.addEventListener('click', () => {
+          if (cameraSelectionModal) {
+            cameraSelectionModal.style.display = 'none';
+          }
+        });
+      }
+
+      // Close modal on overlay click
+      if (cameraSelectionModal) {
+        cameraSelectionModal.addEventListener('click', (e) => {
+          if (e.target === cameraSelectionModal) {
+            cameraSelectionModal.style.display = 'none';
+          }
+        });
+      }
+
+      // Update camera info display periodically
+      setInterval(() => {
+        try {
+          const scene = document.querySelector('a-scene');
+          const video = scene.querySelector('video');
+          if (video && video.srcObject && cameraInfo) {
+            const track = video.srcObject.getVideoTracks()[0];
+            if (track) {
+              const settings = track.getSettings();
+              cameraInfo.textContent = `${settings.width}x${settings.height}`;
+            }
+          }
+        } catch (e) {
+          // Silently fail
+        }
+      }, 2000);
 
       // Letter detail modal functionality
       const lettersDetail = document.getElementById('letters-detail');
