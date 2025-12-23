@@ -21,8 +21,8 @@
               delete modifiedConstraints.video.height;
               
               // Request maximum resolution by using ideal with very high values
-              modifiedConstraints.video.width = { ideal: 4096, min: 1920 };
-              modifiedConstraints.video.height = { ideal: 2160, min: 1080 };
+              modifiedConstraints.video.width = { ideal: 4096 };
+              modifiedConstraints.video.height = { ideal: 2160 };
               
               console.log('🔷 Modified constraints for max resolution:', JSON.stringify(modifiedConstraints, null, 2));
               
@@ -298,7 +298,8 @@
       }
       
       // Generate images for all markers when scene is ready
-      function initializeImageGrids() {
+      // dataArray: Array of objects with photo_url or src property from Supabase/API
+      function initializeImageGrids(dataArray = null) {
         const markers = document.querySelectorAll('a-marker');
         
         if (markers.length > 0) {
@@ -308,35 +309,64 @@
               marker.removeChild(marker.firstChild);
             }
             
-            // Determine X offset and data array size based on marker pattern
+            // Determine X offset based on marker pattern
             let xOffset = 0;
-            let dataCount = 20; // Default to 20 items
             const markerUrl = marker.getAttribute('url');
             
             if (markerUrl === 'pattern-ribbon-final.patt') {
               xOffset = -2; // Shift ribbon marker left by 2 units
-              dataCount = 11; // Ribbon marker shows 11 images
             } else if (markerUrl === 'pattern-smiley-final.patt') {
               xOffset = -1; // Shift smiley marker left by 1 unit
-              dataCount = 6; // Smiley marker shows 6 images
             }
-            // pattern-confetti-final.patt stays at 0 offset with 20 items
+            // pattern-confetti-final.patt stays at 0 offset
             
-            // Create test data array with specified count
-            const testData = [];
-            for (let i = 0; i < dataCount; i++) {
-              testData.push({
-                id: i + 1,
-                src: `/assets/face-${((i % 4) + 1)}.png`
-              });
+            // Use API data if available, otherwise fall back to static images
+            let imageData = [];
+            
+            if (dataArray && dataArray.length > 0) {
+              // Filter items that have photo_url
+              const validItems = dataArray.filter(item => item.photo_url && item.photo_url.trim() !== '');
+              
+              if (validItems.length > 0) {
+                // Use actual data from API/Supabase - use exact number of items
+                imageData = validItems.map((item, index) => ({
+                  id: item.id || index + 1,
+                  src: item.photo_url,
+                  name: item.name || '',
+                  message: item.message || ''
+                }));
+                console.log(`✅ Using ${validItems.length} images from API/Supabase for AR content (exact count)`);
+              } else {
+                // No valid images in API data, use static fallback with default count
+                const defaultCount = markerUrl === 'pattern-ribbon-final.patt' ? 11 : 
+                                   markerUrl === 'pattern-smiley-final.patt' ? 6 : 20;
+                console.log('⚠️ No valid photo_url in API data, using static images');
+                for (let i = 0; i < defaultCount; i++) {
+                  imageData.push({
+                    id: i + 1,
+                    src: `/assets/face-${((i % 4) + 1)}.png`
+                  });
+                }
+              }
+            } else {
+              // No data provided, use static fallback with default count
+              const defaultCount = markerUrl === 'pattern-ribbon-final.patt' ? 11 : 
+                                 markerUrl === 'pattern-smiley-final.patt' ? 6 : 20;
+              console.log('⚠️ No API data provided, using static images');
+              for (let i = 0; i < defaultCount; i++) {
+                imageData.push({
+                  id: i + 1,
+                  src: `/assets/face-${((i % 4) + 1)}.png`
+                });
+              }
             }
             
-            generateImageGrid(marker, testData, xOffset);
+            generateImageGrid(marker, imageData, xOffset);
           });
           console.log('✅ Generated trapezium image grids for', markers.length, 'markers');
         } else {
           console.warn('⚠️ No markers found, retrying...');
-          setTimeout(initializeImageGrids, 100);
+          setTimeout(() => initializeImageGrids(dataArray), 100);
         }
       }
       
@@ -379,25 +409,6 @@
       preload="auto"
       style="display: none; aspect-ratio: 1/1"
     ></video>
-    <div
-      id="stories"
-      style="
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: fixed;
-        bottom: 13.3svh;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 10;
-        width: 95vw;
-        height: 70px;
-        padding: 0 15px;
-        overflow-x: auto;
-        overflow-y: visible;
-        gap: 16px;
-      "
-    ></div>
     <div
       id="messageModal"
       style="
@@ -542,28 +553,33 @@
         bottom: 4.5svh;
         left: calc(50% - 15svh);
         transform: translateX(-50%);
-        width: 6svh;
-        height: 6svh;
-        background-color: white;
+        width: 5svh;
+        height: 5svh;
+        background-color: #49B400;
         border-radius: 50%;
         display: flex;
         justify-content: center;
         align-items: center;
         cursor: pointer;
         z-index: 20;
+        border: none;
+        padding: 0;
       "
     >
-      <svg
-        width="28"
-        height="28"
-        viewBox="0 0 18 18"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-      >
+      <svg style="width: 45%; height: 45%;" width="14" height="14" viewBox="0 0 14 14" fill="none"
+        xmlns="http://www.w3.org/2000/svg">
         <path
-          d="M14.25 2.25H3.75C2.925 2.25 2.25 2.925 2.25 3.75V14.25C2.25 15.075 2.925 15.75 3.75 15.75H14.25C15.075 15.75 15.75 15.075 15.75 14.25V3.75C15.75 2.925 15.075 2.25 14.25 2.25ZM14.25 14.25H3.75V3.75H14.25V14.25ZM10.47 9.2175L8.4075 11.8725L6.9375 10.1025L4.875 12.75H13.125L10.47 9.2175Z"
-          fill="#046511"
-        />
+          d="M1.5 6H4.5C5.325 6 6 5.325 6 4.5V1.5C6 0.675 5.325 0 4.5 0H1.5C0.675 0 0 0.675 0 1.5V4.5C0 5.325 0.675 6 1.5 6Z"
+          fill="#F4F2E4" />
+        <path
+          d="M1.5 13.5H4.5C5.325 13.5 6 12.825 6 12V9C6 8.175 5.325 7.5 4.5 7.5H1.5C0.675 7.5 0 8.175 0 9V12C0 12.825 0.675 13.5 1.5 13.5Z"
+          fill="#F4F2E4" />
+        <path
+          d="M7.5 1.5V4.5C7.5 5.325 8.175 6 9 6H12C12.825 6 13.5 5.325 13.5 4.5V1.5C13.5 0.675 12.825 0 12 0H9C8.175 0 7.5 0.675 7.5 1.5Z"
+          fill="#F4F2E4" />
+        <path
+          d="M9 13.5H12C12.825 13.5 13.5 12.825 13.5 12V9C13.5 8.175 12.825 7.5 12 7.5H9C8.175 7.5 7.5 8.175 7.5 9V12C7.5 12.825 8.175 13.5 9 13.5Z"
+          fill="#F4F2E4" />
       </svg>
     </div>
 
@@ -639,6 +655,58 @@
         />
       </div>
     </div>
+
+    <!-- Letters List (Stories Style) -->
+    <div id="letters-list-bottom"
+      style="display: none; align-items: center; justify-content: center; position: fixed; bottom: 13.3svh; left: 50%; transform: translateX(-50%); z-index: 10; width: 95vw; height: 70px; padding: 0 15px; overflow-x: auto; overflow-y: visible; gap: 16px;">
+    </div>
+
+    <!-- Background Music -->
+    <audio id="background-music" src="./assets/happy-birthday-orchestra.mp3" loop style="display: none;"></audio>
+
+    <!-- Letter Detail Modal -->
+    <div id="letters-detail"
+      style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 80; display: none;">
+      <div id="letters-detail-overlay"
+        style="width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); cursor: pointer;"></div>
+      <svg id="pin-svg" style="position: absolute; top: 43svh; left: 35svw; width: 8svh; height: 8svh; z-index: 100;"
+        width="47" height="64" viewBox="0 0 47 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path
+          d="M14.9882 30.5399C14.7575 30.798 14.4157 31.6758 13.811 32.4282C12.9256 33.5298 12.3032 34.3378 10.4444 36.6623C9.73858 37.545 8.61764 39.2652 7.07598 41.3014C6.04406 42.6644 5.22841 43.8583 4.5577 44.652C3.69027 45.6785 3.00772 46.9243 2.39982 47.978C1.98266 48.7011 1.54059 49.9758 1.45755 50.9851C1.39714 51.7194 2.3761 53.0561 3.07071 54.0032C3.58089 54.6988 4.31263 55.0905 5.0388 55.5007C5.72033 55.8858 6.5896 56.2402 7.46128 56.6079C8.09018 56.8731 9.36689 57.3075 10.8189 57.8307C13.3935 58.7583 14.2233 58.5021 15.045 58.4533C16.37 58.3746 17.2403 57.6981 18.4211 56.5079C18.6701 56.257 18.7457 56.1078 19.8318 54.7436C20.9179 53.3794 22.9977 50.791 24.1206 49.3647C26.0222 46.9496 27.2421 45.2976 28.1661 43.9595C28.6777 43.2186 29.2421 42.6572 29.9777 41.6183C31.8322 38.9993 32.8066 37.796 33.4229 36.8043C33.9325 35.9844 35.1348 34.1238 36.3971 31.8245C37.2155 30.3338 38.0476 28.2818 38.7255 26.5658C39.4023 24.8526 40.0234 23.5248 40.529 22.1472C40.8727 21.2111 41.3068 20.1462 41.6984 19.39C42.1792 18.4617 42.718 17.0863 43.1505 15.9815C43.4153 15.3053 43.8773 14.3756 44.312 13.2537C44.8712 11.8107 44.9395 10.6163 44.7699 10.2485C44.3814 9.4064 43.7203 8.94379 42.9568 8.28115C41.7375 7.22308 40.3804 6.75635 38.6826 6.3515C37.8641 6.15634 37.2155 7.08772 36.2078 8.4487C34.0471 11.3668 32.9506 13.755 32.4165 14.5481C30.5383 17.3378 29.9945 18.7695 28.4663 21.0541C27.1396 23.0374 24.9752 25.2734 23.7285 26.7667C23.198 27.4021 22.8443 27.9563 22.4497 28.5244C21.9775 29.2042 21.5388 29.8135 21.1554 30.4394C20.4575 31.5789 19.4896 33.0354 18.742 34.1251C17.8798 35.382 17.3123 36.5428 16.7805 37.4238C15.7038 39.2079 15.1499 39.7892 14.7802 40.3639C14.348 41.0356 13.8444 41.6464 13.2937 42.4957C12.8502 43.1796 12.708 43.8736 12.6346 44.446C12.5509 45.0984 14.6356 45.4709 16.2793 45.4024C17.3666 45.3571 17.8931 44.4083 18.6299 43.772C19.9264 42.6523 20.2726 41.7628 21.0296 41.048C22.1019 40.0354 23.8899 37.0903 25.0691 35.6169C26.7858 33.4719 27.227 32.6916 27.7377 31.9947C28.746 30.6187 29.0309 29.7821 29.3004 29.1805C29.654 28.391 30.1994 27.8333 30.5873 27.2901C31.0939 26.5808 31.7097 25.8145 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.8288 23.8508 32.9185 23.7149 33.1617 23.6153"
+          stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round" />
+        <path
+          d="M42.9478 16.6166C43.2126 15.9405 43.6746 15.0108 44.1093 13.8888C44.6684 12.4458 44.7368 11.2514 44.5672 10.8836C44.1787 10.0415 43.5176 9.5789 42.7541 8.91627C41.5348 7.8582 40.1777 7.39146 38.4799 6.98662C37.6614 6.79145 37.0127 7.72283 36.005 9.08381C33.8444 12.002 32.7479 14.3901 32.2138 15.1833C30.3355 17.9729 29.7918 19.4046 28.2636 21.6892C26.9369 23.6726 24.7725 25.9085 23.5258 27.4018C22.9953 28.0372 22.6416 28.5915 22.247 29.1595C21.7748 29.8393 21.3361 30.4486 20.9527 31.0746C20.2548 32.214 19.2869 33.6705 18.5393 34.7602C17.677 36.0171 17.1095 37.1779 16.5778 38.0589C15.501 39.843 14.9471 40.4243 14.5775 40.999C14.1453 41.6708 13.6417 42.2815 13.091 43.1308C12.6475 43.8147 12.5053 44.5087 12.4319 45.0812C12.3482 45.7335 14.4329 46.1061 16.0766 46.0376C17.1639 45.9922 17.6904 45.0434 18.4272 44.4071C19.7237 43.2875 20.0698 42.3979 20.8269 41.6831C21.8992 40.6705 23.6872 37.7254 24.8664 36.252C26.5831 34.107 27.0243 33.3267 27.535 32.6298C28.5433 31.2539 28.8282 30.4172 29.0977 29.8157C29.4513 29.0261 29.9967 28.4684 30.3845 27.9252C30.8912 27.2159 31.507 26.4496 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.6261 24.4859 32.7158 24.35 32.959 24.2504"
+          stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round" />
+      </svg>
+      
+      <div id="video-component" class="component"
+        style="cursor: pointer; width: 27svh; height: 45svh; background-color: white; position: absolute; top: 10svh; left: 50%; transform: translateX(-50%); z-index: 81; display: flex; align-items: center; justify-content: center;">
+        <video id="rury-video" src="" style="width: 90%; height: 80%; object-fit: cover; margin-top: 5%; display: none;"
+          loop autoplay playsinline webkit-playsinline x5-playsinline></video>
+        <audio id="rury-audio" src="" loop style="display: none;"></audio>
+        <div id="audio-icon"
+          style="display: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.48 8.71 14 7.97V16.02C15.48 15.29 16.5 13.77 16.5 12ZM14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.85 14 18.71V20.77C18.01 19.86 21 16.28 21 12C21 7.72 18.01 4.14 14 3.23Z"
+              fill="#FF5627" />
+          </svg>
+        </div>
+      </div>
+      <div id="letter-component" class="component"
+        style="cursor: pointer; transform: rotate(1deg); background-color: #F4F2E4; width: 75svw; height: 40svh; padding: 3svh; overflow-y: auto; position: absolute; bottom: 5svh; left: 0; right: 0; margin: 0 auto; z-index: 83; font-family: 'Playpen Sans', cursive;">
+        <div id="letter-component-text"
+          style="font-size: 2svh; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;"></div>
+        <div id="letter-component-footer"
+          style="position: absolute; bottom: 2svh; right: 2svh; display: flex; flex-direction: column; align-items: flex-end; gap: 1svh;">
+          <img id="photo-component-img" src="" alt="photo" class="animate-rotate-slow"
+            style="width: auto; height: 13svh; object-fit: cover; display: none;">
+          <div id="letter-component-sender"
+            style="font-size: 2.4svh; font-weight: bold; font-family: 'Playpen Sans', cursive; display: none;"></div>
+        </div>
+      </div>
+    </div>
+
     <script>
       let videoElement = document.getElementById("arsa-video");
       let pauseTimeout;
@@ -688,7 +756,156 @@
           : decodeURIComponent(results[1].replace(/\+/g, " ")).toUpperCase();
       }
 
+      // Function to render letters in horizontal story list (circular buttons with letter SVGs)
+      async function renderLettersBottomLeft(lettersData) {
+        console.log('renderLettersBottomLeft called with data:', lettersData);
+        const lettersListBottom = document.getElementById('letters-list-bottom');
+        if (!lettersListBottom) {
+          console.error('letters-list-bottom element not found');
+          return;
+        }
+
+        // Setup scrollbar visibility on scroll (only once)
+        if (!lettersListBottom.dataset.scrollbarSetup) {
+          let scrollTimeout;
+          lettersListBottom.addEventListener('scroll', () => {
+            lettersListBottom.classList.add('scrolling');
+            clearTimeout(scrollTimeout);
+            scrollTimeout = setTimeout(() => {
+              lettersListBottom.classList.remove('scrolling');
+            }, 1000); // Hide scrollbar 1 second after scrolling stops
+          });
+          lettersListBottom.dataset.scrollbarSetup = 'true';
+        }
+
+        // Clear existing letters
+        lettersListBottom.innerHTML = '';
+
+        if (!lettersData || lettersData.length === 0) {
+          console.log('No letters data to render');
+          return;
+        }
+
+        console.log('Rendering', lettersData.length, 'letters');
+
+        // Import createSVGComponent dynamically
+        const { createSVGComponent } = await import('./svg-component.js');
+
+        // Color palette for sequential assignment
+        const colorPalette = [
+          '90FF77',
+          'FF5627',
+          '008177',
+          'FFC61C',
+          'FF443D',
+          '8142FF',
+          '28B7FF',
+          'FF7ADC'
+        ];
+
+        lettersData.forEach((letter, i) => {
+          // Create unique ID for filter IDs
+          const uniqueId = `letter_story_${i}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+          // Get sequential color from palette
+          const colorIndex = i % colorPalette.length;
+          const selectedColor = colorPalette[colorIndex];
+
+          // Create SVG with sequential color
+          const svg = createSVGComponent(selectedColor, uniqueId);
+
+          // Create circular story button (like in provided HTML) - bigger size
+          const storyButton = document.createElement('div');
+          storyButton.className = 'story-button';
+          storyButton.style.height = 'auto';
+          storyButton.style.minWidth = '80px';
+          storyButton.style.width = '80px';
+          storyButton.style.overflow = 'visible';
+          storyButton.style.position = 'relative';
+          storyButton.style.cursor = 'pointer';
+          storyButton.style.transition = 'transform 0.3s ease';
+
+          // Store letter data
+          storyButton.dataset.letterData = JSON.stringify({
+            video_url: letter.video_url || '',
+            audio_url: letter.audio_url || '',
+            message: letter.message || '',
+            name: letter.name || 'Anonymous',
+            photo_url: letter.photo_url || ''
+          });
+
+          // Make SVG fit in circular container - bigger
+          svg.style.width = '100%';
+          svg.style.height = '100%';
+          svg.style.display = 'block';
+          svg.style.objectFit = 'cover';
+
+          // Create wrapper for SVG to contain it
+          const svgWrapper = document.createElement('div');
+          svgWrapper.style.width = '100%';
+          svgWrapper.style.height = '100%';
+          svgWrapper.style.overflow = 'hidden';
+          svgWrapper.style.position = 'relative';
+          svgWrapper.appendChild(svg);
+
+          // Add name text at bottom right (overlay on SVG)
+          const nameText = document.createElement('div');
+          nameText.textContent = letter.name || 'Anonymous';
+          nameText.style.fontFamily = "'Playpen Sans', cursive";
+          nameText.style.position = 'absolute';
+          nameText.style.bottom = '8%';
+          nameText.style.right = '8%';
+          nameText.style.fontSize = '11px';
+          nameText.style.fontWeight = '600';
+          nameText.style.color = '#000000';
+          nameText.style.pointerEvents = 'none';
+          nameText.style.zIndex = '10';
+          nameText.style.whiteSpace = 'nowrap';
+          nameText.style.textShadow = '0 1px 2px rgba(255, 255, 255, 0.8)';
+          nameText.style.maxWidth = '70%';
+          nameText.style.overflow = 'hidden';
+          nameText.style.textOverflow = 'ellipsis';
+
+          // Append SVG wrapper and name
+          storyButton.appendChild(svgWrapper);
+          storyButton.appendChild(nameText);
+
+          // Add click handler
+          storyButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            // Remove active class from all buttons
+            document.querySelectorAll('.story-button').forEach((btn) => btn.classList.remove('active'));
+            // Add active class to clicked button
+            storyButton.classList.add('active');
+
+            const letterData = JSON.parse(storyButton.dataset.letterData);
+
+            // Dispatch custom event to open letter detail
+            const event = new CustomEvent('openLetterDetail', {
+              detail: {
+                letterData: {
+                  video_url: letterData.video_url,
+                  audio_url: letterData.audio_url,
+                  message: letterData.message,
+                  name: letterData.name,
+                  photo_url: letterData.photo_url
+                }
+              }
+            });
+            document.dispatchEvent(event);
+          });
+
+          lettersListBottom.appendChild(storyButton);
+        });
+      }
+
       document.addEventListener("DOMContentLoaded", function () {
+        // Ensure letters list is hidden on page load
+        const lettersListBottom = document.getElementById('letters-list-bottom');
+        if (lettersListBottom) {
+          lettersListBottom.style.display = 'none';
+        }
+
         // Load the video but keep it paused
         videoElement.load();
         videoElement.play();
@@ -706,19 +923,18 @@
           updateVideoWidth();
         });
 
-        const storiesElement = document.getElementById("stories");
         const orderID = getUrlParameter("orderID");
         console.log("Fetching content for orderID:", orderID);
 
         if (!orderID) {
           console.log("No orderID found, redirecting to base URL...");
           window.location.href =
-            "https://moonmuffin.byc.plus/experience-app/ar";
+            "https://slamatslimit.byc.plus/experience-app/ar";
           return;
         }
 
         // Fetch content from API
-        fetch(`https://moonmuffin.byc.plus/api/gallery?order_id=${orderID}`)
+        fetch(`https://slamatslimit.byc.plus/api/gallery?order_id=${orderID}`)
           .then((response) => {
             console.log("API Response status:", response.status);
             return response.json();
@@ -729,137 +945,24 @@
               console.log(
                 "No data received, redirecting to order-specific URL..."
               );
-              window.location.href = `https://moonmuffin.byc.plus/experience-app/ar/${orderID}`;
+              window.location.href = `https://slamatslimit.byc.plus/experience-app/ar/${orderID}`;
             return;
           }
-          
-            // Transform API data to match our stories structure
-            const stories = data.map((item) => ({
-              name: item.name,
-              message: item.message,
-              video: item.video_url,
-              signature: item.signature_url,
-            }));
-            console.log("Transformed stories:", stories);
-            console.log("First story:", stories[0]);
-            console.log("Number of stories:", stories.length);
 
-            // Update the stories UI
-            storiesElement.innerHTML = ""; // Clear existing stories
-            stories.forEach((story, index) => {
-              const storyButton = document.createElement("div");
-              storyButton.className = "story-button";
-              storyButton.style.height = "60px";
-              storyButton.style.minWidth = "60px";
-              storyButton.style.backgroundColor = "#000";
-              storyButton.style.borderRadius = "50%";
-              storyButton.style.overflow = "hidden";
-              // Store all story data
-              storyButton.dataset.message = story.message;
-              storyButton.dataset.video = story.video;
-              storyButton.dataset.signature = story.signature;
+            // Update AR images with data from API/Supabase
+            initializeImageGrids(data);
 
-              const video = document.createElement("video");
-              video.src = story.video;
-              video.loop = true;
-              video.muted = true;
-              video.autoplay = true;
-              video.playsinline = true;
-              video.setAttribute("webkit-playsinline", "true");
-              video.setAttribute("x5-playsinline", "true");
-              video.setAttribute("playsinline", "true");
-              video.setAttribute("webkit-playsinline", "true");
-              video.setAttribute("x5-playsinline", "true");
-              video.setAttribute("x-webkit-airplay", "allow");
-              video.setAttribute("x5-video-player-type", "h5");
-              video.setAttribute("x5-video-player-fullscreen", "false");
-              video.style.width = "100%";
-              video.style.height = "100%";
-              video.style.objectFit = "cover";
-
-              storyButton.appendChild(video);
-              storiesElement.appendChild(storyButton);
-
-              // Add click event listener
-              storyButton.addEventListener("click", () => {
-              // Remove active class from all buttons
-                document
-                  .querySelectorAll(".story-button")
-                  .forEach((btn) => btn.classList.remove("active"));
-              // Add active class to clicked button
-                storyButton.classList.add("active");
-                // Update content immediately
-                updateContent(index);
-              });
-
-              // Assign random border color
-              const randomColor =
-                colors[Math.floor(Math.random() * colors.length)];
-              storyButton.style.border = `3px solid ${randomColor}`;
+            // Render letters in bottom list
+            renderLettersBottomLeft(data).catch((error) => {
+              console.error("Error rendering letters:", error);
             });
-
-            // Add plus button at the end
-            const plusButton = document.createElement("div");
-            plusButton.className = "story-button";
-            plusButton.style.height = "60px";
-            plusButton.style.minWidth = "60px";
-            plusButton.style.backgroundColor = "#92ed00";
-            plusButton.style.borderRadius = "50%";
-            plusButton.style.display = "flex";
-            plusButton.style.alignItems = "center";
-            plusButton.style.justifyContent = "center";
-            plusButton.style.cursor = "pointer";
-            plusButton.style.border = "2px solid #046511";
-            plusButton.innerHTML = `
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M19 13H13V19H11V13H5V11H11V5H13V11H19V13Z" fill="#046511"/>
-              </svg>
-            `;
-            plusButton.addEventListener("click", () => {
-              window.open(
-                `https://moonmuffin.byc.plus/content/${orderID}`,
-                "_blank"
-              );
-            });
-            storiesElement.appendChild(plusButton);
-
-            // Set first story as active by default
-            const firstStoryButton =
-              storiesElement.querySelector(".story-button");
-            if (firstStoryButton) {
-              firstStoryButton.classList.add("active");
-              // Set initial signature
-              const signatureImg = document.querySelector("#signatureImg");
-              if (signatureImg && firstStoryButton.dataset.signature) {
-                console.log(
-                  "Setting initial signature URL:",
-                  firstStoryButton.dataset.signature
-                );
-                signatureImg.src = firstStoryButton.dataset.signature;
-                signatureImg.style.display = "block";
-              }
-            }
-
-            // Set initial video source
-            if (stories.length > 0) {
-              videoElement.src = stories[0].video;
-              }
             })
             .catch((error) => {
               console.error("Error fetching content:", error);
             // console.log("Redirecting due to error...");
             // window.location.href =
-            //   "https://moonmuffin.byc.plus/experience-app/ar";
+            //   "https://slamatslimit.byc.plus/experience-app/ar";
           });
-
-        const colors = [
-          "#EACA2A",
-          "#EB579B",
-          "#F77B29",
-          "#FF3755",
-          "#5EA0C6",
-          "#92ED00",
-        ];
 
         const messageModal = document.getElementById("messageModal");
         const modalMessage = document.getElementById("modalMessage");
@@ -871,109 +974,74 @@
         muteButton.style.bottom = "4.5svh";
         muteButton.style.left = "calc(50% + 13svh)";
         muteButton.style.transform = "translateX(-50%)";
-        muteButton.style.width = "6svh";
-        muteButton.style.height = "6svh";
-        muteButton.style.backgroundColor = "white";
+        muteButton.style.width = "5svh";
+        muteButton.style.height = "5svh";
+        muteButton.style.backgroundColor = "#FFC61C";
         muteButton.style.borderRadius = "50%";
         muteButton.style.display = "flex";
         muteButton.style.justifyContent = "center";
         muteButton.style.alignItems = "center";
         muteButton.style.cursor = "pointer";
         muteButton.style.zIndex = "20";
+        muteButton.style.border = "none";
+        muteButton.style.padding = "0";
         muteButton.innerHTML = `
-          <svg
-            width="28"
-            height="28"
-            viewBox="0 0 18 18"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
+          <svg id="sound-on" style="width: 60%; height: 60%; display: block;" xmlns="http://www.w3.org/2000/svg" height="24"
+            viewBox="0 0 24 24" width="24">
+            <path d="M0 0h24v24H0z" fill="none" />
             <path
-              d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
-              fill="#046511"
-            />
+              d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"
+              fill="#000000" />
+          </svg>
+          <svg id="sound-off" style="width: 60%; height: 60%; display: none;" xmlns="http://www.w3.org/2000/svg" height="24"
+            viewBox="0 0 24 24" width="24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path
+              d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"
+              fill="#000000" />
           </svg>
         `;
         document.body.appendChild(muteButton);
 
         // Add functionality to toggle mute state
+        const soundOn = muteButton.querySelector("#sound-on");
+        const soundOff = muteButton.querySelector("#sound-off");
         let isMuted = false;
+        
         muteButton.addEventListener("click", () => {
           isMuted = !isMuted;
-          videoElement.muted = isMuted;
-          muteButton.innerHTML = isMuted
-            ? `
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 18 18"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M3.25477 2.20117L2.19727 3.25867L5.46727 6.52867L5.24977 6.75367H2.24977V11.2537H5.24977L8.99977 15.0037V10.0612L12.1348 13.1962C11.6473 13.5637 11.0998 13.8562 10.4998 14.0287V15.5737C11.5048 15.3487 12.4273 14.8837 13.2073 14.2612L14.7448 15.7987L15.8023 14.7412L3.25477 2.20117ZM7.49977 11.3812L5.87227 9.75367H3.74977V8.25367H5.87227L6.53227 7.59367L7.49977 8.56117V11.3812ZM14.2498 9.00367C14.2498 9.61867 14.1373 10.2112 13.9423 10.7587L15.0898 11.9062C15.5098 11.0287 15.7498 10.0462 15.7498 9.00367C15.7498 5.79367 13.5073 3.10867 10.4998 2.42617V3.97117C12.6673 4.61617 14.2498 6.62617 14.2498 9.00367ZM8.99977 3.00367L7.58977 4.41367L8.99977 5.82367V3.00367ZM12.3748 9.00367C12.3748 7.67617 11.6098 6.53617 10.4998 5.98117V7.32367L12.3598 9.18367C12.3673 9.12367 12.3748 9.06367 12.3748 9.00367Z"
-                fill="#046511"
-              />
-            </svg>
-          `
-            : `
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 18 18"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M2.25 6.74937V11.2494H5.25L9 14.9994V2.99937L5.25 6.74937H2.25ZM7.5 6.62187V11.3769L5.8725 9.74938H3.75V8.24937H5.8725L7.5 6.62187ZM12.375 8.99938C12.375 7.67188 11.61 6.53187 10.5 5.97687V12.0144C11.61 11.4669 12.375 10.3269 12.375 8.99938ZM10.5 2.42188V3.96687C12.6675 4.61187 14.25 6.62188 14.25 8.99938C14.25 11.3769 12.6675 13.3869 10.5 14.0319V15.5769C13.5075 14.8944 15.75 12.2094 15.75 8.99938C15.75 5.78938 13.5075 3.10438 10.5 2.42188Z"
-                fill="#046511"
-              />
-            </svg>
-          `;
-        });
-
-        // Function to update video and message
-        function updateContent(index) {
-          const activeButton = document.querySelector(".story-button.active");
-          if (activeButton) {
-            const video = activeButton.dataset.video;
-            const message = activeButton.dataset.message;
-            const signature = activeButton.dataset.signature;
-
-            if (video) {
-              videoElement.src = video;
-              videoElement.play().catch((error) => {
-                console.log("Error playing video:", error);
-                if (error.name === "NotAllowedError") {
-                  videoElement
-                    .play()
-                    .catch((e) =>
-                      console.log("Even muted autoplay failed:", e)
-                    );
-            }
-          });
-        }
-        
-            // Update the signature dynamically
-            const signatureImg = document.querySelector("#signatureImg");
-            if (signatureImg) {
-              if (signature && signature.trim() !== "") {
-                console.log("Setting signature URL:", signature);
-                signatureImg.src = signature;
-                signatureImg.style.display = "block";
+          
+          // Toggle video mute
+          if (videoElement) {
+            videoElement.muted = isMuted;
+          }
+          
+          // Toggle background music
+          const bgMusic = document.getElementById('background-music');
+          if (bgMusic) {
+            if (isMuted) {
+              bgMusic.muted = true;
+              bgMusic.pause();
             } else {
-                console.log(
-                  "No signature URL available, hiding signature image"
-                );
-                signatureImg.style.display = "none";
-                signatureImg.removeAttribute("src");
+              bgMusic.muted = false;
+              if (bgMusic.paused) {
+                bgMusic.play().catch(e => console.log('Background music play error:', e));
               }
             }
           }
-        }
+          
+          // Toggle icon visibility
+          if (soundOn && soundOff) {
+            if (isMuted) {
+              soundOn.style.display = "none";
+              soundOff.style.display = "block";
+            } else {
+              soundOn.style.display = "block";
+              soundOff.style.display = "none";
+            }
+          }
+        });
 
-        // Initially hide the stories
-        storiesElement.style.display = "none";
 
 
         // Add event listener to close the modal when clicking on the overlay
@@ -1011,10 +1079,24 @@
           window.location.href = `/gallery.html?orderID=${orderID.toUpperCase()}`;
         });
 
+        // Track detected markers and background music state
+        const detectedMarkers = new Set();
+        const backgroundMusic = document.getElementById('background-music');
+        let backgroundMusicStarted = false;
+
+        // Setup background music
+        if (backgroundMusic) {
+          backgroundMusic.volume = 0.3; // Lower volume compared to modal audio (which is 1.0)
+          backgroundMusic.loop = true;
+        }
+
         // Add event listeners for both markers
         document.querySelectorAll("a-marker").forEach((marker) => {
           marker.addEventListener("markerFound", function () {
             console.log("Marker is found");
+            const markerId = marker.id || marker.getAttribute('url');
+            detectedMarkers.add(markerId);
+
             // Ensure video is loaded and play it
             videoElement.load();
             const playPromise = videoElement.play();
@@ -1038,9 +1120,29 @@
 
             videoElement.muted = false; // Unmute when marker is detected
             videoElement.volume = 1; // Set volume to maximum
-            // Show the stories when the marker is found
-            storiesElement.style.display = "flex";
+            
+            // Show letters list when marker is found
+            const lettersListBottom = document.getElementById('letters-list-bottom');
+            if (lettersListBottom) {
+              lettersListBottom.style.display = 'flex';
+            }
 
+            // Play background music when marker is found for the first time
+            if (backgroundMusic && !backgroundMusicStarted) {
+              backgroundMusic.play().catch(e => {
+                console.log('Background music play error:', e);
+                // Retry after a short delay
+                setTimeout(() => {
+                  backgroundMusic.play().catch(err => console.log('Background music retry error:', err));
+                }, 500);
+              });
+              backgroundMusicStarted = true;
+            } else if (backgroundMusic && backgroundMusicStarted) {
+              // Resume background music if it was paused (don't reset position)
+              if (backgroundMusic.paused) {
+                backgroundMusic.play().catch(e => console.log('Background music resume error:', e));
+              }
+            }
 
             // Hide the overlay when the marker is found
             const markerNotFoundOverlay = document.getElementById(
@@ -1058,18 +1160,37 @@
 
           marker.addEventListener("markerLost", function () {
             console.log("Marker is lost");
-            pauseTimeout = setTimeout(() => {
-              videoElement.pause();
-              console.log("Video and audio paused due to marker loss");
-            }, 500); // Pause after 3 seconds
-            // Hide the stories when the marker is lost
-            storiesElement.style.display = "none";
+            const markerId = marker.id || marker.getAttribute('url');
+            detectedMarkers.delete(markerId);
 
-            // Show the overlay when the marker is lost
-            const markerNotFoundOverlay = document.getElementById(
-              "markerNotFoundOverlay"
-            );
-            markerNotFoundOverlay.style.display = "block";
+            pauseTimeout = setTimeout(() => {
+              // Only pause if marker is still lost (check if it's back in detectedMarkers)
+              if (!detectedMarkers.has(markerId)) {
+                videoElement.pause();
+                console.log("Video and audio paused due to marker loss");
+
+                // Pause background music when marker is lost
+                if (backgroundMusic && !backgroundMusic.paused) {
+                  backgroundMusic.pause();
+                }
+
+                // Hide letters list when all markers are lost
+                if (detectedMarkers.size === 0) {
+                  const lettersListBottom = document.getElementById('letters-list-bottom');
+                  if (lettersListBottom) {
+                    lettersListBottom.style.display = 'none';
+                  }
+                }
+
+                // Only show the overlay when ALL markers are lost
+                if (detectedMarkers.size === 0) {
+                  const markerNotFoundOverlay = document.getElementById(
+                    "markerNotFoundOverlay"
+                  );
+                  markerNotFoundOverlay.style.display = "block";
+                }
+              }
+            }, 2000); // 2 second delay before hiding content
 
           });
         });
@@ -1081,6 +1202,173 @@
           videoElement.pause();
         }
       });
+
+      // Letter detail modal functionality
+      const lettersDetail = document.getElementById('letters-detail');
+      const lettersDetailOverlay = document.getElementById('letters-detail-overlay');
+      const videoComponent = document.getElementById('video-component');
+      const letterComponent = document.getElementById('letter-component');
+      const ruryVideo = document.getElementById('rury-video');
+      const ruryAudio = document.getElementById('rury-audio');
+      const audioIcon = document.getElementById('audio-icon');
+
+      // Listen for letter detail open event
+      document.addEventListener('openLetterDetail', (e) => {
+        if (lettersDetail && e.detail && e.detail.letterData) {
+          const letterData = e.detail.letterData;
+
+          // Hide the AR video behind letters
+          const arsaVideo = document.getElementById('arsa-video');
+          if (arsaVideo) {
+            arsaVideo.style.display = 'none';
+          }
+
+          // Hide both video and audio initially
+          if (ruryVideo) {
+            ruryVideo.style.display = 'none';
+            ruryVideo.src = '';
+            ruryVideo.pause();
+          }
+          if (ruryAudio) {
+            ruryAudio.style.display = 'none';
+            ruryAudio.src = '';
+            ruryAudio.pause();
+          }
+          if (audioIcon) {
+            audioIcon.style.display = 'none';
+          }
+
+          // Update media component - prioritize video, then audio
+          // Support both video_url/audio_url (from API) and video/audio (from mailbox)
+          const hasVideo = (letterData.video_url && letterData.video_url.trim() !== '') ||
+            (letterData.video && letterData.video.trim() !== '');
+          const hasAudio = (letterData.audio_url && letterData.audio_url.trim() !== '') ||
+            (letterData.audio && letterData.audio.trim() !== '');
+
+          const videoUrl = letterData.video_url || letterData.video || '';
+          const audioUrl = letterData.audio_url || letterData.audio || '';
+
+          if (hasVideo && ruryVideo && videoUrl) {
+            if (audioIcon) audioIcon.style.display = 'none';
+            ruryVideo.src = videoUrl;
+            ruryVideo.style.display = 'block';
+            const playVideo = () => {
+              ruryVideo.play().catch(e => {
+                console.log('Video autoplay error:', e);
+                setTimeout(() => {
+                  ruryVideo.play().catch(err => console.log('Video retry error:', err));
+                }, 500);
+              });
+            };
+            if (ruryVideo.readyState >= 2) {
+              playVideo();
+            } else {
+              ruryVideo.addEventListener('canplay', playVideo, { once: true });
+              ruryVideo.load();
+            }
+          } else if (hasAudio && ruryAudio && audioUrl) {
+            if (ruryVideo) ruryVideo.style.display = 'none';
+            if (audioIcon) audioIcon.style.display = 'flex';
+            ruryAudio.muted = false;
+            ruryAudio.volume = 1.0;
+            ruryAudio.src = audioUrl;
+            ruryAudio.style.display = 'block';
+            const playAudio = () => {
+              ruryAudio.muted = false;
+              ruryAudio.volume = 1.0;
+              ruryAudio.play().then(() => {
+                console.log('Audio playing successfully');
+              }).catch(e => {
+                console.log('Audio autoplay error:', e);
+                setTimeout(() => {
+                  ruryAudio.muted = false;
+                  ruryAudio.volume = 1.0;
+                  ruryAudio.play().catch(err => console.log('Audio retry error:', err));
+                }, 500);
+              });
+            };
+            if (ruryAudio.readyState >= 2) {
+              playAudio();
+            } else {
+              ruryAudio.addEventListener('canplay', playAudio, { once: true });
+              ruryAudio.addEventListener('loadeddata', playAudio, { once: true });
+              ruryAudio.addEventListener('canplaythrough', playAudio, { once: true });
+              ruryAudio.load();
+            }
+          }
+
+          // Update photo component
+          const photoImg = document.getElementById('photo-component-img');
+          if (photoImg) {
+            const photoUrl = letterData.photo_url || letterData.photo || '';
+            if (photoUrl && photoUrl.trim() !== '') {
+              photoImg.src = photoUrl;
+              photoImg.style.display = 'block';
+            } else {
+              photoImg.style.display = 'none';
+            }
+          }
+
+          // Update sender name
+          const letterSender = document.getElementById('letter-component-sender');
+          if (letterSender) {
+            const senderName = letterData.name || letterData.senderName || '';
+            if (senderName && senderName.trim() !== '') {
+              letterSender.textContent = senderName;
+              letterSender.style.display = 'block';
+            } else {
+              letterSender.style.display = 'none';
+            }
+          }
+
+          // Update letter text component
+          const letterText = document.getElementById('letter-component-text');
+          if (letterText) {
+            const message = letterData.message || letterData.text || '';
+            if (message) {
+              letterText.textContent = message;
+            }
+          }
+
+          // Center letter if no video and no audio
+          if (!hasVideo && !hasAudio && letterComponent) {
+            letterComponent.style.left = '50%';
+            letterComponent.style.right = 'auto';
+            letterComponent.style.transform = 'translateX(-50%) rotate(1deg)';
+          } else if (letterComponent) {
+            letterComponent.style.left = '0';
+            letterComponent.style.right = '0';
+            letterComponent.style.transform = 'rotate(1deg)';
+          }
+
+          lettersDetail.style.display = 'block';
+        }
+      });
+
+      // Close modal when overlay is clicked
+      if (lettersDetailOverlay) {
+        lettersDetailOverlay.addEventListener('click', () => {
+          if (lettersDetail) {
+            // Stop video and audio when closing
+            if (ruryVideo) {
+              ruryVideo.pause();
+              ruryVideo.currentTime = 0;
+            }
+            if (ruryAudio) {
+              ruryAudio.pause();
+              ruryAudio.currentTime = 0;
+            }
+
+            // Show the AR video again
+            const arsaVideo = document.getElementById('arsa-video');
+            if (arsaVideo) {
+              arsaVideo.style.display = '';
+            }
+
+            lettersDetail.style.display = 'none';
+          }
+        });
+      }
     </script>
   </body>
 </html>
