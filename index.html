@@ -4,6 +4,29 @@
     <title>AR App | Moon Muffin</title>
     <link rel="icon" type="image/x-icon" href="/icon.ico" />
     <link rel="stylesheet" href="/styles.css" />
+    <style>
+      @keyframes slowRotate {
+        0%, 100% {
+          transform: rotate(15deg);
+        }
+        50% {
+          transform: rotate(25deg);
+        }
+      }
+      
+      #top-right-image {
+        animation-name: slowRotateReverse;
+      }
+      
+      @keyframes slowRotateReverse {
+        0%, 100% {
+          transform: rotate(-15deg);
+        }
+        50% {
+          transform: rotate(-25deg);
+        }
+      }
+    </style>
     <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
     <script>
       // Intercept getUserMedia BEFORE AR.js initializes to request maximum resolution
@@ -656,6 +679,39 @@
       </div>
     </div>
 
+    <!-- Decorative Images Top Corners -->
+    <img
+      id="top-left-image"
+      src="./assets/face-1.png"
+      style="
+        position: fixed;
+        top: 5svh;
+        left: -50svh;
+        height: 35svh;
+        width: auto;
+        z-index: 5;
+        pointer-events: none;
+        transition: left 2s ease-in-out;
+        transform: rotate(15deg);
+      "
+    />
+    <img
+      id="top-right-image"
+      src="./assets/face-1.png"
+      style="
+        position: fixed;
+        top: 5svh;
+        right: -50svh;
+        height: 35svh;
+        width: auto;
+        z-index: 5;
+        pointer-events: none;
+        transition: right 2s ease-in-out;
+        transform: rotate(-15deg);
+      "
+    />
+    <audio id="content-audio" style="display: none;"></audio>
+
     <!-- Letters List (Stories Style) -->
     <div id="letters-list-bottom"
       style="display: none; align-items: center; justify-content: center; position: fixed; bottom: 13.3svh; left: 50%; transform: translateX(-50%); z-index: 10; width: 95vw; height: 70px; padding: 0 15px; overflow-x: auto; overflow-y: visible; gap: 16px;">
@@ -754,6 +810,302 @@
         return results === null
           ? ""
           : decodeURIComponent(results[1].replace(/\+/g, " ")).toUpperCase();
+      }
+
+      // Cache for preloaded assets
+      const assetCache = {
+        images: new Map(),
+        audio: new Map()
+      };
+
+      // Function to preload image
+      function preloadImage(src) {
+        return new Promise((resolve, reject) => {
+          if (assetCache.images.has(src)) {
+            resolve(assetCache.images.get(src));
+            return;
+          }
+
+          const img = new Image();
+          img.onload = () => {
+            assetCache.images.set(src, img);
+            resolve(img);
+          };
+          img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+          img.src = src;
+        });
+      }
+
+      // Function to preload audio/video
+      function preloadAudio(src) {
+        return new Promise((resolve, reject) => {
+          if (assetCache.audio.has(src)) {
+            resolve(assetCache.audio.get(src));
+            return;
+          }
+
+          const audio = new Audio();
+          audio.preload = 'auto';
+          audio.oncanplaythrough = () => {
+            assetCache.audio.set(src, audio);
+            resolve(audio);
+          };
+          audio.onerror = () => reject(new Error(`Failed to load audio: ${src}`));
+          audio.src = src;
+          audio.load();
+        });
+      }
+
+      // Preload all content assets on page load
+      function preloadContentAssets(contentData) {
+        const validItems = contentData.filter(item => 
+          item.photo_url && item.photo_url.trim() !== ''
+        );
+
+        if (validItems.length === 0) {
+          console.log('No valid items to preload');
+          return;
+        }
+
+        console.log(`📥 Preloading ${validItems.length} assets...`);
+
+        // Preload all images and audio
+        const preloadPromises = [];
+        
+        for (let i = 0; i < validItems.length; i++) {
+          const item = validItems[i];
+          
+          // Preload image
+          if (item.photo_url && item.photo_url.trim() !== '') {
+            preloadPromises.push(
+              preloadImage(item.photo_url)
+                .then(() => console.log(`✅ Image ${i + 1}/${validItems.length} preloaded`))
+                .catch((error) => console.warn(`⚠️ Image ${i + 1} failed to preload:`, error))
+            );
+          }
+
+          // Preload audio (prefer audio_url, fallback to video_url)
+          const audioUrl = item.audio_url || item.video_url || '';
+          if (audioUrl && audioUrl.trim() !== '') {
+            preloadPromises.push(
+              preloadAudio(audioUrl)
+                .then(() => console.log(`✅ Audio ${i + 1}/${validItems.length} preloaded`))
+                .catch((error) => console.warn(`⚠️ Audio ${i + 1} failed to preload:`, error))
+            );
+          }
+        }
+
+        // Wait for all assets to load (don't block, just log progress)
+        Promise.allSettled(preloadPromises).then(() => {
+          console.log('✅ All assets preloaded and cached');
+        });
+      }
+
+      // Global variable to control sequential display
+      let sequentialDisplayRunning = false;
+      let sequentialDisplayTimeout = null;
+
+      // Function to start sequential image display with audio
+      function startSequentialImageDisplay(contentData) {
+        // Filter items that have photo_url
+        const validItems = contentData.filter(item => 
+          item.photo_url && item.photo_url.trim() !== ''
+        );
+
+        if (validItems.length === 0) {
+          console.log('No valid items with photo_url for sequential display');
+          return;
+        }
+
+        const leftImage = document.getElementById('top-left-image');
+        const rightImage = document.getElementById('top-right-image');
+        const contentAudio = document.getElementById('content-audio');
+
+        if (!leftImage || !rightImage || !contentAudio) {
+          console.error('Required elements not found for sequential display');
+          return;
+        }
+
+        // Initialize both images to be outside
+        leftImage.style.left = '-50svh';
+        rightImage.style.right = '-50svh';
+
+        let currentIndex = 0;
+        let isRightSide = true; // Start with right side first
+        sequentialDisplayRunning = true;
+
+        async function showNextImage() {
+          if (!sequentialDisplayRunning) return;
+
+          if (currentIndex >= validItems.length) {
+            console.log('All images displayed, looping after 15s...');
+            // Loop after 15 seconds
+            sequentialDisplayTimeout = setTimeout(() => {
+              if (sequentialDisplayRunning) {
+                currentIndex = 0;
+                isRightSide = true;
+                showNextImage();
+              }
+            }, 15000);
+            return;
+          }
+
+          const item = validItems[currentIndex];
+          const currentImage = isRightSide ? rightImage : leftImage;
+
+          // Get audio URL (prefer audio_url, fallback to video_url)
+          const audioUrl = item.audio_url || item.video_url || '';
+
+          // Preload image and audio BEFORE showing anything
+          try {
+            await preloadImage(item.photo_url);
+            console.log(`✅ Image ${currentIndex + 1} preloaded`);
+          } catch (error) {
+            console.warn(`⚠️ Image ${currentIndex + 1} preload failed:`, error);
+          }
+
+          // Set image source but keep it hidden
+          currentImage.src = item.photo_url;
+
+          // Wait for image to load
+          await new Promise((resolve) => {
+            if (currentImage.complete) {
+              resolve();
+            } else {
+              currentImage.onload = resolve;
+              currentImage.onerror = resolve; // Continue even if image fails
+            }
+          });
+
+          if (audioUrl && audioUrl.trim() !== '') {
+            // Preload audio before showing image
+            try {
+              await preloadAudio(audioUrl);
+              console.log(`✅ Audio ${currentIndex + 1} preloaded`);
+            } catch (error) {
+              console.warn(`⚠️ Audio ${currentIndex + 1} preload failed:`, error);
+            }
+
+            // Load audio and wait for it to be ready
+            contentAudio.src = audioUrl;
+            contentAudio.muted = false;
+            contentAudio.volume = 1.0;
+            contentAudio.load();
+
+            // Wait for audio to be ready before showing image
+            await new Promise((resolve) => {
+              if (contentAudio.readyState >= 3) { // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA
+                resolve();
+              } else {
+                const onCanPlay = () => {
+                  contentAudio.removeEventListener('canplay', onCanPlay);
+                  contentAudio.removeEventListener('canplaythrough', onCanPlayThrough);
+                  resolve();
+                };
+                const onCanPlayThrough = () => {
+                  contentAudio.removeEventListener('canplay', onCanPlay);
+                  contentAudio.removeEventListener('canplaythrough', onCanPlayThrough);
+                  resolve();
+                };
+                contentAudio.addEventListener('canplay', onCanPlay);
+                contentAudio.addEventListener('canplaythrough', onCanPlayThrough);
+                
+                // Timeout after 5 seconds to prevent infinite waiting
+                setTimeout(() => {
+                  contentAudio.removeEventListener('canplay', onCanPlay);
+                  contentAudio.removeEventListener('canplaythrough', onCanPlayThrough);
+                  resolve();
+                }, 5000);
+              }
+            });
+
+            // Now show image and play audio together
+            if (isRightSide) {
+              rightImage.style.right = '-5svh';
+            } else {
+              leftImage.style.left = '-5svh';
+            }
+
+            console.log(`Showing image ${currentIndex + 1}/${validItems.length} on ${isRightSide ? 'right' : 'left'} side with audio`);
+
+            const playAudio = () => {
+              contentAudio.play().then(() => {
+                console.log('Audio playing for item', currentIndex + 1);
+                
+                // When audio ends, hide current image and show next
+                const onEnded = () => {
+                  contentAudio.removeEventListener('ended', onEnded);
+                  
+                  // Hide current image
+                  if (isRightSide) {
+                    rightImage.style.right = '-50svh';
+                  } else {
+                    leftImage.style.left = '-50svh';
+                  }
+
+                  // Move to next item after 3s gap
+                  sequentialDisplayTimeout = setTimeout(() => {
+                    if (sequentialDisplayRunning) {
+                      currentIndex++;
+                      isRightSide = !isRightSide; // Alternate sides
+
+                      // Show next image
+                      showNextImage();
+                    }
+                  }, 3000); // 3 second gap between contents
+                };
+
+                contentAudio.addEventListener('ended', onEnded, { once: true });
+              }).catch((error) => {
+                console.error('Error playing audio:', error);
+                // If audio fails, still proceed to next image after 3 seconds
+                setTimeout(() => {
+                  if (isRightSide) {
+                    rightImage.style.right = '-50svh';
+                  } else {
+                    leftImage.style.left = '-50svh';
+                  }
+                  
+                  sequentialDisplayTimeout = setTimeout(() => {
+                    if (sequentialDisplayRunning) {
+                      currentIndex++;
+                      isRightSide = !isRightSide;
+                      showNextImage();
+                    }
+                  }, 3000); // 3 second gap
+                }, 3000);
+              });
+            };
+
+            // Play audio immediately (already loaded and ready)
+            playAudio();
+          } else {
+            // No audio, just show image for 3 seconds then move to next
+            console.log('No audio for item', currentIndex + 1);
+            setTimeout(() => {
+              // Hide current image
+              if (isRightSide) {
+                rightImage.style.right = '-50svh';
+              } else {
+                leftImage.style.left = '-50svh';
+              }
+
+              // Move to next item after 3s gap
+              sequentialDisplayTimeout = setTimeout(() => {
+                if (sequentialDisplayRunning) {
+                  currentIndex++;
+                  isRightSide = !isRightSide; // Alternate sides
+
+                  // Show next image
+                  showNextImage();
+                }
+              }, 3000); // 3 second gap between contents
+            }, 3000);
+          }
+        }
+
+        // Start the sequence
+        showNextImage();
       }
 
       // Function to render letters in horizontal story list (circular buttons with letter SVGs)
@@ -956,6 +1308,12 @@
             renderLettersBottomLeft(data).catch((error) => {
               console.error("Error rendering letters:", error);
             });
+
+            // Preload content assets on page load (while waiting for marker)
+            preloadContentAssets(data);
+            
+            // Store content data globally for sequential display (will start when marker detected)
+            window.sequentialContentData = data;
             })
             .catch((error) => {
               console.error("Error fetching content:", error);
@@ -1127,6 +1485,11 @@
               lettersListBottom.style.display = 'flex';
             }
 
+            // Start sequential image display when marker is detected (only if not already running)
+            if (window.sequentialContentData && !sequentialDisplayRunning) {
+              startSequentialImageDisplay(window.sequentialContentData);
+            }
+
             // Play background music when marker is found for the first time
             if (backgroundMusic && !backgroundMusicStarted) {
               backgroundMusic.play().catch(e => {
@@ -1180,6 +1543,29 @@
                   if (lettersListBottom) {
                     lettersListBottom.style.display = 'none';
                   }
+
+                  // Hide sequential images and stop audio when all markers are lost
+                  const leftImage = document.getElementById('top-left-image');
+                  const rightImage = document.getElementById('top-right-image');
+                  const contentAudio = document.getElementById('content-audio');
+                  
+                  if (leftImage) {
+                    leftImage.style.left = '-50svh';
+                  }
+                  if (rightImage) {
+                    rightImage.style.right = '-50svh';
+                  }
+                  if (contentAudio) {
+                    contentAudio.pause();
+                    contentAudio.currentTime = 0;
+                  }
+                  
+                  // Stop sequential display
+                  sequentialDisplayRunning = false;
+                  if (sequentialDisplayTimeout) {
+                    clearTimeout(sequentialDisplayTimeout);
+                    sequentialDisplayTimeout = null;
+                  }
                 }
 
                 // Only show the overlay when ALL markers are lost
@@ -1216,6 +1602,21 @@
       document.addEventListener('openLetterDetail', (e) => {
         if (lettersDetail && e.detail && e.detail.letterData) {
           const letterData = e.detail.letterData;
+
+          // Stop sequential image audio and pause display when modal opens
+          const contentAudio = document.getElementById('content-audio');
+          if (contentAudio) {
+            contentAudio.pause();
+            contentAudio.currentTime = 0;
+            console.log('Sequential image audio stopped (letter modal opened)');
+          }
+          
+          // Pause sequential display
+          sequentialDisplayRunning = false;
+          if (sequentialDisplayTimeout) {
+            clearTimeout(sequentialDisplayTimeout);
+            sequentialDisplayTimeout = null;
+          }
 
           // Hide the AR video behind letters
           const arsaVideo = document.getElementById('arsa-video');
