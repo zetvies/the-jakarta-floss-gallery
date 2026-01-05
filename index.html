@@ -1,381 +1,372 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>AR App | Moon Muffin</title>
-    <link rel="icon" type="image/x-icon" href="/icon.ico" />
-    <link rel="stylesheet" href="/styles.css" />
-    <style>
-      @keyframes slowRotate {
-        0%, 100% {
-          transform: rotate(15deg);
-        }
-        50% {
-          transform: rotate(25deg);
-        }
+
+<head>
+  <title>AR App | Moon Muffin</title>
+  <link rel="icon" type="image/x-icon" href="/icon.ico" />
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    @keyframes slowRotate {
+
+      0%,
+      100% {
+        transform: rotate(15deg);
       }
-      
-      #top-right-image {
-        animation-name: slowRotateReverse;
+
+      50% {
+        transform: rotate(25deg);
       }
-      
-      @keyframes slowRotateReverse {
-        0%, 100% {
-          transform: rotate(-15deg);
-        }
-        50% {
-          transform: rotate(-25deg);
-        }
+    }
+
+    #top-right-image {
+      animation-name: slowRotateReverse;
+    }
+
+    @keyframes slowRotateReverse {
+
+      0%,
+      100% {
+        transform: rotate(-15deg);
       }
-    </style>
-    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-    <script>
-      // Intercept getUserMedia BEFORE AR.js initializes to request maximum resolution
-      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-        const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-        navigator.mediaDevices.getUserMedia = async function(constraints) {
-          console.log('📹 getUserMedia called with constraints:', JSON.stringify(constraints, null, 2));
-          
-          if (constraints && constraints.video) {
-            const modifiedConstraints = JSON.parse(JSON.stringify(constraints));
-            
-            if (typeof modifiedConstraints.video === 'object' && modifiedConstraints.video !== null) {
-              // Remove any width/height limits to allow maximum resolution
-              delete modifiedConstraints.video.width;
-              delete modifiedConstraints.video.height;
-              
-              // Request maximum resolution by using ideal with very high values
-              modifiedConstraints.video.width = { ideal: 4096 };
-              modifiedConstraints.video.height = { ideal: 2160 };
-              
-              console.log('🔷 Modified constraints for max resolution:', JSON.stringify(modifiedConstraints, null, 2));
-              
-              try {
-                const stream = await originalGetUserMedia(modifiedConstraints);
-                const track = stream.getVideoTracks()[0];
-                if (track) {
-                  const settings = track.getSettings();
-                  const capabilities = track.getCapabilities();
-                  console.log('✅ Stream obtained - Resolution:', settings.width + 'x' + settings.height);
-                  console.log('📊 Max Available Resolution:', 
-                    (capabilities.width?.max || 'unknown') + 'x' + (capabilities.height?.max || 'unknown'));
-                  
-                  // Try to upgrade to maximum if we got less than max
-                  if (capabilities.width?.max && capabilities.height?.max) {
-                    const maxWidth = capabilities.width.max;
-                    const maxHeight = capabilities.height.max;
-                    
-                    if (settings.width < maxWidth || settings.height < maxHeight) {
-                      console.log(`🔄 Attempting to upgrade to max resolution: ${maxWidth}x${maxHeight}`);
-                      try {
-                        await track.applyConstraints({
-                          width: { ideal: maxWidth },
-                          height: { ideal: maxHeight }
-                        });
-                        const newSettings = track.getSettings();
-                        console.log(`✅ Upgraded to: ${newSettings.width}x${newSettings.height}`);
-                      } catch (upgradeErr) {
-                        console.warn('⚠️ Could not upgrade to max resolution:', upgradeErr);
-                      }
+
+      50% {
+        transform: rotate(-25deg);
+      }
+    }
+  </style>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <script>
+    // Intercept getUserMedia BEFORE AR.js initializes to request maximum resolution
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+      const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+      navigator.mediaDevices.getUserMedia = async function (constraints) {
+        console.log('📹 getUserMedia called with constraints:', JSON.stringify(constraints, null, 2));
+
+        if (constraints && constraints.video) {
+          const modifiedConstraints = JSON.parse(JSON.stringify(constraints));
+
+          if (typeof modifiedConstraints.video === 'object' && modifiedConstraints.video !== null) {
+            // Remove any width/height limits to allow maximum resolution
+            delete modifiedConstraints.video.width;
+            delete modifiedConstraints.video.height;
+
+            // Request maximum resolution by using ideal with very high values
+            modifiedConstraints.video.width = { ideal: 4096 };
+            modifiedConstraints.video.height = { ideal: 2160 };
+
+            console.log('🔷 Modified constraints for max resolution:', JSON.stringify(modifiedConstraints, null, 2));
+
+            try {
+              const stream = await originalGetUserMedia(modifiedConstraints);
+              const track = stream.getVideoTracks()[0];
+              if (track) {
+                const settings = track.getSettings();
+                const capabilities = track.getCapabilities();
+                console.log('✅ Stream obtained - Resolution:', settings.width + 'x' + settings.height);
+                console.log('📊 Max Available Resolution:',
+                  (capabilities.width?.max || 'unknown') + 'x' + (capabilities.height?.max || 'unknown'));
+
+                // Try to upgrade to maximum if we got less than max
+                if (capabilities.width?.max && capabilities.height?.max) {
+                  const maxWidth = capabilities.width.max;
+                  const maxHeight = capabilities.height.max;
+
+                  if (settings.width < maxWidth || settings.height < maxHeight) {
+                    console.log(`🔄 Attempting to upgrade to max resolution: ${maxWidth}x${maxHeight}`);
+                    try {
+                      await track.applyConstraints({
+                        width: { ideal: maxWidth },
+                        height: { ideal: maxHeight }
+                      });
+                      const newSettings = track.getSettings();
+                      console.log(`✅ Upgraded to: ${newSettings.width}x${newSettings.height}`);
+                    } catch (upgradeErr) {
+                      console.warn('⚠️ Could not upgrade to max resolution:', upgradeErr);
                     }
                   }
                 }
-                return stream;
-              } catch (error) {
-                console.warn('⚠️ Error with max resolution constraints, falling back to original:', error);
-                // Fall back to original constraints if max resolution fails
-                return originalGetUserMedia(constraints);
               }
+              return stream;
+            } catch (error) {
+              console.warn('⚠️ Error with max resolution constraints, falling back to original:', error);
+              // Fall back to original constraints if max resolution fails
+              return originalGetUserMedia(constraints);
             }
           }
-          
-          // No video constraints or video is just true - use original
-          return originalGetUserMedia(constraints);
-        };
-        console.log('✅ getUserMedia interception set up for max resolution');
-      }
-    </script>
-    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
-    <script>
-      // Custom component for smooth, slow, irregular character animation
-      AFRAME.registerComponent('character-animation', {
-        schema: {
-          rotationSpeed: { type: 'number', default: 1 },
-          translationSpeed: { type: 'number', default: 1 },
-          zAmplitude: { type: 'number', default: 0.2 },
-          yAmplitude: { type: 'number', default: 0.2 }
-        },
-        init: function () {
-          // Store initial position
-          const initialPos = this.el.getAttribute('position');
-          this.initialZ = initialPos.z || 0;
-          this.initialY = initialPos.y || 0;
-          
-          // Store initial rotation
-          const initialRot = this.el.getAttribute('rotation');
-          this.initialRotationY = initialRot.y || 0;
-          
-          // Random offsets for irregular movement (different for each character)
-          this.timeOffset = Math.random() * Math.PI * 2; // Random phase
-          this.zPhase = Math.random() * Math.PI * 2;
-          this.yPhase = Math.random() * Math.PI * 2;
-          this.rotationPhase = Math.random() * Math.PI * 2;
-          
-          // Different frequencies for irregular movement
-          this.zFreq = 0.3 + Math.random() * 0.2; // 0.3 to 0.5
-          this.yFreq = 0.25 + Math.random() * 0.15; // 0.25 to 0.4
-          this.rotationFreq = 0.2 + Math.random() * 0.1; // 0.2 to 0.3
-          
-          // Random rotation range (different for each character)
-          this.rotationRange = 10 + Math.random() * 20; // 10 to 30 degrees
-          
-          this.startTime = Date.now();
-        },
-        tick: function (time, timeDelta) {
-          const elapsed = (time - this.startTime) / 1000; // Convert to seconds
-          
-          // Smooth, slow rotation on Y-axis with irregular pattern
-          const rotationTime = elapsed * this.data.rotationSpeed * this.rotationFreq + this.rotationPhase;
-          // Use sine wave with slight variation for irregularity
-          const rotationOffset = Math.sin(rotationTime) * this.rotationRange + 
-                                Math.sin(rotationTime * 1.7) * (this.rotationRange * 0.3);
-          const newRotationY = this.initialRotationY + rotationOffset;
-          
-          // Smooth, slow translation in Z and Y with irregular pattern
-          const zTime = elapsed * this.data.translationSpeed * this.zFreq + this.zPhase;
-          const yTime = elapsed * this.data.translationSpeed * this.yFreq + this.yPhase;
-          
-          // Use sine waves with multiple frequencies for irregular, smooth movement
-          const zOffset = Math.sin(zTime) * this.data.zAmplitude + 
-                         Math.sin(zTime * 1.5) * (this.data.zAmplitude * 0.4) +
-                         Math.sin(zTime * 2.3) * (this.data.zAmplitude * 0.2);
-          
-          const yOffset = Math.sin(yTime) * this.data.yAmplitude + 
-                          Math.sin(yTime * 1.3) * (this.data.yAmplitude * 0.5) +
-                          Math.sin(yTime * 2.1) * (this.data.yAmplitude * 0.3);
-          
-          // Apply rotation
-          const currentRotation = this.el.getAttribute('rotation');
-          this.el.setAttribute('rotation', {
-            x: currentRotation.x,
-            y: newRotationY,
-            z: currentRotation.z
-          });
-          
-          // Apply translation
-          const currentPosition = this.el.getAttribute('position');
-          this.el.setAttribute('position', {
-            x: currentPosition.x,
-            y: this.initialY + yOffset,
-            z: this.initialZ + zOffset
-          });
         }
-      });
-    </script>
-  </head>
-  <body style="margin: 0; overflow: hidden; z-index: 0">
-    <a-scene
-      style="z-index: 1"
-      embedded
-      arjs="debugUIEnabled: false; patternRatio: 0.7; sourceType: webcam;"
-      device-orientation-permission-ui="enabled: false"
-      vr-mode-ui="enabled: false"
-    >
-      <!-- Define markers - images will be generated dynamically -->
-      <a-marker type="pattern" url="pattern-confetti-final.patt"></a-marker>
-      <a-marker type="pattern" url="pattern-smiley-final.patt"></a-marker>
-      <a-marker type="pattern" url="pattern-ribbon-final.patt"></a-marker>
-      <!-- Add a camera -->
-      <a-entity camera></a-entity>
-    </a-scene>
 
-    <script>
-      // Function to generate trapezium grid of images for a marker
-      // Fills from center outward: middle, left, right, outer left, outer right, etc.
-      function generateImageGrid(marker, dataArray, xOffset = 0) {
-        // Grid configuration
-        const width = 1.5; // 1.5x bigger (was 1)
-        const height = 3; // 1.5x bigger (was 2)
-        const xSpacing = width; // 1x the size (spacing equals width)
-        // Alternative: const xSpacing = width * 0.5; // 0.5x the size
-        const zIncrement = 0.3; // Z increments by 0.3
-        const yIncrement = 1.0; // Y increments by 1
-        
-        // Calculate trapezium structure
-        // Row 1: 4 images, Row 2: 5 images, Row 3: 6 images, etc.
-        function getRowSize(rowIndex) {
-          return 4 + rowIndex; // Row 0 = 4, Row 1 = 5, Row 2 = 6, etc.
-        }
-        
-        // Generate fill order: center, left, right, outer left, outer right, etc.
-        // Fills each row completely before moving to next row
-        function getFillOrder(rowIndex, rowSize) {
-          const order = [];
-          
-          if (rowSize % 2 === 1) {
-            // Odd number of items: single center
-            const centerIndex = Math.floor(rowSize / 2);
-            order.push(centerIndex); // Start with center
-            
-            // Then fill outward: left, right, outer left, outer right, etc.
-            for (let offset = 1; offset <= centerIndex; offset++) {
-              // Left side (closer to center first)
-              if (centerIndex - offset >= 0) {
-                order.push(centerIndex - offset);
-              }
-              // Right side (closer to center first)
-              if (centerIndex + offset < rowSize) {
-                order.push(centerIndex + offset);
-              }
+        // No video constraints or video is just true - use original
+        return originalGetUserMedia(constraints);
+      };
+      console.log('✅ getUserMedia interception set up for max resolution');
+    }
+  </script>
+  <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
+  <script>
+    // Custom component for smooth, slow, irregular character animation
+    AFRAME.registerComponent('character-animation', {
+      schema: {
+        rotationSpeed: { type: 'number', default: 1 },
+        translationSpeed: { type: 'number', default: 1 },
+        zAmplitude: { type: 'number', default: 0.2 },
+        yAmplitude: { type: 'number', default: 0.2 }
+      },
+      init: function () {
+        // Store initial position
+        const initialPos = this.el.getAttribute('position');
+        this.initialZ = initialPos.z || 0;
+        this.initialY = initialPos.y || 0;
+
+        // Store initial rotation
+        const initialRot = this.el.getAttribute('rotation');
+        this.initialRotationY = initialRot.y || 0;
+
+        // Random offsets for irregular movement (different for each character)
+        this.timeOffset = Math.random() * Math.PI * 2; // Random phase
+        this.zPhase = Math.random() * Math.PI * 2;
+        this.yPhase = Math.random() * Math.PI * 2;
+        this.rotationPhase = Math.random() * Math.PI * 2;
+
+        // Different frequencies for irregular movement
+        this.zFreq = 0.3 + Math.random() * 0.2; // 0.3 to 0.5
+        this.yFreq = 0.25 + Math.random() * 0.15; // 0.25 to 0.4
+        this.rotationFreq = 0.2 + Math.random() * 0.1; // 0.2 to 0.3
+
+        // Random rotation range (different for each character)
+        this.rotationRange = 10 + Math.random() * 20; // 10 to 30 degrees
+
+        this.startTime = Date.now();
+      },
+      tick: function (time, timeDelta) {
+        const elapsed = (time - this.startTime) / 1000; // Convert to seconds
+
+        // Smooth, slow rotation on Y-axis with irregular pattern
+        const rotationTime = elapsed * this.data.rotationSpeed * this.rotationFreq + this.rotationPhase;
+        // Use sine wave with slight variation for irregularity
+        const rotationOffset = Math.sin(rotationTime) * this.rotationRange +
+          Math.sin(rotationTime * 1.7) * (this.rotationRange * 0.3);
+        const newRotationY = this.initialRotationY + rotationOffset;
+
+        // Smooth, slow translation in Z and Y with irregular pattern
+        const zTime = elapsed * this.data.translationSpeed * this.zFreq + this.zPhase;
+        const yTime = elapsed * this.data.translationSpeed * this.yFreq + this.yPhase;
+
+        // Use sine waves with multiple frequencies for irregular, smooth movement
+        const zOffset = Math.sin(zTime) * this.data.zAmplitude +
+          Math.sin(zTime * 1.5) * (this.data.zAmplitude * 0.4) +
+          Math.sin(zTime * 2.3) * (this.data.zAmplitude * 0.2);
+
+        const yOffset = Math.sin(yTime) * this.data.yAmplitude +
+          Math.sin(yTime * 1.3) * (this.data.yAmplitude * 0.5) +
+          Math.sin(yTime * 2.1) * (this.data.yAmplitude * 0.3);
+
+        // Apply rotation
+        const currentRotation = this.el.getAttribute('rotation');
+        this.el.setAttribute('rotation', {
+          x: currentRotation.x,
+          y: newRotationY,
+          z: currentRotation.z
+        });
+
+        // Apply translation
+        const currentPosition = this.el.getAttribute('position');
+        this.el.setAttribute('position', {
+          x: currentPosition.x,
+          y: this.initialY + yOffset,
+          z: this.initialZ + zOffset
+        });
+      }
+    });
+  </script>
+</head>
+
+<body style="margin: 0; overflow: hidden; z-index: 0">
+  <a-scene style="z-index: 1" embedded arjs="debugUIEnabled: false; patternRatio: 0.7; sourceType: webcam;"
+    device-orientation-permission-ui="enabled: false" vr-mode-ui="enabled: false">
+    <!-- Define markers - images will be generated dynamically -->
+    <a-marker type="pattern" url="pattern-confetti-final.patt"></a-marker>
+    <a-marker type="pattern" url="pattern-smiley-final.patt"></a-marker>
+    <a-marker type="pattern" url="pattern-ribbon-final.patt"></a-marker>
+    <!-- Add a camera -->
+    <a-entity camera></a-entity>
+  </a-scene>
+
+  <script>
+    // Function to generate trapezium grid of images for a marker
+    // Fills from center outward: middle, left, right, outer left, outer right, etc.
+    function generateImageGrid(marker, dataArray, xOffset = 0) {
+      // Grid configuration
+      const width = 1.5; // 1.5x bigger (was 1)
+      const height = 3; // 1.5x bigger (was 2)
+      const xSpacing = width; // 1x the size (spacing equals width)
+      // Alternative: const xSpacing = width * 0.5; // 0.5x the size
+      const zIncrement = 0.3; // Z increments by 0.3
+      const yIncrement = 1.0; // Y increments by 1
+
+      // Calculate trapezium structure
+      // Row 1: 4 images, Row 2: 5 images, Row 3: 6 images, etc.
+      function getRowSize(rowIndex) {
+        return 4 + rowIndex; // Row 0 = 4, Row 1 = 5, Row 2 = 6, etc.
+      }
+
+      // Generate fill order: center, left, right, outer left, outer right, etc.
+      // Fills each row completely before moving to next row
+      function getFillOrder(rowIndex, rowSize) {
+        const order = [];
+
+        if (rowSize % 2 === 1) {
+          // Odd number of items: single center
+          const centerIndex = Math.floor(rowSize / 2);
+          order.push(centerIndex); // Start with center
+
+          // Then fill outward: left, right, outer left, outer right, etc.
+          for (let offset = 1; offset <= centerIndex; offset++) {
+            // Left side (closer to center first)
+            if (centerIndex - offset >= 0) {
+              order.push(centerIndex - offset);
             }
-          } else {
-            // Even number of items: two center positions
-            const leftCenter = Math.floor(rowSize / 2) - 1;
-            const rightCenter = Math.floor(rowSize / 2);
-            
-            // Start with left center, then right center
-            order.push(leftCenter);
-            order.push(rightCenter);
-            
-            // Then fill outward: left, right, outer left, outer right, etc.
-            for (let offset = 1; offset < rowSize / 2; offset++) {
-              // Left side
-              if (leftCenter - offset >= 0) {
-                order.push(leftCenter - offset);
-              }
-              // Right side
-              if (rightCenter + offset < rowSize) {
-                order.push(rightCenter + offset);
-              }
+            // Right side (closer to center first)
+            if (centerIndex + offset < rowSize) {
+              order.push(centerIndex + offset);
             }
           }
-          
-          return order;
-        }
-        
-        // Calculate which row and position for each item
-        let itemIndex = 0;
-        let currentRow = 0;
-        let currentRowPosition = 0;
-        let currentRowSize = getRowSize(currentRow);
-        let currentRowFillOrder = getFillOrder(currentRow, currentRowSize);
-        
-        // Y variations for slight randomness (reuse pattern)
-        const yVariationPattern = [0.05, -0.08, 0.12, -0.05, 0.08, 0.12, -0.05, 0.08, -0.08, 0.15];
-        
-        for (let i = 0; i < dataArray.length; i++) {
-          const data = dataArray[i];
-          
-          // Get position in current row's fill order
-          const colInFillOrder = currentRowFillOrder[currentRowPosition];
-          
-          // Calculate X position (center is 0, left is negative, right is positive)
-          // Apply xOffset to shift the entire grid, plus one character width to the right
-          const x = ((colInFillOrder - Math.floor(currentRowSize / 2)) * xSpacing) + xOffset + width;
-          
-          // Calculate Z and Y positions
-          const baseZ = currentRow * zIncrement;
-          const baseY = currentRow * yIncrement;
-          const yVariation = yVariationPattern[itemIndex % yVariationPattern.length];
-          const y = baseY + yVariation;
-          const z = baseZ;
-          
-          // Get image source from data or default
-          const faceSrc = data.src || data.image || `/assets/face-${((itemIndex % 4) + 1)}.png`;
-          
-          // Create image element
-          const imageEl = document.createElement('a-image');
-          imageEl.setAttribute('src', faceSrc);
-          imageEl.setAttribute('width', width);
-          imageEl.setAttribute('height', height);
-          imageEl.setAttribute('position', `${x} ${y} ${z}`);
-          imageEl.setAttribute('rotation', '-90 0 0');
-          imageEl.setAttribute('character-animation', '');
-          
-          // Add material properties to prevent overlap glitches
-          imageEl.setAttribute('material', {
-            transparent: true,
-            alphaTest: 0.1, // Discard pixels with alpha < 0.1 to prevent transparent part glitches
-            depthTest: true,
-            depthWrite: true,
-            side: 'double' // Render both sides to prevent flickering
-          });
-          
-          // Store any additional data attributes
-          if (data.id) imageEl.setAttribute('data-id', data.id);
-          if (data.class) imageEl.setAttribute('class', data.class);
-          
-          marker.appendChild(imageEl);
-          
-          // Move to next position
-          itemIndex++;
-          currentRowPosition++;
-          
-          // Check if we need to move to next row
-          if (currentRowPosition >= currentRowSize) {
-            currentRow++;
-            currentRowPosition = 0;
-            currentRowSize = getRowSize(currentRow);
-            currentRowFillOrder = getFillOrder(currentRow, currentRowSize);
+        } else {
+          // Even number of items: two center positions
+          const leftCenter = Math.floor(rowSize / 2) - 1;
+          const rightCenter = Math.floor(rowSize / 2);
+
+          // Start with left center, then right center
+          order.push(leftCenter);
+          order.push(rightCenter);
+
+          // Then fill outward: left, right, outer left, outer right, etc.
+          for (let offset = 1; offset < rowSize / 2; offset++) {
+            // Left side
+            if (leftCenter - offset >= 0) {
+              order.push(leftCenter - offset);
+            }
+            // Right side
+            if (rightCenter + offset < rowSize) {
+              order.push(rightCenter + offset);
+            }
           }
+        }
+
+        return order;
+      }
+
+      // Calculate which row and position for each item
+      let itemIndex = 0;
+      let currentRow = 0;
+      let currentRowPosition = 0;
+      let currentRowSize = getRowSize(currentRow);
+      let currentRowFillOrder = getFillOrder(currentRow, currentRowSize);
+
+      // Y variations for slight randomness (reuse pattern)
+      const yVariationPattern = [0.05, -0.08, 0.12, -0.05, 0.08, 0.12, -0.05, 0.08, -0.08, 0.15];
+
+      for (let i = 0; i < dataArray.length; i++) {
+        const data = dataArray[i];
+
+        // Get position in current row's fill order
+        const colInFillOrder = currentRowFillOrder[currentRowPosition];
+
+        // Calculate X position (center is 0, left is negative, right is positive)
+        // Apply xOffset to shift the entire grid, plus one character width to the right
+        const x = ((colInFillOrder - Math.floor(currentRowSize / 2)) * xSpacing) + xOffset + width;
+
+        // Calculate Z and Y positions
+        const baseZ = currentRow * zIncrement;
+        const baseY = currentRow * yIncrement;
+        const yVariation = yVariationPattern[itemIndex % yVariationPattern.length];
+        const y = baseY + yVariation;
+        const z = baseZ;
+
+        // Get image source from data or default
+        const faceSrc = data.src || data.image || `/assets/face-${((itemIndex % 4) + 1)}.png`;
+
+        // Create image element
+        const imageEl = document.createElement('a-image');
+        imageEl.setAttribute('src', faceSrc);
+        imageEl.setAttribute('width', width);
+        imageEl.setAttribute('height', height);
+        imageEl.setAttribute('position', `${x} ${y} ${z}`);
+        imageEl.setAttribute('rotation', '-90 0 0');
+        imageEl.setAttribute('character-animation', '');
+
+        // Add material properties to prevent overlap glitches
+        imageEl.setAttribute('material', {
+          transparent: true,
+          alphaTest: 0.1, // Discard pixels with alpha < 0.1 to prevent transparent part glitches
+          depthTest: true,
+          depthWrite: true,
+          side: 'double' // Render both sides to prevent flickering
+        });
+
+        // Store any additional data attributes
+        if (data.id) imageEl.setAttribute('data-id', data.id);
+        if (data.class) imageEl.setAttribute('class', data.class);
+
+        marker.appendChild(imageEl);
+
+        // Move to next position
+        itemIndex++;
+        currentRowPosition++;
+
+        // Check if we need to move to next row
+        if (currentRowPosition >= currentRowSize) {
+          currentRow++;
+          currentRowPosition = 0;
+          currentRowSize = getRowSize(currentRow);
+          currentRowFillOrder = getFillOrder(currentRow, currentRowSize);
         }
       }
-      
-      // Generate images for all markers when scene is ready
-      // dataArray: Array of objects with photo_url or src property from Supabase/API
-      function initializeImageGrids(dataArray = null) {
-        const markers = document.querySelectorAll('a-marker');
-        
-        if (markers.length > 0) {
-          markers.forEach(function(marker) {
-            // Clear any existing children first
-            while (marker.firstChild) {
-              marker.removeChild(marker.firstChild);
-            }
-            
-            // Determine X offset based on marker pattern
-            let xOffset = 0;
-            const markerUrl = marker.getAttribute('url');
-            
-            if (markerUrl === 'pattern-ribbon-final.patt') {
-              xOffset = -2; // Shift ribbon marker left by 2 units
-            } else if (markerUrl === 'pattern-smiley-final.patt') {
-              xOffset = -1; // Shift smiley marker left by 1 unit
-            }
-            // pattern-confetti-final.patt stays at 0 offset
-            
-            // Use API data if available, otherwise fall back to static images
-            let imageData = [];
-            
-            if (dataArray && dataArray.length > 0) {
-              // Filter items that have photo_url
-              const validItems = dataArray.filter(item => item.photo_url && item.photo_url.trim() !== '');
-              
-              if (validItems.length > 0) {
-                // Use actual data from API/Supabase - use exact number of items
-                imageData = validItems.map((item, index) => ({
-                  id: item.id || index + 1,
-                  src: item.photo_url,
-                  name: item.name || '',
-                  message: item.message || ''
-                }));
-                console.log(`✅ Using ${validItems.length} images from API/Supabase for AR content (exact count)`);
-              } else {
-                // No valid images in API data, use static fallback with default count
-                const defaultCount = markerUrl === 'pattern-ribbon-final.patt' ? 11 : 
-                                   markerUrl === 'pattern-smiley-final.patt' ? 6 : 20;
-                console.log('⚠️ No valid photo_url in API data, using static images');
-                for (let i = 0; i < defaultCount; i++) {
-                  imageData.push({
-                    id: i + 1,
-                    src: `/assets/face-${((i % 4) + 1)}.png`
-                  });
-                }
-              }
+    }
+
+    // Generate images for all markers when scene is ready
+    // dataArray: Array of objects with photo_url or src property from Supabase/API
+    function initializeImageGrids(dataArray = null) {
+      const markers = document.querySelectorAll('a-marker');
+
+      if (markers.length > 0) {
+        markers.forEach(function (marker) {
+          // Clear any existing children first
+          while (marker.firstChild) {
+            marker.removeChild(marker.firstChild);
+          }
+
+          // Determine X offset based on marker pattern
+          let xOffset = 0;
+          const markerUrl = marker.getAttribute('url');
+
+          if (markerUrl === 'pattern-ribbon-final.patt') {
+            xOffset = -2; // Shift ribbon marker left by 2 units
+          } else if (markerUrl === 'pattern-smiley-final.patt') {
+            xOffset = -1; // Shift smiley marker left by 1 unit
+          }
+          // pattern-confetti-final.patt stays at 0 offset
+
+          // Use API data if available, otherwise fall back to static images
+          let imageData = [];
+
+          if (dataArray && dataArray.length > 0) {
+            // Filter items that have photo_url
+            const validItems = dataArray.filter(item => item.photo_url && item.photo_url.trim() !== '');
+
+            if (validItems.length > 0) {
+              // Use actual data from API/Supabase - use exact number of items
+              imageData = validItems.map((item, index) => ({
+                id: item.id || index + 1,
+                src: item.photo_url,
+                name: item.name || '',
+                message: item.message || ''
+              }));
+              console.log(`✅ Using ${validItems.length} images from API/Supabase for AR content (exact count)`);
             } else {
-              // No data provided, use static fallback with default count
-              const defaultCount = markerUrl === 'pattern-ribbon-final.patt' ? 11 : 
-                                 markerUrl === 'pattern-smiley-final.patt' ? 6 : 20;
-              console.log('⚠️ No API data provided, using static images');
+              // No valid images in API data, use static fallback with default count
+              const defaultCount = markerUrl === 'pattern-ribbon-final.patt' ? 11 :
+                markerUrl === 'pattern-smiley-final.patt' ? 6 : 20;
+              console.log('⚠️ No valid photo_url in API data, using static images');
               for (let i = 0; i < defaultCount; i++) {
                 imageData.push({
                   id: i + 1,
@@ -383,58 +374,58 @@
                 });
               }
             }
-            
-            generateImageGrid(marker, imageData, xOffset);
-          });
-          console.log('✅ Generated trapezium image grids for', markers.length, 'markers');
-        } else {
-          console.warn('⚠️ No markers found, retrying...');
-          setTimeout(() => initializeImageGrids(dataArray), 100);
-        }
-      }
-      
-      // Try multiple initialization methods
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-          const scene = document.querySelector('a-scene');
-          if (scene && scene.hasLoaded) {
-            initializeImageGrids();
           } else {
-            scene.addEventListener('loaded', initializeImageGrids);
-            // Fallback timeout
-            setTimeout(initializeImageGrids, 1000);
+            // No data provided, use static fallback with default count
+            const defaultCount = markerUrl === 'pattern-ribbon-final.patt' ? 11 :
+              markerUrl === 'pattern-smiley-final.patt' ? 6 : 20;
+            console.log('⚠️ No API data provided, using static images');
+            for (let i = 0; i < defaultCount; i++) {
+              imageData.push({
+                id: i + 1,
+                src: `/assets/face-${((i % 4) + 1)}.png`
+              });
+            }
           }
+
+          generateImageGrid(marker, imageData, xOffset);
         });
+        console.log('✅ Generated trapezium image grids for', markers.length, 'markers');
       } else {
-        // DOM already loaded
+        console.warn('⚠️ No markers found, retrying...');
+        setTimeout(() => initializeImageGrids(dataArray), 100);
+      }
+    }
+
+    // Try multiple initialization methods
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function () {
         const scene = document.querySelector('a-scene');
         if (scene && scene.hasLoaded) {
           initializeImageGrids();
         } else {
-          if (scene) {
-            scene.addEventListener('loaded', initializeImageGrids);
-          }
+          scene.addEventListener('loaded', initializeImageGrids);
           // Fallback timeout
           setTimeout(initializeImageGrids, 1000);
         }
+      });
+    } else {
+      // DOM already loaded
+      const scene = document.querySelector('a-scene');
+      if (scene && scene.hasLoaded) {
+        initializeImageGrids();
+      } else {
+        if (scene) {
+          scene.addEventListener('loaded', initializeImageGrids);
+        }
+        // Fallback timeout
+        setTimeout(initializeImageGrids, 1000);
       }
-    </script>
+    }
+  </script>
 
-    <video
-      id="arsa-video"
-      src=""
-      loop
-      autoplay
-      muted
-      playsinline
-      webkit-playsinline
-      x5-playsinline
-      preload="auto"
-      style="display: none; aspect-ratio: 1/1"
-    ></video>
-    <div
-      id="messageModal"
-      style="
+  <video id="arsa-video" src="" loop autoplay muted playsinline webkit-playsinline x5-playsinline preload="auto"
+    style="display: none; aspect-ratio: 1/1"></video>
+  <div id="messageModal" style="
         display: none;
         position: fixed;
         top: 0;
@@ -445,10 +436,8 @@
         z-index: 30;
         justify-content: center;
         align-items: center;
-      "
-    >
-      <div
-        style="
+      ">
+    <div style="
           position: relative;
           background-color: white;
           color: #046511;
@@ -458,11 +447,8 @@
           max-height: 90svh;
           overflow-y: auto;
           text-align: left;
-        "
-      >
-        <button
-          id="closeModalButton"
-          style="
+        ">
+      <button id="closeModalButton" style="
             position: absolute;
             top: 10px;
             right: 10px;
@@ -475,45 +461,30 @@
             justify-content: center;
             align-items: center;
             cursor: pointer;
-          "
-        >
-          <svg
-            width="18"
-            height="18"
-            viewBox="0 0 12 12"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M11.25 1.8075L10.1925 0.75L6 4.9425L1.8075 0.75L0.75 1.8075L4.9425 6L0.75 10.1925L1.8075 11.25L6 7.0575L10.1925 11.25L11.25 10.1925L7.0575 6L11.25 1.8075Z"
-              fill="#046511"
-            />
-          </svg>
-        </button>
-        <p id="modalMessage"></p>
-        <div
-          style="
+          ">
+        <svg width="18" height="18" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M11.25 1.8075L10.1925 0.75L6 4.9425L1.8075 0.75L0.75 1.8075L4.9425 6L0.75 10.1925L1.8075 11.25L6 7.0575L10.1925 11.25L11.25 10.1925L7.0575 6L11.25 1.8075Z"
+            fill="#046511" />
+        </svg>
+      </button>
+      <p id="modalMessage"></p>
+      <div style="
             display: flex;
             gap: 16px;
             align-items: end;
             justify-content: space-between;
-          "
-        >
-          <!-- <img
+          ">
+        <!-- <img
             id="signatureImg"
             alt="Signature"
             style="height: 8svh; display: none"
           /> -->
-          <img
-            src="./assets/images/highfive.png"
-            alt="High Five"
-            style="height: 6svh"
-          />
-        </div>
+        <img src="./assets/images/highfive.png" alt="High Five" style="height: 6svh" />
       </div>
     </div>
-    <div
-      style="
+  </div>
+  <div style="
         position: fixed;
         bottom: 4.5svh;
         padding: 1svh;
@@ -522,7 +493,7 @@
         bottom: 3.5svh;
         width: 14svh;
         height: 6svh;
-        background-color: white;
+        background-color: #FF5627;
         border-radius: 4svh;
         display: flex;
         justify-content: center;
@@ -530,17 +501,11 @@
         cursor: pointer;
         z-index: 20;
         overflow: hidden;
-      "
-    >
-      <img
-        src="./moonmuffin_logo.png"
-        alt="Gallery"
-        style="width: 100%; height: 100%; object-fit: contain"
-      />
-    </div>
-    <div
-      id="recordButton"
-      style="
+      ">
+    <img src="./assets/images/slamatslimit-logo.png" alt="Gallery"
+      style="width: 100%; height: 90%; object-fit: contain" />
+  </div>
+  <div id="recordButton" style="
         z-index: -1;
         opacity: 0;
         position: fixed;
@@ -556,22 +521,16 @@
         align-items: center;
         cursor: pointer;
         z-index: 20;
-      "
-    >
-      <div
-        id="recordInner"
-        style="
+      ">
+    <div id="recordInner" style="
           width: 5.2svh;
           height: 5.2svh;
           background-color: #92ed00;
           border-radius: 50%;
           transition: all 0.3s ease;
-        "
-      ></div>
-    </div>
-    <div
-      id="galleryButton"
-      style="
+        "></div>
+  </div>
+  <div id="galleryButton" style="
         position: fixed;
         bottom: 4.5svh;
         left: calc(50% - 15svh);
@@ -587,28 +546,25 @@
         z-index: 20;
         border: none;
         padding: 0;
-      "
-    >
-      <svg style="width: 45%; height: 45%;" width="14" height="14" viewBox="0 0 14 14" fill="none"
-        xmlns="http://www.w3.org/2000/svg">
-        <path
-          d="M1.5 6H4.5C5.325 6 6 5.325 6 4.5V1.5C6 0.675 5.325 0 4.5 0H1.5C0.675 0 0 0.675 0 1.5V4.5C0 5.325 0.675 6 1.5 6Z"
-          fill="#F4F2E4" />
-        <path
-          d="M1.5 13.5H4.5C5.325 13.5 6 12.825 6 12V9C6 8.175 5.325 7.5 4.5 7.5H1.5C0.675 7.5 0 8.175 0 9V12C0 12.825 0.675 13.5 1.5 13.5Z"
-          fill="#F4F2E4" />
-        <path
-          d="M7.5 1.5V4.5C7.5 5.325 8.175 6 9 6H12C12.825 6 13.5 5.325 13.5 4.5V1.5C13.5 0.675 12.825 0 12 0H9C8.175 0 7.5 0.675 7.5 1.5Z"
-          fill="#F4F2E4" />
-        <path
-          d="M9 13.5H12C12.825 13.5 13.5 12.825 13.5 12V9C13.5 8.175 12.825 7.5 12 7.5H9C8.175 7.5 7.5 8.175 7.5 9V12C7.5 12.825 8.175 13.5 9 13.5Z"
-          fill="#F4F2E4" />
-      </svg>
-    </div>
+      ">
+    <svg style="width: 45%; height: 45%;" width="14" height="14" viewBox="0 0 14 14" fill="none"
+      xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M1.5 6H4.5C5.325 6 6 5.325 6 4.5V1.5C6 0.675 5.325 0 4.5 0H1.5C0.675 0 0 0.675 0 1.5V4.5C0 5.325 0.675 6 1.5 6Z"
+        fill="#F4F2E4" />
+      <path
+        d="M1.5 13.5H4.5C5.325 13.5 6 12.825 6 12V9C6 8.175 5.325 7.5 4.5 7.5H1.5C0.675 7.5 0 8.175 0 9V12C0 12.825 0.675 13.5 1.5 13.5Z"
+        fill="#F4F2E4" />
+      <path
+        d="M7.5 1.5V4.5C7.5 5.325 8.175 6 9 6H12C12.825 6 13.5 5.325 13.5 4.5V1.5C13.5 0.675 12.825 0 12 0H9C8.175 0 7.5 0.675 7.5 1.5Z"
+        fill="#F4F2E4" />
+      <path
+        d="M9 13.5H12C12.825 13.5 13.5 12.825 13.5 12V9C13.5 8.175 12.825 7.5 12 7.5H9C8.175 7.5 7.5 8.175 7.5 9V12C7.5 12.825 8.175 13.5 9 13.5Z"
+        fill="#F4F2E4" />
+    </svg>
+  </div>
 
-    <div
-      id="markerNotFoundOverlay"
-      style="
+  <div id="markerNotFoundOverlay" style="
         font-family: Inter;
         position: fixed;
         height: 100svh;
@@ -626,64 +582,52 @@
         text-align: center;
         z-index: 2;
         padding-bottom: 10svh;
-      "
-    >
-      <p>Arahkan kameramu ke<br />marker Moon Muffin:</p>
-      <div
-        style="
+      ">
+    <p>Arahkan kameramu ke<br />marker Moon Muffin:</p>
+    <div style="
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 16px;
-        "
-      >
-        <img
-          src="./assets/images/line-decoration-left.png"
-          style="width: 10svh; max-width: 15vw; height: auto"
-        />
-        <span
-          style="
+        ">
+      <img src="./assets/images/line-decoration-left.png" style="width: 10svh; max-width: 15vw; height: auto" />
+      <span style="
             position: relative;
             width: 24svh;
             height: 40svh;
             display: flex;
             justify-content: center;
-          "
-        >
-          <img
-            src="./pattern-sparkle-white.png"
-            style="
-              padding-top: 3svh;
+          ">
+        <img src="./assets/images/ribbon-marker-final.png" style="
+              padding-top: 6svh;
               width: 15svh;
               max-width: 40vw;
               height: 15svh;
-              transform: rotate(-5deg);
-              margin-left: 4svh;
-            "
-          /><img
-            src="./pattern-highfive-white.png"
-            style="
-              width: 18svh;
+              transform: rotate(7deg);
+              margin-left: 11svh;
+            " /><img src="./assets/images/confetti-marker-final.png" style="
+              width: 16svh;
               max-width: 30vw;
               height: auto;
               position: absolute;
-              top: 20svh;
-              left: 0;
+              top: 17svh;
+              left: 1svh;
+              transform: rotate(-8deg);
+            " /> <img src="./assets/images/smiley-marker-final.png" style="
+              width: 12svh;
+              max-width: 30vw;
+              height: auto;
+              position: absolute;
+              top: 28svh;
+              left: 12svh;
               transform: rotate(10deg);
-            "
-          /> </span
-        ><img
-          src="./assets/images/line-decoration-right.png"
-          style="width: 10svh; max-width: 15vw; height: auto"
-        />
-      </div>
+            " /> </span><img src="./assets/images/line-decoration-right.png"
+        style="width: 10svh; max-width: 15vw; height: auto" />
     </div>
+  </div>
 
-    <!-- Decorative Images Top Corners -->
-    <img
-      id="top-left-image"
-      src="./assets/face-1.png"
-      style="
+  <!-- Decorative Images Top Corners -->
+  <img id="top-left-image" src="./assets/face-1.png" style="
         position: fixed;
         top: 5svh;
         left: -50svh;
@@ -693,12 +637,8 @@
         pointer-events: none;
         transition: left 2s ease-in-out;
         transform: rotate(15deg);
-      "
-    />
-    <img
-      id="top-right-image"
-      src="./assets/face-1.png"
-      style="
+      " />
+  <img id="top-right-image" src="./assets/face-1.png" style="
         position: fixed;
         top: 5svh;
         right: -50svh;
@@ -708,642 +648,641 @@
         pointer-events: none;
         transition: right 2s ease-in-out;
         transform: rotate(-15deg);
-      "
-    />
-    <audio id="content-audio" style="display: none;"></audio>
+      " />
+  <audio id="content-audio" style="display: none;"></audio>
 
-    <!-- Letters List (Stories Style) -->
-    <div id="letters-list-bottom"
-      style="display: none; align-items: center; justify-content: center; position: fixed; bottom: 13.3svh; left: 50%; transform: translateX(-50%); z-index: 10; width: 95vw; height: 70px; padding: 0 15px; overflow-x: auto; overflow-y: visible; gap: 16px;">
-    </div>
+  <!-- Letters List (Stories Style) -->
+  <div id="letters-list-bottom"
+    style="display: none; align-items: center; justify-content: center; position: fixed; bottom: 13.3svh; left: 50%; transform: translateX(-50%); z-index: 10; width: 95vw; height: 70px; padding: 0 15px; overflow-x: auto; overflow-y: visible; gap: 16px;">
+  </div>
 
-    <!-- Background Music -->
-    <audio id="background-music" src="./assets/happy-birthday-orchestra.mp3" loop style="display: none;"></audio>
+  <!-- Background Music -->
+  <audio id="background-music" src="./assets/happy-birthday-orchestra.mp3" loop style="display: none;"></audio>
 
-    <!-- Letter Detail Modal -->
-    <div id="letters-detail"
-      style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 80; display: none;">
-      <div id="letters-detail-overlay"
-        style="width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); cursor: pointer;"></div>
-      <svg id="pin-svg" style="position: absolute; top: 43svh; left: 35svw; width: 8svh; height: 8svh; z-index: 100;"
-        width="47" height="64" viewBox="0 0 47 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path
-          d="M14.9882 30.5399C14.7575 30.798 14.4157 31.6758 13.811 32.4282C12.9256 33.5298 12.3032 34.3378 10.4444 36.6623C9.73858 37.545 8.61764 39.2652 7.07598 41.3014C6.04406 42.6644 5.22841 43.8583 4.5577 44.652C3.69027 45.6785 3.00772 46.9243 2.39982 47.978C1.98266 48.7011 1.54059 49.9758 1.45755 50.9851C1.39714 51.7194 2.3761 53.0561 3.07071 54.0032C3.58089 54.6988 4.31263 55.0905 5.0388 55.5007C5.72033 55.8858 6.5896 56.2402 7.46128 56.6079C8.09018 56.8731 9.36689 57.3075 10.8189 57.8307C13.3935 58.7583 14.2233 58.5021 15.045 58.4533C16.37 58.3746 17.2403 57.6981 18.4211 56.5079C18.6701 56.257 18.7457 56.1078 19.8318 54.7436C20.9179 53.3794 22.9977 50.791 24.1206 49.3647C26.0222 46.9496 27.2421 45.2976 28.1661 43.9595C28.6777 43.2186 29.2421 42.6572 29.9777 41.6183C31.8322 38.9993 32.8066 37.796 33.4229 36.8043C33.9325 35.9844 35.1348 34.1238 36.3971 31.8245C37.2155 30.3338 38.0476 28.2818 38.7255 26.5658C39.4023 24.8526 40.0234 23.5248 40.529 22.1472C40.8727 21.2111 41.3068 20.1462 41.6984 19.39C42.1792 18.4617 42.718 17.0863 43.1505 15.9815C43.4153 15.3053 43.8773 14.3756 44.312 13.2537C44.8712 11.8107 44.9395 10.6163 44.7699 10.2485C44.3814 9.4064 43.7203 8.94379 42.9568 8.28115C41.7375 7.22308 40.3804 6.75635 38.6826 6.3515C37.8641 6.15634 37.2155 7.08772 36.2078 8.4487C34.0471 11.3668 32.9506 13.755 32.4165 14.5481C30.5383 17.3378 29.9945 18.7695 28.4663 21.0541C27.1396 23.0374 24.9752 25.2734 23.7285 26.7667C23.198 27.4021 22.8443 27.9563 22.4497 28.5244C21.9775 29.2042 21.5388 29.8135 21.1554 30.4394C20.4575 31.5789 19.4896 33.0354 18.742 34.1251C17.8798 35.382 17.3123 36.5428 16.7805 37.4238C15.7038 39.2079 15.1499 39.7892 14.7802 40.3639C14.348 41.0356 13.8444 41.6464 13.2937 42.4957C12.8502 43.1796 12.708 43.8736 12.6346 44.446C12.5509 45.0984 14.6356 45.4709 16.2793 45.4024C17.3666 45.3571 17.8931 44.4083 18.6299 43.772C19.9264 42.6523 20.2726 41.7628 21.0296 41.048C22.1019 40.0354 23.8899 37.0903 25.0691 35.6169C26.7858 33.4719 27.227 32.6916 27.7377 31.9947C28.746 30.6187 29.0309 29.7821 29.3004 29.1805C29.654 28.391 30.1994 27.8333 30.5873 27.2901C31.0939 26.5808 31.7097 25.8145 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.8288 23.8508 32.9185 23.7149 33.1617 23.6153"
-          stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round" />
-        <path
-          d="M42.9478 16.6166C43.2126 15.9405 43.6746 15.0108 44.1093 13.8888C44.6684 12.4458 44.7368 11.2514 44.5672 10.8836C44.1787 10.0415 43.5176 9.5789 42.7541 8.91627C41.5348 7.8582 40.1777 7.39146 38.4799 6.98662C37.6614 6.79145 37.0127 7.72283 36.005 9.08381C33.8444 12.002 32.7479 14.3901 32.2138 15.1833C30.3355 17.9729 29.7918 19.4046 28.2636 21.6892C26.9369 23.6726 24.7725 25.9085 23.5258 27.4018C22.9953 28.0372 22.6416 28.5915 22.247 29.1595C21.7748 29.8393 21.3361 30.4486 20.9527 31.0746C20.2548 32.214 19.2869 33.6705 18.5393 34.7602C17.677 36.0171 17.1095 37.1779 16.5778 38.0589C15.501 39.843 14.9471 40.4243 14.5775 40.999C14.1453 41.6708 13.6417 42.2815 13.091 43.1308C12.6475 43.8147 12.5053 44.5087 12.4319 45.0812C12.3482 45.7335 14.4329 46.1061 16.0766 46.0376C17.1639 45.9922 17.6904 45.0434 18.4272 44.4071C19.7237 43.2875 20.0698 42.3979 20.8269 41.6831C21.8992 40.6705 23.6872 37.7254 24.8664 36.252C26.5831 34.107 27.0243 33.3267 27.535 32.6298C28.5433 31.2539 28.8282 30.4172 29.0977 29.8157C29.4513 29.0261 29.9967 28.4684 30.3845 27.9252C30.8912 27.2159 31.507 26.4496 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.6261 24.4859 32.7158 24.35 32.959 24.2504"
-          stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round" />
-      </svg>
-      
-      <div id="video-component" class="component"
-        style="cursor: pointer; width: 27svh; height: 45svh; background-color: white; position: absolute; top: 10svh; left: 50%; transform: translateX(-50%); z-index: 81; display: flex; align-items: center; justify-content: center;">
-        <video id="rury-video" src="" style="width: 90%; height: 80%; object-fit: cover; margin-top: 5%; display: none;"
-          loop autoplay playsinline webkit-playsinline x5-playsinline></video>
-        <audio id="rury-audio" src="" loop style="display: none;"></audio>
-        <div id="audio-icon"
-          style="display: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.48 8.71 14 7.97V16.02C15.48 15.29 16.5 13.77 16.5 12ZM14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.85 14 18.71V20.77C18.01 19.86 21 16.28 21 12C21 7.72 18.01 4.14 14 3.23Z"
-              fill="#FF5627" />
-          </svg>
-        </div>
-      </div>
-      <div id="letter-component" class="component"
-        style="cursor: pointer; transform: rotate(1deg); background-color: #F4F2E4; width: 75svw; height: 40svh; padding: 3svh; overflow-y: auto; position: absolute; bottom: 5svh; left: 0; right: 0; margin: 0 auto; z-index: 83; font-family: 'Playpen Sans', cursive;">
-        <div id="letter-component-text"
-          style="font-size: 2svh; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;"></div>
-        <div id="letter-component-footer"
-          style="position: absolute; bottom: 2svh; right: 2svh; display: flex; flex-direction: column; align-items: flex-end; gap: 1svh;">
-          <img id="photo-component-img" src="" alt="photo" class="animate-rotate-slow"
-            style="width: auto; height: 13svh; object-fit: cover; display: none;">
-          <div id="letter-component-sender"
-            style="font-size: 2.4svh; font-weight: bold; font-family: 'Playpen Sans', cursive; display: none;"></div>
-        </div>
+  <!-- Letter Detail Modal -->
+  <div id="letters-detail"
+    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 80; display: none;">
+    <div id="letters-detail-overlay"
+      style="width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); cursor: pointer;"></div>
+    <svg id="pin-svg" style="position: absolute; top: 43svh; left: 35svw; width: 8svh; height: 8svh; z-index: 100;"
+      width="47" height="64" viewBox="0 0 47 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path
+        d="M14.9882 30.5399C14.7575 30.798 14.4157 31.6758 13.811 32.4282C12.9256 33.5298 12.3032 34.3378 10.4444 36.6623C9.73858 37.545 8.61764 39.2652 7.07598 41.3014C6.04406 42.6644 5.22841 43.8583 4.5577 44.652C3.69027 45.6785 3.00772 46.9243 2.39982 47.978C1.98266 48.7011 1.54059 49.9758 1.45755 50.9851C1.39714 51.7194 2.3761 53.0561 3.07071 54.0032C3.58089 54.6988 4.31263 55.0905 5.0388 55.5007C5.72033 55.8858 6.5896 56.2402 7.46128 56.6079C8.09018 56.8731 9.36689 57.3075 10.8189 57.8307C13.3935 58.7583 14.2233 58.5021 15.045 58.4533C16.37 58.3746 17.2403 57.6981 18.4211 56.5079C18.6701 56.257 18.7457 56.1078 19.8318 54.7436C20.9179 53.3794 22.9977 50.791 24.1206 49.3647C26.0222 46.9496 27.2421 45.2976 28.1661 43.9595C28.6777 43.2186 29.2421 42.6572 29.9777 41.6183C31.8322 38.9993 32.8066 37.796 33.4229 36.8043C33.9325 35.9844 35.1348 34.1238 36.3971 31.8245C37.2155 30.3338 38.0476 28.2818 38.7255 26.5658C39.4023 24.8526 40.0234 23.5248 40.529 22.1472C40.8727 21.2111 41.3068 20.1462 41.6984 19.39C42.1792 18.4617 42.718 17.0863 43.1505 15.9815C43.4153 15.3053 43.8773 14.3756 44.312 13.2537C44.8712 11.8107 44.9395 10.6163 44.7699 10.2485C44.3814 9.4064 43.7203 8.94379 42.9568 8.28115C41.7375 7.22308 40.3804 6.75635 38.6826 6.3515C37.8641 6.15634 37.2155 7.08772 36.2078 8.4487C34.0471 11.3668 32.9506 13.755 32.4165 14.5481C30.5383 17.3378 29.9945 18.7695 28.4663 21.0541C27.1396 23.0374 24.9752 25.2734 23.7285 26.7667C23.198 27.4021 22.8443 27.9563 22.4497 28.5244C21.9775 29.2042 21.5388 29.8135 21.1554 30.4394C20.4575 31.5789 19.4896 33.0354 18.742 34.1251C17.8798 35.382 17.3123 36.5428 16.7805 37.4238C15.7038 39.2079 15.1499 39.7892 14.7802 40.3639C14.348 41.0356 13.8444 41.6464 13.2937 42.4957C12.8502 43.1796 12.708 43.8736 12.6346 44.446C12.5509 45.0984 14.6356 45.4709 16.2793 45.4024C17.3666 45.3571 17.8931 44.4083 18.6299 43.772C19.9264 42.6523 20.2726 41.7628 21.0296 41.048C22.1019 40.0354 23.8899 37.0903 25.0691 35.6169C26.7858 33.4719 27.227 32.6916 27.7377 31.9947C28.746 30.6187 29.0309 29.7821 29.3004 29.1805C29.654 28.391 30.1994 27.8333 30.5873 27.2901C31.0939 26.5808 31.7097 25.8145 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.8288 23.8508 32.9185 23.7149 33.1617 23.6153"
+        stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round" />
+      <path
+        d="M42.9478 16.6166C43.2126 15.9405 43.6746 15.0108 44.1093 13.8888C44.6684 12.4458 44.7368 11.2514 44.5672 10.8836C44.1787 10.0415 43.5176 9.5789 42.7541 8.91627C41.5348 7.8582 40.1777 7.39146 38.4799 6.98662C37.6614 6.79145 37.0127 7.72283 36.005 9.08381C33.8444 12.002 32.7479 14.3901 32.2138 15.1833C30.3355 17.9729 29.7918 19.4046 28.2636 21.6892C26.9369 23.6726 24.7725 25.9085 23.5258 27.4018C22.9953 28.0372 22.6416 28.5915 22.247 29.1595C21.7748 29.8393 21.3361 30.4486 20.9527 31.0746C20.2548 32.214 19.2869 33.6705 18.5393 34.7602C17.677 36.0171 17.1095 37.1779 16.5778 38.0589C15.501 39.843 14.9471 40.4243 14.5775 40.999C14.1453 41.6708 13.6417 42.2815 13.091 43.1308C12.6475 43.8147 12.5053 44.5087 12.4319 45.0812C12.3482 45.7335 14.4329 46.1061 16.0766 46.0376C17.1639 45.9922 17.6904 45.0434 18.4272 44.4071C19.7237 43.2875 20.0698 42.3979 20.8269 41.6831C21.8992 40.6705 23.6872 37.7254 24.8664 36.252C26.5831 34.107 27.0243 33.3267 27.535 32.6298C28.5433 31.2539 28.8282 30.4172 29.0977 29.8157C29.4513 29.0261 29.9967 28.4684 30.3845 27.9252C30.8912 27.2159 31.507 26.4496 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.6261 24.4859 32.7158 24.35 32.959 24.2504"
+        stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round" />
+    </svg>
+
+    <div id="video-component" class="component"
+      style="cursor: pointer; width: 27svh; height: 45svh; background-color: white; position: absolute; top: 10svh; left: 50%; transform: translateX(-50%); z-index: 81; display: flex; align-items: center; justify-content: center;">
+      <video id="rury-video" src="" style="width: 90%; height: 80%; object-fit: cover; margin-top: 5%; display: none;"
+        loop autoplay playsinline webkit-playsinline x5-playsinline></video>
+      <audio id="rury-audio" src="" loop style="display: none;"></audio>
+      <div id="audio-icon"
+        style="display: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path
+            d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.48 8.71 14 7.97V16.02C15.48 15.29 16.5 13.77 16.5 12ZM14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.85 14 18.71V20.77C18.01 19.86 21 16.28 21 12C21 7.72 18.01 4.14 14 3.23Z"
+            fill="#FF5627" />
+        </svg>
       </div>
     </div>
+    <div id="letter-component" class="component"
+      style="cursor: pointer; transform: rotate(1deg); background-color: #F4F2E4; width: 75svw; height: 40svh; padding: 3svh; overflow-y: auto; position: absolute; bottom: 5svh; left: 0; right: 0; margin: 0 auto; z-index: 83; font-family: 'Playpen Sans', cursive;">
+      <div id="letter-component-text"
+        style="font-size: 2svh; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;"></div>
+      <div id="letter-component-footer"
+        style="position: absolute; bottom: 2svh; right: 2svh; display: flex; flex-direction: column; align-items: flex-end; gap: 1svh;">
+        <img id="photo-component-img" src="" alt="photo" class="animate-rotate-slow"
+          style="width: auto; height: 13svh; object-fit: cover; display: none;">
+        <div id="letter-component-sender"
+          style="font-size: 2.4svh; font-weight: bold; font-family: 'Playpen Sans', cursive; display: none;"></div>
+      </div>
+    </div>
+  </div>
 
-    <script>
-      let videoElement = document.getElementById("arsa-video");
-      let pauseTimeout;
-      let markerDetectedOnce = false;
-      let currentDeviceIndex = 0;
-      let videoDevices = [];
-      const muteButton = document.getElementById("muteButton");
-      let currentStream;
+  <script>
+    let videoElement = document.getElementById("arsa-video");
+    let pauseTimeout;
+    let markerDetectedOnce = false;
+    let currentDeviceIndex = 0;
+    let videoDevices = [];
+    const muteButton = document.getElementById("muteButton");
+    let currentStream;
 
-      // Function to update video height based on aspect ratio
-      function updateVideoHeight() {
-        const videoPlane = document.querySelector("a-video");
-        if (videoPlane && videoElement.videoWidth && videoElement.videoHeight) {
-          const aspectRatio =
-            videoElement.videoHeight / videoElement.videoWidth;
-          const width = 1.8; // Keep width fixed
-          const height = width * aspectRatio;
-          videoPlane.setAttribute("height", height);
+    // Function to update video height based on aspect ratio
+    function updateVideoHeight() {
+      const videoPlane = document.querySelector("a-video");
+      if (videoPlane && videoElement.videoWidth && videoElement.videoHeight) {
+        const aspectRatio =
+          videoElement.videoHeight / videoElement.videoWidth;
+        const width = 1.8; // Keep width fixed
+        const height = width * aspectRatio;
+        videoPlane.setAttribute("height", height);
+      }
+    }
+
+    // Function to update video width based on aspect ratio for sparkle marker
+    function updateVideoWidth() {
+      const videoPlanes = document.querySelectorAll("a-video");
+      if (videoElement.videoWidth && videoElement.videoHeight) {
+        const aspectRatio =
+          videoElement.videoHeight / videoElement.videoWidth;
+        const height = 5.3; // Keep height fixed for sparkle marker
+        const width = height / aspectRatio;
+
+        videoPlanes.forEach((plane) => {
+          if (plane.getAttribute("width") === "6.3") {
+            // Only update sparkle marker video
+            plane.setAttribute("width", width);
+          }
+        });
+      }
+    }
+
+    // Function to get URL parameters
+    function getUrlParameter(name) {
+      name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+      var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+      var results = regex.exec(location.search);
+      return results === null
+        ? ""
+        : decodeURIComponent(results[1].replace(/\+/g, " ")).toUpperCase();
+    }
+
+    // Cache for preloaded assets
+    const assetCache = {
+      images: new Map(),
+      audio: new Map()
+    };
+
+    // Function to preload image
+    function preloadImage(src) {
+      return new Promise((resolve, reject) => {
+        if (assetCache.images.has(src)) {
+          resolve(assetCache.images.get(src));
+          return;
+        }
+
+        const img = new Image();
+        img.onload = () => {
+          assetCache.images.set(src, img);
+          resolve(img);
+        };
+        img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+        img.src = src;
+      });
+    }
+
+    // Function to preload audio/video
+    function preloadAudio(src) {
+      return new Promise((resolve, reject) => {
+        if (assetCache.audio.has(src)) {
+          resolve(assetCache.audio.get(src));
+          return;
+        }
+
+        const audio = new Audio();
+        audio.preload = 'auto';
+        audio.oncanplaythrough = () => {
+          assetCache.audio.set(src, audio);
+          resolve(audio);
+        };
+        audio.onerror = () => reject(new Error(`Failed to load audio: ${src}`));
+        audio.src = src;
+        audio.load();
+      });
+    }
+
+    // Preload all content assets on page load
+    function preloadContentAssets(contentData) {
+      const validItems = contentData.filter(item =>
+        item.photo_url && item.photo_url.trim() !== ''
+      );
+
+      if (validItems.length === 0) {
+        console.log('No valid items to preload');
+        return;
+      }
+
+      console.log(`📥 Preloading ${validItems.length} assets...`);
+
+      // Preload all images and audio
+      const preloadPromises = [];
+
+      for (let i = 0; i < validItems.length; i++) {
+        const item = validItems[i];
+
+        // Preload image
+        if (item.photo_url && item.photo_url.trim() !== '') {
+          preloadPromises.push(
+            preloadImage(item.photo_url)
+              .then(() => console.log(`✅ Image ${i + 1}/${validItems.length} preloaded`))
+              .catch((error) => console.warn(`⚠️ Image ${i + 1} failed to preload:`, error))
+          );
+        }
+
+        // Preload audio (prefer audio_url, fallback to video_url)
+        const audioUrl = item.audio_url || item.video_url || '';
+        if (audioUrl && audioUrl.trim() !== '') {
+          preloadPromises.push(
+            preloadAudio(audioUrl)
+              .then(() => console.log(`✅ Audio ${i + 1}/${validItems.length} preloaded`))
+              .catch((error) => console.warn(`⚠️ Audio ${i + 1} failed to preload:`, error))
+          );
         }
       }
 
-      // Function to update video width based on aspect ratio for sparkle marker
-      function updateVideoWidth() {
-        const videoPlanes = document.querySelectorAll("a-video");
-        if (videoElement.videoWidth && videoElement.videoHeight) {
-          const aspectRatio =
-            videoElement.videoHeight / videoElement.videoWidth;
-          const height = 5.3; // Keep height fixed for sparkle marker
-          const width = height / aspectRatio;
+      // Wait for all assets to load (don't block, just log progress)
+      Promise.allSettled(preloadPromises).then(() => {
+        console.log('✅ All assets preloaded and cached');
+      });
+    }
 
-          videoPlanes.forEach((plane) => {
-            if (plane.getAttribute("width") === "6.3") {
-              // Only update sparkle marker video
-              plane.setAttribute("width", width);
+    // Global variable to control sequential display
+    let sequentialDisplayRunning = false;
+    let sequentialDisplayTimeout = null;
+
+    // Function to start sequential image display with audio
+    function startSequentialImageDisplay(contentData) {
+      // Filter items that have photo_url
+      const validItems = contentData.filter(item =>
+        item.photo_url && item.photo_url.trim() !== ''
+      );
+
+      if (validItems.length === 0) {
+        console.log('No valid items with photo_url for sequential display');
+        return;
+      }
+
+      const leftImage = document.getElementById('top-left-image');
+      const rightImage = document.getElementById('top-right-image');
+      const contentAudio = document.getElementById('content-audio');
+
+      if (!leftImage || !rightImage || !contentAudio) {
+        console.error('Required elements not found for sequential display');
+        return;
+      }
+
+      // Initialize both images to be outside
+      leftImage.style.left = '-50svh';
+      rightImage.style.right = '-50svh';
+
+      let currentIndex = 0;
+      let isRightSide = true; // Start with right side first
+      sequentialDisplayRunning = true;
+
+      async function showNextImage() {
+        if (!sequentialDisplayRunning) return;
+
+        if (currentIndex >= validItems.length) {
+          console.log('All images displayed, looping after 15s...');
+          // Loop after 15 seconds
+          sequentialDisplayTimeout = setTimeout(() => {
+            if (sequentialDisplayRunning) {
+              currentIndex = 0;
+              isRightSide = true;
+              showNextImage();
             }
-          });
-        }
-      }
-
-      // Function to get URL parameters
-      function getUrlParameter(name) {
-        name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-        var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
-        var results = regex.exec(location.search);
-        return results === null
-          ? ""
-          : decodeURIComponent(results[1].replace(/\+/g, " ")).toUpperCase();
-      }
-
-      // Cache for preloaded assets
-      const assetCache = {
-        images: new Map(),
-        audio: new Map()
-      };
-
-      // Function to preload image
-      function preloadImage(src) {
-        return new Promise((resolve, reject) => {
-          if (assetCache.images.has(src)) {
-            resolve(assetCache.images.get(src));
-            return;
-          }
-
-          const img = new Image();
-          img.onload = () => {
-            assetCache.images.set(src, img);
-            resolve(img);
-          };
-          img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
-          img.src = src;
-        });
-      }
-
-      // Function to preload audio/video
-      function preloadAudio(src) {
-        return new Promise((resolve, reject) => {
-          if (assetCache.audio.has(src)) {
-            resolve(assetCache.audio.get(src));
-            return;
-          }
-
-          const audio = new Audio();
-          audio.preload = 'auto';
-          audio.oncanplaythrough = () => {
-            assetCache.audio.set(src, audio);
-            resolve(audio);
-          };
-          audio.onerror = () => reject(new Error(`Failed to load audio: ${src}`));
-          audio.src = src;
-          audio.load();
-        });
-      }
-
-      // Preload all content assets on page load
-      function preloadContentAssets(contentData) {
-        const validItems = contentData.filter(item => 
-          item.photo_url && item.photo_url.trim() !== ''
-        );
-
-        if (validItems.length === 0) {
-          console.log('No valid items to preload');
+          }, 15000);
           return;
         }
 
-        console.log(`📥 Preloading ${validItems.length} assets...`);
+        const item = validItems[currentIndex];
+        const currentImage = isRightSide ? rightImage : leftImage;
 
-        // Preload all images and audio
-        const preloadPromises = [];
-        
-        for (let i = 0; i < validItems.length; i++) {
-          const item = validItems[i];
-          
-          // Preload image
-          if (item.photo_url && item.photo_url.trim() !== '') {
-            preloadPromises.push(
-              preloadImage(item.photo_url)
-                .then(() => console.log(`✅ Image ${i + 1}/${validItems.length} preloaded`))
-                .catch((error) => console.warn(`⚠️ Image ${i + 1} failed to preload:`, error))
-            );
-          }
+        // Get audio URL (prefer audio_url, fallback to video_url)
+        const audioUrl = item.audio_url || item.video_url || '';
 
-          // Preload audio (prefer audio_url, fallback to video_url)
-          const audioUrl = item.audio_url || item.video_url || '';
-          if (audioUrl && audioUrl.trim() !== '') {
-            preloadPromises.push(
-              preloadAudio(audioUrl)
-                .then(() => console.log(`✅ Audio ${i + 1}/${validItems.length} preloaded`))
-                .catch((error) => console.warn(`⚠️ Audio ${i + 1} failed to preload:`, error))
-            );
-          }
+        // Preload image and audio BEFORE showing anything
+        try {
+          await preloadImage(item.photo_url);
+          console.log(`✅ Image ${currentIndex + 1} preloaded`);
+        } catch (error) {
+          console.warn(`⚠️ Image ${currentIndex + 1} preload failed:`, error);
         }
 
-        // Wait for all assets to load (don't block, just log progress)
-        Promise.allSettled(preloadPromises).then(() => {
-          console.log('✅ All assets preloaded and cached');
+        // Set image source but keep it hidden
+        currentImage.src = item.photo_url;
+
+        // Wait for image to load
+        await new Promise((resolve) => {
+          if (currentImage.complete) {
+            resolve();
+          } else {
+            currentImage.onload = resolve;
+            currentImage.onerror = resolve; // Continue even if image fails
+          }
         });
-      }
 
-      // Global variable to control sequential display
-      let sequentialDisplayRunning = false;
-      let sequentialDisplayTimeout = null;
-
-      // Function to start sequential image display with audio
-      function startSequentialImageDisplay(contentData) {
-        // Filter items that have photo_url
-        const validItems = contentData.filter(item => 
-          item.photo_url && item.photo_url.trim() !== ''
-        );
-
-        if (validItems.length === 0) {
-          console.log('No valid items with photo_url for sequential display');
-          return;
-        }
-
-        const leftImage = document.getElementById('top-left-image');
-        const rightImage = document.getElementById('top-right-image');
-        const contentAudio = document.getElementById('content-audio');
-
-        if (!leftImage || !rightImage || !contentAudio) {
-          console.error('Required elements not found for sequential display');
-          return;
-        }
-
-        // Initialize both images to be outside
-        leftImage.style.left = '-50svh';
-        rightImage.style.right = '-50svh';
-
-        let currentIndex = 0;
-        let isRightSide = true; // Start with right side first
-        sequentialDisplayRunning = true;
-
-        async function showNextImage() {
-          if (!sequentialDisplayRunning) return;
-
-          if (currentIndex >= validItems.length) {
-            console.log('All images displayed, looping after 15s...');
-            // Loop after 15 seconds
-            sequentialDisplayTimeout = setTimeout(() => {
-              if (sequentialDisplayRunning) {
-                currentIndex = 0;
-                isRightSide = true;
-                showNextImage();
-              }
-            }, 15000);
-            return;
-          }
-
-          const item = validItems[currentIndex];
-          const currentImage = isRightSide ? rightImage : leftImage;
-
-          // Get audio URL (prefer audio_url, fallback to video_url)
-          const audioUrl = item.audio_url || item.video_url || '';
-
-          // Preload image and audio BEFORE showing anything
+        if (audioUrl && audioUrl.trim() !== '') {
+          // Preload audio before showing image
           try {
-            await preloadImage(item.photo_url);
-            console.log(`✅ Image ${currentIndex + 1} preloaded`);
+            await preloadAudio(audioUrl);
+            console.log(`✅ Audio ${currentIndex + 1} preloaded`);
           } catch (error) {
-            console.warn(`⚠️ Image ${currentIndex + 1} preload failed:`, error);
+            console.warn(`⚠️ Audio ${currentIndex + 1} preload failed:`, error);
           }
 
-          // Set image source but keep it hidden
-          currentImage.src = item.photo_url;
+          // Load audio and wait for it to be ready
+          contentAudio.src = audioUrl;
+          contentAudio.muted = false;
+          contentAudio.volume = 1.0;
+          contentAudio.load();
 
-          // Wait for image to load
+          // Wait for audio to be ready before showing image
           await new Promise((resolve) => {
-            if (currentImage.complete) {
+            if (contentAudio.readyState >= 3) { // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA
               resolve();
             } else {
-              currentImage.onload = resolve;
-              currentImage.onerror = resolve; // Continue even if image fails
-            }
-          });
-
-          if (audioUrl && audioUrl.trim() !== '') {
-            // Preload audio before showing image
-            try {
-              await preloadAudio(audioUrl);
-              console.log(`✅ Audio ${currentIndex + 1} preloaded`);
-            } catch (error) {
-              console.warn(`⚠️ Audio ${currentIndex + 1} preload failed:`, error);
-            }
-
-            // Load audio and wait for it to be ready
-            contentAudio.src = audioUrl;
-            contentAudio.muted = false;
-            contentAudio.volume = 1.0;
-            contentAudio.load();
-
-            // Wait for audio to be ready before showing image
-            await new Promise((resolve) => {
-              if (contentAudio.readyState >= 3) { // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA
+              const onCanPlay = () => {
+                contentAudio.removeEventListener('canplay', onCanPlay);
+                contentAudio.removeEventListener('canplaythrough', onCanPlayThrough);
                 resolve();
-              } else {
-                const onCanPlay = () => {
-                  contentAudio.removeEventListener('canplay', onCanPlay);
-                  contentAudio.removeEventListener('canplaythrough', onCanPlayThrough);
-                  resolve();
-                };
-                const onCanPlayThrough = () => {
-                  contentAudio.removeEventListener('canplay', onCanPlay);
-                  contentAudio.removeEventListener('canplaythrough', onCanPlayThrough);
-                  resolve();
-                };
-                contentAudio.addEventListener('canplay', onCanPlay);
-                contentAudio.addEventListener('canplaythrough', onCanPlayThrough);
-                
-                // Timeout after 5 seconds to prevent infinite waiting
-                setTimeout(() => {
-                  contentAudio.removeEventListener('canplay', onCanPlay);
-                  contentAudio.removeEventListener('canplaythrough', onCanPlayThrough);
-                  resolve();
-                }, 5000);
-              }
-            });
+              };
+              const onCanPlayThrough = () => {
+                contentAudio.removeEventListener('canplay', onCanPlay);
+                contentAudio.removeEventListener('canplaythrough', onCanPlayThrough);
+                resolve();
+              };
+              contentAudio.addEventListener('canplay', onCanPlay);
+              contentAudio.addEventListener('canplaythrough', onCanPlayThrough);
 
-            // Now show image and play audio together
+              // Timeout after 5 seconds to prevent infinite waiting
+              setTimeout(() => {
+                contentAudio.removeEventListener('canplay', onCanPlay);
+                contentAudio.removeEventListener('canplaythrough', onCanPlayThrough);
+                resolve();
+              }, 5000);
+            }
+          });
+
+          // Now show image and play audio together
+          if (isRightSide) {
+            rightImage.style.right = '-5svh';
+          } else {
+            leftImage.style.left = '-5svh';
+          }
+
+          console.log(`Showing image ${currentIndex + 1}/${validItems.length} on ${isRightSide ? 'right' : 'left'} side with audio`);
+
+          const playAudio = () => {
+            contentAudio.play().then(() => {
+              console.log('Audio playing for item', currentIndex + 1);
+
+              // When audio ends, hide current image and show next
+              const onEnded = () => {
+                contentAudio.removeEventListener('ended', onEnded);
+
+                // Hide current image
+                if (isRightSide) {
+                  rightImage.style.right = '-50svh';
+                } else {
+                  leftImage.style.left = '-50svh';
+                }
+
+                // Move to next item after 3s gap
+                sequentialDisplayTimeout = setTimeout(() => {
+                  if (sequentialDisplayRunning) {
+                    currentIndex++;
+                    isRightSide = !isRightSide; // Alternate sides
+
+                    // Show next image
+                    showNextImage();
+                  }
+                }, 3000); // 3 second gap between contents
+              };
+
+              contentAudio.addEventListener('ended', onEnded, { once: true });
+            }).catch((error) => {
+              console.error('Error playing audio:', error);
+              // If audio fails, still proceed to next image after 3 seconds
+              setTimeout(() => {
+                if (isRightSide) {
+                  rightImage.style.right = '-50svh';
+                } else {
+                  leftImage.style.left = '-50svh';
+                }
+
+                sequentialDisplayTimeout = setTimeout(() => {
+                  if (sequentialDisplayRunning) {
+                    currentIndex++;
+                    isRightSide = !isRightSide;
+                    showNextImage();
+                  }
+                }, 3000); // 3 second gap
+              }, 3000);
+            });
+          };
+
+          // Play audio immediately (already loaded and ready)
+          playAudio();
+        } else {
+          // No audio, just show image for 3 seconds then move to next
+          console.log('No audio for item', currentIndex + 1);
+          setTimeout(() => {
+            // Hide current image
             if (isRightSide) {
-              rightImage.style.right = '-5svh';
+              rightImage.style.right = '-50svh';
             } else {
-              leftImage.style.left = '-5svh';
+              leftImage.style.left = '-50svh';
             }
 
-            console.log(`Showing image ${currentIndex + 1}/${validItems.length} on ${isRightSide ? 'right' : 'left'} side with audio`);
+            // Move to next item after 3s gap
+            sequentialDisplayTimeout = setTimeout(() => {
+              if (sequentialDisplayRunning) {
+                currentIndex++;
+                isRightSide = !isRightSide; // Alternate sides
 
-            const playAudio = () => {
-              contentAudio.play().then(() => {
-                console.log('Audio playing for item', currentIndex + 1);
-                
-                // When audio ends, hide current image and show next
-                const onEnded = () => {
-                  contentAudio.removeEventListener('ended', onEnded);
-                  
-                  // Hide current image
-                  if (isRightSide) {
-                    rightImage.style.right = '-50svh';
-                  } else {
-                    leftImage.style.left = '-50svh';
-                  }
-
-                  // Move to next item after 3s gap
-                  sequentialDisplayTimeout = setTimeout(() => {
-                    if (sequentialDisplayRunning) {
-                      currentIndex++;
-                      isRightSide = !isRightSide; // Alternate sides
-
-                      // Show next image
-                      showNextImage();
-                    }
-                  }, 3000); // 3 second gap between contents
-                };
-
-                contentAudio.addEventListener('ended', onEnded, { once: true });
-              }).catch((error) => {
-                console.error('Error playing audio:', error);
-                // If audio fails, still proceed to next image after 3 seconds
-                setTimeout(() => {
-                  if (isRightSide) {
-                    rightImage.style.right = '-50svh';
-                  } else {
-                    leftImage.style.left = '-50svh';
-                  }
-                  
-                  sequentialDisplayTimeout = setTimeout(() => {
-                    if (sequentialDisplayRunning) {
-                      currentIndex++;
-                      isRightSide = !isRightSide;
-                      showNextImage();
-                    }
-                  }, 3000); // 3 second gap
-                }, 3000);
-              });
-            };
-
-            // Play audio immediately (already loaded and ready)
-            playAudio();
-          } else {
-            // No audio, just show image for 3 seconds then move to next
-            console.log('No audio for item', currentIndex + 1);
-            setTimeout(() => {
-              // Hide current image
-              if (isRightSide) {
-                rightImage.style.right = '-50svh';
-              } else {
-                leftImage.style.left = '-50svh';
+                // Show next image
+                showNextImage();
               }
-
-              // Move to next item after 3s gap
-              sequentialDisplayTimeout = setTimeout(() => {
-                if (sequentialDisplayRunning) {
-                  currentIndex++;
-                  isRightSide = !isRightSide; // Alternate sides
-
-                  // Show next image
-                  showNextImage();
-                }
-              }, 3000); // 3 second gap between contents
-            }, 3000);
-          }
+            }, 3000); // 3 second gap between contents
+          }, 3000);
         }
-
-        // Start the sequence
-        showNextImage();
       }
 
-      // Function to render letters in horizontal story list (circular buttons with letter SVGs)
-      async function renderLettersBottomLeft(lettersData) {
-        console.log('renderLettersBottomLeft called with data:', lettersData);
-        const lettersListBottom = document.getElementById('letters-list-bottom');
-        if (!lettersListBottom) {
-          console.error('letters-list-bottom element not found');
-          return;
-        }
+      // Start the sequence
+      showNextImage();
+    }
 
-        // Setup scrollbar visibility on scroll (only once)
-        if (!lettersListBottom.dataset.scrollbarSetup) {
-          let scrollTimeout;
-          lettersListBottom.addEventListener('scroll', () => {
-            lettersListBottom.classList.add('scrolling');
-            clearTimeout(scrollTimeout);
-            scrollTimeout = setTimeout(() => {
-              lettersListBottom.classList.remove('scrolling');
-            }, 1000); // Hide scrollbar 1 second after scrolling stops
-          });
-          lettersListBottom.dataset.scrollbarSetup = 'true';
-        }
-
-        // Clear existing letters
-        lettersListBottom.innerHTML = '';
-
-        if (!lettersData || lettersData.length === 0) {
-          console.log('No letters data to render');
-          return;
-        }
-
-        console.log('Rendering', lettersData.length, 'letters');
-
-        // Import createSVGComponent dynamically
-        const { createSVGComponent } = await import('./svg-component.js');
-
-        // Color palette for sequential assignment
-        const colorPalette = [
-          '90FF77',
-          'FF5627',
-          '008177',
-          'FFC61C',
-          'FF443D',
-          '8142FF',
-          '28B7FF',
-          'FF7ADC'
-        ];
-
-        lettersData.forEach((letter, i) => {
-          // Create unique ID for filter IDs
-          const uniqueId = `letter_story_${i}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-          // Get sequential color from palette
-          const colorIndex = i % colorPalette.length;
-          const selectedColor = colorPalette[colorIndex];
-
-          // Create SVG with sequential color
-          const svg = createSVGComponent(selectedColor, uniqueId);
-
-          // Create circular story button (like in provided HTML) - bigger size
-          const storyButton = document.createElement('div');
-          storyButton.className = 'story-button';
-          storyButton.style.height = 'auto';
-          storyButton.style.minWidth = '80px';
-          storyButton.style.width = '80px';
-          storyButton.style.overflow = 'visible';
-          storyButton.style.position = 'relative';
-          storyButton.style.cursor = 'pointer';
-          storyButton.style.transition = 'transform 0.3s ease';
-
-          // Store letter data
-          storyButton.dataset.letterData = JSON.stringify({
-            video_url: letter.video_url || '',
-            audio_url: letter.audio_url || '',
-            message: letter.message || '',
-            name: letter.name || 'Anonymous',
-            photo_url: letter.photo_url || ''
-          });
-
-          // Make SVG fit in circular container - bigger
-          svg.style.width = '100%';
-          svg.style.height = '100%';
-          svg.style.display = 'block';
-          svg.style.objectFit = 'cover';
-
-          // Create wrapper for SVG to contain it
-          const svgWrapper = document.createElement('div');
-          svgWrapper.style.width = '100%';
-          svgWrapper.style.height = '100%';
-          svgWrapper.style.overflow = 'hidden';
-          svgWrapper.style.position = 'relative';
-          svgWrapper.appendChild(svg);
-
-          // Add name text at bottom right (overlay on SVG)
-          const nameText = document.createElement('div');
-          nameText.textContent = letter.name || 'Anonymous';
-          nameText.style.fontFamily = "'Playpen Sans', cursive";
-          nameText.style.position = 'absolute';
-          nameText.style.bottom = '8%';
-          nameText.style.right = '8%';
-          nameText.style.fontSize = '11px';
-          nameText.style.fontWeight = '600';
-          nameText.style.color = '#000000';
-          nameText.style.pointerEvents = 'none';
-          nameText.style.zIndex = '10';
-          nameText.style.whiteSpace = 'nowrap';
-          nameText.style.textShadow = '0 1px 2px rgba(255, 255, 255, 0.8)';
-          nameText.style.maxWidth = '70%';
-          nameText.style.overflow = 'hidden';
-          nameText.style.textOverflow = 'ellipsis';
-
-          // Append SVG wrapper and name
-          storyButton.appendChild(svgWrapper);
-          storyButton.appendChild(nameText);
-
-          // Add click handler
-          storyButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            // Remove active class from all buttons
-            document.querySelectorAll('.story-button').forEach((btn) => btn.classList.remove('active'));
-            // Add active class to clicked button
-            storyButton.classList.add('active');
-
-            const letterData = JSON.parse(storyButton.dataset.letterData);
-
-            // Dispatch custom event to open letter detail
-            const event = new CustomEvent('openLetterDetail', {
-              detail: {
-                letterData: {
-                  video_url: letterData.video_url,
-                  audio_url: letterData.audio_url,
-                  message: letterData.message,
-                  name: letterData.name,
-                  photo_url: letterData.photo_url
-                }
-              }
-            });
-            document.dispatchEvent(event);
-          });
-
-          lettersListBottom.appendChild(storyButton);
-        });
+    // Function to render letters in horizontal story list (circular buttons with letter SVGs)
+    async function renderLettersBottomLeft(lettersData) {
+      console.log('renderLettersBottomLeft called with data:', lettersData);
+      const lettersListBottom = document.getElementById('letters-list-bottom');
+      if (!lettersListBottom) {
+        console.error('letters-list-bottom element not found');
+        return;
       }
 
-      document.addEventListener("DOMContentLoaded", function () {
-        // Ensure letters list is hidden on page load
-        const lettersListBottom = document.getElementById('letters-list-bottom');
-        if (lettersListBottom) {
-          lettersListBottom.style.display = 'none';
-        }
+      // Setup scrollbar visibility on scroll (only once)
+      if (!lettersListBottom.dataset.scrollbarSetup) {
+        let scrollTimeout;
+        lettersListBottom.addEventListener('scroll', () => {
+          lettersListBottom.classList.add('scrolling');
+          clearTimeout(scrollTimeout);
+          scrollTimeout = setTimeout(() => {
+            lettersListBottom.classList.remove('scrolling');
+          }, 1000); // Hide scrollbar 1 second after scrolling stops
+        });
+        lettersListBottom.dataset.scrollbarSetup = 'true';
+      }
 
-        // Load the video but keep it paused
-        videoElement.load();
-        videoElement.play();
+      // Clear existing letters
+      lettersListBottom.innerHTML = '';
 
-        // Try to preload the video
-        videoElement.addEventListener("loadedmetadata", function () {
-          console.log("Video metadata loaded");
-          updateVideoHeight();
-          updateVideoWidth();
+      if (!lettersData || lettersData.length === 0) {
+        console.log('No letters data to render');
+        return;
+      }
+
+      console.log('Rendering', lettersData.length, 'letters');
+
+      // Import createSVGComponent dynamically
+      const { createSVGComponent } = await import('./svg-component.js');
+
+      // Color palette for sequential assignment
+      const colorPalette = [
+        '90FF77',
+        'FF5627',
+        '008177',
+        'FFC61C',
+        'FF443D',
+        '8142FF',
+        '28B7FF',
+        'FF7ADC'
+      ];
+
+      lettersData.forEach((letter, i) => {
+        // Create unique ID for filter IDs
+        const uniqueId = `letter_story_${i}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+        // Get sequential color from palette
+        const colorIndex = i % colorPalette.length;
+        const selectedColor = colorPalette[colorIndex];
+
+        // Create SVG with sequential color
+        const svg = createSVGComponent(selectedColor, uniqueId);
+
+        // Create circular story button (like in provided HTML) - bigger size
+        const storyButton = document.createElement('div');
+        storyButton.className = 'story-button';
+        storyButton.style.height = 'auto';
+        storyButton.style.minWidth = '80px';
+        storyButton.style.width = '80px';
+        storyButton.style.overflow = 'visible';
+        storyButton.style.position = 'relative';
+        storyButton.style.cursor = 'pointer';
+        storyButton.style.transition = 'transform 0.3s ease';
+
+        // Store letter data
+        storyButton.dataset.letterData = JSON.stringify({
+          video_url: letter.video_url || '',
+          audio_url: letter.audio_url || '',
+          message: letter.message || '',
+          name: letter.name || 'Anonymous',
+          photo_url: letter.photo_url || ''
         });
 
-        // Update dimensions when video source changes
-        videoElement.addEventListener("loadeddata", function () {
-          updateVideoHeight();
-          updateVideoWidth();
+        // Make SVG fit in circular container - bigger
+        svg.style.width = '100%';
+        svg.style.height = '100%';
+        svg.style.display = 'block';
+        svg.style.objectFit = 'cover';
+
+        // Create wrapper for SVG to contain it
+        const svgWrapper = document.createElement('div');
+        svgWrapper.style.width = '100%';
+        svgWrapper.style.height = '100%';
+        svgWrapper.style.overflow = 'hidden';
+        svgWrapper.style.position = 'relative';
+        svgWrapper.appendChild(svg);
+
+        // Add name text at bottom right (overlay on SVG)
+        const nameText = document.createElement('div');
+        nameText.textContent = letter.name || 'Anonymous';
+        nameText.style.fontFamily = "'Playpen Sans', cursive";
+        nameText.style.position = 'absolute';
+        nameText.style.bottom = '8%';
+        nameText.style.right = '8%';
+        nameText.style.fontSize = '11px';
+        nameText.style.fontWeight = '600';
+        nameText.style.color = '#000000';
+        nameText.style.pointerEvents = 'none';
+        nameText.style.zIndex = '10';
+        nameText.style.whiteSpace = 'nowrap';
+        nameText.style.textShadow = '0 1px 2px rgba(255, 255, 255, 0.8)';
+        nameText.style.maxWidth = '70%';
+        nameText.style.overflow = 'hidden';
+        nameText.style.textOverflow = 'ellipsis';
+
+        // Append SVG wrapper and name
+        storyButton.appendChild(svgWrapper);
+        storyButton.appendChild(nameText);
+
+        // Add click handler
+        storyButton.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Remove active class from all buttons
+          document.querySelectorAll('.story-button').forEach((btn) => btn.classList.remove('active'));
+          // Add active class to clicked button
+          storyButton.classList.add('active');
+
+          const letterData = JSON.parse(storyButton.dataset.letterData);
+
+          // Dispatch custom event to open letter detail
+          const event = new CustomEvent('openLetterDetail', {
+            detail: {
+              letterData: {
+                video_url: letterData.video_url,
+                audio_url: letterData.audio_url,
+                message: letterData.message,
+                name: letterData.name,
+                photo_url: letterData.photo_url
+              }
+            }
+          });
+          document.dispatchEvent(event);
         });
 
-        const orderID = getUrlParameter("orderID");
-        console.log("Fetching content for orderID:", orderID);
+        lettersListBottom.appendChild(storyButton);
+      });
+    }
 
-        if (!orderID) {
-          console.log("No orderID found, redirecting to base URL...");
-          window.location.href =
-            "https://slamatslimit.byc.plus/experience-app/ar";
-          return;
-        }
+    document.addEventListener("DOMContentLoaded", function () {
+      // Ensure letters list is hidden on page load
+      const lettersListBottom = document.getElementById('letters-list-bottom');
+      if (lettersListBottom) {
+        lettersListBottom.style.display = 'none';
+      }
 
-        // Fetch content from API
-        fetch(`https://slamatslimit.byc.plus/api/gallery?order_id=${orderID}`)
-          .then((response) => {
-            console.log("API Response status:", response.status);
-            return response.json();
-          })
-          .then((data) => {
-            console.log("API Response data:", data);
-            if (!data || data.length === 0) {
-              console.log(
-                "No data received, redirecting to order-specific URL..."
-              );
-              window.location.href = `https://slamatslimit.byc.plus/experience-app/ar/${orderID}`;
+      // Load the video but keep it paused
+      videoElement.load();
+      videoElement.play();
+
+      // Try to preload the video
+      videoElement.addEventListener("loadedmetadata", function () {
+        console.log("Video metadata loaded");
+        updateVideoHeight();
+        updateVideoWidth();
+      });
+
+      // Update dimensions when video source changes
+      videoElement.addEventListener("loadeddata", function () {
+        updateVideoHeight();
+        updateVideoWidth();
+      });
+
+      const orderID = getUrlParameter("orderID");
+      console.log("Fetching content for orderID:", orderID);
+
+      if (!orderID) {
+        console.log("No orderID found, redirecting to base URL...");
+        window.location.href =
+          "https://slamatslimit.byc.plus/experience-app/ar";
+        return;
+      }
+
+      // Fetch content from API
+      fetch(`https://slamatslimit.byc.plus/api/gallery?order_id=${orderID}`)
+        .then((response) => {
+          console.log("API Response status:", response.status);
+          return response.json();
+        })
+        .then((data) => {
+          console.log("API Response data:", data);
+          if (!data || data.length === 0) {
+            console.log(
+              "No data received, redirecting to order-specific URL..."
+            );
+            window.location.href = `https://slamatslimit.byc.plus/experience-app/ar/${orderID}`;
             return;
           }
 
-            // Update AR images with data from API/Supabase
-            initializeImageGrids(data);
+          // Update AR images with data from API/Supabase
+          initializeImageGrids(data);
 
-            // Render letters in bottom list
-            renderLettersBottomLeft(data).catch((error) => {
-              console.error("Error rendering letters:", error);
-            });
-
-            // Preload content assets on page load (while waiting for marker)
-            preloadContentAssets(data);
-            
-            // Store content data globally for sequential display (will start when marker detected)
-            window.sequentialContentData = data;
-            })
-            .catch((error) => {
-              console.error("Error fetching content:", error);
-            // console.log("Redirecting due to error...");
-            // window.location.href =
-            //   "https://slamatslimit.byc.plus/experience-app/ar";
+          // Render letters in bottom list
+          renderLettersBottomLeft(data).catch((error) => {
+            console.error("Error rendering letters:", error);
           });
 
-        const messageModal = document.getElementById("messageModal");
-        const modalMessage = document.getElementById("modalMessage");
+          // Preload content assets on page load (while waiting for marker)
+          preloadContentAssets(data);
 
-        // Add the mute button to the right of the record button
-        const muteButton = document.createElement("div");
-        muteButton.id = "muteButton";
-        muteButton.style.position = "fixed";
-        muteButton.style.bottom = "4.5svh";
-        muteButton.style.left = "calc(50% + 13svh)";
-        muteButton.style.transform = "translateX(-50%)";
-        muteButton.style.width = "5svh";
-        muteButton.style.height = "5svh";
-        muteButton.style.backgroundColor = "#FFC61C";
-        muteButton.style.borderRadius = "50%";
-        muteButton.style.display = "flex";
-        muteButton.style.justifyContent = "center";
-        muteButton.style.alignItems = "center";
-        muteButton.style.cursor = "pointer";
-        muteButton.style.zIndex = "20";
-        muteButton.style.border = "none";
-        muteButton.style.padding = "0";
-        muteButton.innerHTML = `
+          // Store content data globally for sequential display (will start when marker detected)
+          window.sequentialContentData = data;
+        })
+        .catch((error) => {
+          console.error("Error fetching content:", error);
+          // console.log("Redirecting due to error...");
+          // window.location.href =
+          //   "https://slamatslimit.byc.plus/experience-app/ar";
+        });
+
+      const messageModal = document.getElementById("messageModal");
+      const modalMessage = document.getElementById("modalMessage");
+
+      // Add the mute button to the right of the record button
+      const muteButton = document.createElement("div");
+      muteButton.id = "muteButton";
+      muteButton.style.position = "fixed";
+      muteButton.style.bottom = "4.5svh";
+      muteButton.style.left = "calc(50% + 13svh)";
+      muteButton.style.transform = "translateX(-50%)";
+      muteButton.style.width = "5svh";
+      muteButton.style.height = "5svh";
+      muteButton.style.backgroundColor = "#FFC61C";
+      muteButton.style.borderRadius = "50%";
+      muteButton.style.display = "flex";
+      muteButton.style.justifyContent = "center";
+      muteButton.style.alignItems = "center";
+      muteButton.style.cursor = "pointer";
+      muteButton.style.zIndex = "20";
+      muteButton.style.border = "none";
+      muteButton.style.padding = "0";
+      muteButton.innerHTML = `
           <svg id="sound-on" style="width: 60%; height: 60%; display: block;" xmlns="http://www.w3.org/2000/svg" height="24"
             viewBox="0 0 24 24" width="24">
             <path d="M0 0h24v24H0z" fill="none" />
@@ -1359,417 +1298,418 @@
               fill="#000000" />
           </svg>
         `;
-        document.body.appendChild(muteButton);
+      document.body.appendChild(muteButton);
 
-        // Add functionality to toggle mute state
-        const soundOn = muteButton.querySelector("#sound-on");
-        const soundOff = muteButton.querySelector("#sound-off");
-        let isMuted = false;
-        
-        muteButton.addEventListener("click", () => {
-          isMuted = !isMuted;
-          
-          // Toggle video mute
-          if (videoElement) {
-            videoElement.muted = isMuted;
-          }
-          
-          // Toggle background music
-          const bgMusic = document.getElementById('background-music');
-          if (bgMusic) {
-            if (isMuted) {
-              bgMusic.muted = true;
-              bgMusic.pause();
-            } else {
-              bgMusic.muted = false;
-              if (bgMusic.paused) {
-                bgMusic.play().catch(e => console.log('Background music play error:', e));
-              }
-            }
-          }
-          
-          // Toggle icon visibility
-          if (soundOn && soundOff) {
-            if (isMuted) {
-              soundOn.style.display = "none";
-              soundOff.style.display = "block";
-            } else {
-              soundOn.style.display = "block";
-              soundOff.style.display = "none";
-            }
-          }
-        });
+      // Add functionality to toggle mute state
+      const soundOn = muteButton.querySelector("#sound-on");
+      const soundOff = muteButton.querySelector("#sound-off");
+      let isMuted = false;
 
+      muteButton.addEventListener("click", () => {
+        isMuted = !isMuted;
 
-
-        // Add event listener to close the modal when clicking on the overlay
-        messageModal.addEventListener("click", (event) => {
-          if (event.target === messageModal) {
-            messageModal.style.display = "none";
-          }
-        });
-
-        // Ensure the close button functionality remains
-        const closeModalButton = document.getElementById("closeModalButton");
-        closeModalButton.addEventListener("click", () => {
-          messageModal.style.display = "none";
-        });
-
-        const recordButton = document.getElementById("recordButton");
-        const recordInner = document.getElementById("recordInner");
-        let isRecording = false;
-
-        recordButton.addEventListener("click", () => {
-          isRecording = !isRecording;
-          if (isRecording) {
-            recordInner.style.borderRadius = "0";
-            recordInner.style.width = "20px";
-            recordInner.style.height = "20px";
-              } else {
-            recordInner.style.borderRadius = "50%";
-            recordInner.style.width = "30px";
-            recordInner.style.height = "30px";
-          }
-        });
-
-        const galleryButton = document.getElementById("galleryButton");
-        galleryButton.addEventListener("click", () => {
-          window.location.href = `/gallery.html?orderID=${orderID.toUpperCase()}`;
-        });
-
-        // Track detected markers and background music state
-        const detectedMarkers = new Set();
-        const backgroundMusic = document.getElementById('background-music');
-        let backgroundMusicStarted = false;
-
-        // Setup background music
-        if (backgroundMusic) {
-          backgroundMusic.volume = 0.3; // Lower volume compared to modal audio (which is 1.0)
-          backgroundMusic.loop = true;
-        }
-
-        // Add event listeners for both markers
-        document.querySelectorAll("a-marker").forEach((marker) => {
-          marker.addEventListener("markerFound", function () {
-            console.log("Marker is found");
-            const markerId = marker.id || marker.getAttribute('url');
-            detectedMarkers.add(markerId);
-
-            // Ensure video is loaded and play it
-            videoElement.load();
-            const playPromise = videoElement.play();
-            if (playPromise !== undefined) {
-              playPromise.catch((error) => {
-                console.log("Error playing video:", error);
-                // If autoplay with unmute fails, try playing muted
-                if (error.name === "NotAllowedError") {
-                  videoElement.muted = true;
-                  videoElement
-                    .play()
-                    .catch((e) =>
-                      console.log("Even muted autoplay failed:", e)
-                    );
-                }
-              });
-            }
-            if (pauseTimeout) {
-              clearTimeout(pauseTimeout);
-            }
-
-            videoElement.muted = false; // Unmute when marker is detected
-            videoElement.volume = 1; // Set volume to maximum
-            
-            // Show letters list when marker is found
-            const lettersListBottom = document.getElementById('letters-list-bottom');
-            if (lettersListBottom) {
-              lettersListBottom.style.display = 'flex';
-            }
-
-            // Start sequential image display when marker is detected (only if not already running)
-            if (window.sequentialContentData && !sequentialDisplayRunning) {
-              startSequentialImageDisplay(window.sequentialContentData);
-            }
-
-            // Play background music when marker is found for the first time
-            if (backgroundMusic && !backgroundMusicStarted) {
-              backgroundMusic.play().catch(e => {
-                console.log('Background music play error:', e);
-                // Retry after a short delay
-                setTimeout(() => {
-                  backgroundMusic.play().catch(err => console.log('Background music retry error:', err));
-                }, 500);
-              });
-              backgroundMusicStarted = true;
-            } else if (backgroundMusic && backgroundMusicStarted) {
-              // Resume background music if it was paused (don't reset position)
-              if (backgroundMusic.paused) {
-                backgroundMusic.play().catch(e => console.log('Background music resume error:', e));
-              }
-            }
-
-            // Hide the overlay when the marker is found
-            const markerNotFoundOverlay = document.getElementById(
-              "markerNotFoundOverlay"
-            );
-            if (!markerDetectedOnce) {
-              markerNotFoundOverlay.style.transition = "opacity 0.5s ease";
-              markerNotFoundOverlay.style.opacity = "0";
-              setTimeout(() => {
-                markerNotFoundOverlay.style.display = "none";
-              }, 500); // Wait for the transition to complete
-              markerDetectedOnce = true;
-            }
-          });
-
-          marker.addEventListener("markerLost", function () {
-            console.log("Marker is lost");
-            const markerId = marker.id || marker.getAttribute('url');
-            detectedMarkers.delete(markerId);
-
-            pauseTimeout = setTimeout(() => {
-              // Only pause if marker is still lost (check if it's back in detectedMarkers)
-              if (!detectedMarkers.has(markerId)) {
-                videoElement.pause();
-                console.log("Video and audio paused due to marker loss");
-
-                // Pause background music when marker is lost
-                if (backgroundMusic && !backgroundMusic.paused) {
-                  backgroundMusic.pause();
-                }
-
-                // Hide letters list when all markers are lost
-                if (detectedMarkers.size === 0) {
-                  const lettersListBottom = document.getElementById('letters-list-bottom');
-                  if (lettersListBottom) {
-                    lettersListBottom.style.display = 'none';
-                  }
-
-                  // Hide sequential images and stop audio when all markers are lost
-                  const leftImage = document.getElementById('top-left-image');
-                  const rightImage = document.getElementById('top-right-image');
-                  const contentAudio = document.getElementById('content-audio');
-                  
-                  if (leftImage) {
-                    leftImage.style.left = '-50svh';
-                  }
-                  if (rightImage) {
-                    rightImage.style.right = '-50svh';
-                  }
-                  if (contentAudio) {
-                    contentAudio.pause();
-                    contentAudio.currentTime = 0;
-                  }
-                  
-                  // Stop sequential display
-                  sequentialDisplayRunning = false;
-                  if (sequentialDisplayTimeout) {
-                    clearTimeout(sequentialDisplayTimeout);
-                    sequentialDisplayTimeout = null;
-                  }
-                }
-
-                // Only show the overlay when ALL markers are lost
-                if (detectedMarkers.size === 0) {
-                  const markerNotFoundOverlay = document.getElementById(
-                    "markerNotFoundOverlay"
-                  );
-                  markerNotFoundOverlay.style.display = "block";
-                }
-              }
-            }, 2000); // 2 second delay before hiding content
-
-          });
-        });
-      });
-
-      window.addEventListener("beforeunload", () => {
-        const videoElement = document.getElementById("arsa-video");
+        // Toggle video mute
         if (videoElement) {
-          videoElement.pause();
+          videoElement.muted = isMuted;
+        }
+
+        // Toggle background music
+        const bgMusic = document.getElementById('background-music');
+        if (bgMusic) {
+          if (isMuted) {
+            bgMusic.muted = true;
+            bgMusic.pause();
+          } else {
+            bgMusic.muted = false;
+            if (bgMusic.paused) {
+              bgMusic.play().catch(e => console.log('Background music play error:', e));
+            }
+          }
+        }
+
+        // Toggle icon visibility
+        if (soundOn && soundOff) {
+          if (isMuted) {
+            soundOn.style.display = "none";
+            soundOff.style.display = "block";
+          } else {
+            soundOn.style.display = "block";
+            soundOff.style.display = "none";
+          }
         }
       });
 
-      // Letter detail modal functionality
-      const lettersDetail = document.getElementById('letters-detail');
-      const lettersDetailOverlay = document.getElementById('letters-detail-overlay');
-      const videoComponent = document.getElementById('video-component');
-      const letterComponent = document.getElementById('letter-component');
-      const ruryVideo = document.getElementById('rury-video');
-      const ruryAudio = document.getElementById('rury-audio');
-      const audioIcon = document.getElementById('audio-icon');
 
-      // Listen for letter detail open event
-      document.addEventListener('openLetterDetail', (e) => {
-        if (lettersDetail && e.detail && e.detail.letterData) {
-          const letterData = e.detail.letterData;
 
-          // Stop sequential image audio and pause display when modal opens
-          const contentAudio = document.getElementById('content-audio');
-          if (contentAudio) {
-            contentAudio.pause();
-            contentAudio.currentTime = 0;
-            console.log('Sequential image audio stopped (letter modal opened)');
+      // Add event listener to close the modal when clicking on the overlay
+      messageModal.addEventListener("click", (event) => {
+        if (event.target === messageModal) {
+          messageModal.style.display = "none";
+        }
+      });
+
+      // Ensure the close button functionality remains
+      const closeModalButton = document.getElementById("closeModalButton");
+      closeModalButton.addEventListener("click", () => {
+        messageModal.style.display = "none";
+      });
+
+      const recordButton = document.getElementById("recordButton");
+      const recordInner = document.getElementById("recordInner");
+      let isRecording = false;
+
+      recordButton.addEventListener("click", () => {
+        isRecording = !isRecording;
+        if (isRecording) {
+          recordInner.style.borderRadius = "0";
+          recordInner.style.width = "20px";
+          recordInner.style.height = "20px";
+        } else {
+          recordInner.style.borderRadius = "50%";
+          recordInner.style.width = "30px";
+          recordInner.style.height = "30px";
+        }
+      });
+
+      const galleryButton = document.getElementById("galleryButton");
+      galleryButton.addEventListener("click", () => {
+        window.location.href = `/gallery.html?orderID=${orderID.toUpperCase()}`;
+      });
+
+      // Track detected markers and background music state
+      const detectedMarkers = new Set();
+      const backgroundMusic = document.getElementById('background-music');
+      let backgroundMusicStarted = false;
+
+      // Setup background music
+      if (backgroundMusic) {
+        backgroundMusic.volume = 0.3; // Lower volume compared to modal audio (which is 1.0)
+        backgroundMusic.loop = true;
+      }
+
+      // Add event listeners for both markers
+      document.querySelectorAll("a-marker").forEach((marker) => {
+        marker.addEventListener("markerFound", function () {
+          console.log("Marker is found");
+          const markerId = marker.id || marker.getAttribute('url');
+          detectedMarkers.add(markerId);
+
+          // Ensure video is loaded and play it
+          videoElement.load();
+          const playPromise = videoElement.play();
+          if (playPromise !== undefined) {
+            playPromise.catch((error) => {
+              console.log("Error playing video:", error);
+              // If autoplay with unmute fails, try playing muted
+              if (error.name === "NotAllowedError") {
+                videoElement.muted = true;
+                videoElement
+                  .play()
+                  .catch((e) =>
+                    console.log("Even muted autoplay failed:", e)
+                  );
+              }
+            });
           }
-          
-          // Pause sequential display
-          sequentialDisplayRunning = false;
-          if (sequentialDisplayTimeout) {
-            clearTimeout(sequentialDisplayTimeout);
-            sequentialDisplayTimeout = null;
+          if (pauseTimeout) {
+            clearTimeout(pauseTimeout);
           }
 
-          // Hide the AR video behind letters
-          const arsaVideo = document.getElementById('arsa-video');
-          if (arsaVideo) {
-            arsaVideo.style.display = 'none';
+          videoElement.muted = false; // Unmute when marker is detected
+          videoElement.volume = 1; // Set volume to maximum
+
+          // Show letters list when marker is found
+          const lettersListBottom = document.getElementById('letters-list-bottom');
+          if (lettersListBottom) {
+            lettersListBottom.style.display = 'flex';
           }
 
-          // Hide both video and audio initially
-          if (ruryVideo) {
-            ruryVideo.style.display = 'none';
-            ruryVideo.src = '';
-            ruryVideo.pause();
-          }
-          if (ruryAudio) {
-            ruryAudio.style.display = 'none';
-            ruryAudio.src = '';
-            ruryAudio.pause();
-          }
-          if (audioIcon) {
-            audioIcon.style.display = 'none';
+          // Start sequential image display when marker is detected (only if not already running)
+          if (window.sequentialContentData && !sequentialDisplayRunning) {
+            startSequentialImageDisplay(window.sequentialContentData);
           }
 
-          // Update media component - prioritize video, then audio
-          // Support both video_url/audio_url (from API) and video/audio (from mailbox)
-          const hasVideo = (letterData.video_url && letterData.video_url.trim() !== '') ||
-            (letterData.video && letterData.video.trim() !== '');
-          const hasAudio = (letterData.audio_url && letterData.audio_url.trim() !== '') ||
-            (letterData.audio && letterData.audio.trim() !== '');
-
-          const videoUrl = letterData.video_url || letterData.video || '';
-          const audioUrl = letterData.audio_url || letterData.audio || '';
-
-          if (hasVideo && ruryVideo && videoUrl) {
-            if (audioIcon) audioIcon.style.display = 'none';
-            ruryVideo.src = videoUrl;
-            ruryVideo.style.display = 'block';
-            const playVideo = () => {
-              ruryVideo.play().catch(e => {
-                console.log('Video autoplay error:', e);
-                setTimeout(() => {
-                  ruryVideo.play().catch(err => console.log('Video retry error:', err));
-                }, 500);
-              });
-            };
-            if (ruryVideo.readyState >= 2) {
-              playVideo();
-            } else {
-              ruryVideo.addEventListener('canplay', playVideo, { once: true });
-              ruryVideo.load();
+          // Play background music when marker is found for the first time
+          if (backgroundMusic && !backgroundMusicStarted) {
+            backgroundMusic.play().catch(e => {
+              console.log('Background music play error:', e);
+              // Retry after a short delay
+              setTimeout(() => {
+                backgroundMusic.play().catch(err => console.log('Background music retry error:', err));
+              }, 500);
+            });
+            backgroundMusicStarted = true;
+          } else if (backgroundMusic && backgroundMusicStarted) {
+            // Resume background music if it was paused (don't reset position)
+            if (backgroundMusic.paused) {
+              backgroundMusic.play().catch(e => console.log('Background music resume error:', e));
             }
-          } else if (hasAudio && ruryAudio && audioUrl) {
-            if (ruryVideo) ruryVideo.style.display = 'none';
-            if (audioIcon) audioIcon.style.display = 'flex';
+          }
+
+          // Hide the overlay when the marker is found
+          const markerNotFoundOverlay = document.getElementById(
+            "markerNotFoundOverlay"
+          );
+          if (!markerDetectedOnce) {
+            markerNotFoundOverlay.style.transition = "opacity 0.5s ease";
+            markerNotFoundOverlay.style.opacity = "0";
+            setTimeout(() => {
+              markerNotFoundOverlay.style.display = "none";
+            }, 500); // Wait for the transition to complete
+            markerDetectedOnce = true;
+          }
+        });
+
+        marker.addEventListener("markerLost", function () {
+          console.log("Marker is lost");
+          const markerId = marker.id || marker.getAttribute('url');
+          detectedMarkers.delete(markerId);
+
+          pauseTimeout = setTimeout(() => {
+            // Only pause if marker is still lost (check if it's back in detectedMarkers)
+            if (!detectedMarkers.has(markerId)) {
+              videoElement.pause();
+              console.log("Video and audio paused due to marker loss");
+
+              // Pause background music when marker is lost
+              if (backgroundMusic && !backgroundMusic.paused) {
+                backgroundMusic.pause();
+              }
+
+              // Hide letters list when all markers are lost
+              if (detectedMarkers.size === 0) {
+                const lettersListBottom = document.getElementById('letters-list-bottom');
+                if (lettersListBottom) {
+                  lettersListBottom.style.display = 'none';
+                }
+
+                // Hide sequential images and stop audio when all markers are lost
+                const leftImage = document.getElementById('top-left-image');
+                const rightImage = document.getElementById('top-right-image');
+                const contentAudio = document.getElementById('content-audio');
+
+                if (leftImage) {
+                  leftImage.style.left = '-50svh';
+                }
+                if (rightImage) {
+                  rightImage.style.right = '-50svh';
+                }
+                if (contentAudio) {
+                  contentAudio.pause();
+                  contentAudio.currentTime = 0;
+                }
+
+                // Stop sequential display
+                sequentialDisplayRunning = false;
+                if (sequentialDisplayTimeout) {
+                  clearTimeout(sequentialDisplayTimeout);
+                  sequentialDisplayTimeout = null;
+                }
+              }
+
+              // Only show the overlay when ALL markers are lost
+              if (detectedMarkers.size === 0) {
+                const markerNotFoundOverlay = document.getElementById(
+                  "markerNotFoundOverlay"
+                );
+                markerNotFoundOverlay.style.display = "block";
+              }
+            }
+          }, 2000); // 2 second delay before hiding content
+
+        });
+      });
+    });
+
+    window.addEventListener("beforeunload", () => {
+      const videoElement = document.getElementById("arsa-video");
+      if (videoElement) {
+        videoElement.pause();
+      }
+    });
+
+    // Letter detail modal functionality
+    const lettersDetail = document.getElementById('letters-detail');
+    const lettersDetailOverlay = document.getElementById('letters-detail-overlay');
+    const videoComponent = document.getElementById('video-component');
+    const letterComponent = document.getElementById('letter-component');
+    const ruryVideo = document.getElementById('rury-video');
+    const ruryAudio = document.getElementById('rury-audio');
+    const audioIcon = document.getElementById('audio-icon');
+
+    // Listen for letter detail open event
+    document.addEventListener('openLetterDetail', (e) => {
+      if (lettersDetail && e.detail && e.detail.letterData) {
+        const letterData = e.detail.letterData;
+
+        // Stop sequential image audio and pause display when modal opens
+        const contentAudio = document.getElementById('content-audio');
+        if (contentAudio) {
+          contentAudio.pause();
+          contentAudio.currentTime = 0;
+          console.log('Sequential image audio stopped (letter modal opened)');
+        }
+
+        // Pause sequential display
+        sequentialDisplayRunning = false;
+        if (sequentialDisplayTimeout) {
+          clearTimeout(sequentialDisplayTimeout);
+          sequentialDisplayTimeout = null;
+        }
+
+        // Hide the AR video behind letters
+        const arsaVideo = document.getElementById('arsa-video');
+        if (arsaVideo) {
+          arsaVideo.style.display = 'none';
+        }
+
+        // Hide both video and audio initially
+        if (ruryVideo) {
+          ruryVideo.style.display = 'none';
+          ruryVideo.src = '';
+          ruryVideo.pause();
+        }
+        if (ruryAudio) {
+          ruryAudio.style.display = 'none';
+          ruryAudio.src = '';
+          ruryAudio.pause();
+        }
+        if (audioIcon) {
+          audioIcon.style.display = 'none';
+        }
+
+        // Update media component - prioritize video, then audio
+        // Support both video_url/audio_url (from API) and video/audio (from mailbox)
+        const hasVideo = (letterData.video_url && letterData.video_url.trim() !== '') ||
+          (letterData.video && letterData.video.trim() !== '');
+        const hasAudio = (letterData.audio_url && letterData.audio_url.trim() !== '') ||
+          (letterData.audio && letterData.audio.trim() !== '');
+
+        const videoUrl = letterData.video_url || letterData.video || '';
+        const audioUrl = letterData.audio_url || letterData.audio || '';
+
+        if (hasVideo && ruryVideo && videoUrl) {
+          if (audioIcon) audioIcon.style.display = 'none';
+          ruryVideo.src = videoUrl;
+          ruryVideo.style.display = 'block';
+          const playVideo = () => {
+            ruryVideo.play().catch(e => {
+              console.log('Video autoplay error:', e);
+              setTimeout(() => {
+                ruryVideo.play().catch(err => console.log('Video retry error:', err));
+              }, 500);
+            });
+          };
+          if (ruryVideo.readyState >= 2) {
+            playVideo();
+          } else {
+            ruryVideo.addEventListener('canplay', playVideo, { once: true });
+            ruryVideo.load();
+          }
+        } else if (hasAudio && ruryAudio && audioUrl) {
+          if (ruryVideo) ruryVideo.style.display = 'none';
+          if (audioIcon) audioIcon.style.display = 'flex';
+          ruryAudio.muted = false;
+          ruryAudio.volume = 1.0;
+          ruryAudio.src = audioUrl;
+          ruryAudio.style.display = 'block';
+          const playAudio = () => {
             ruryAudio.muted = false;
             ruryAudio.volume = 1.0;
-            ruryAudio.src = audioUrl;
-            ruryAudio.style.display = 'block';
-            const playAudio = () => {
-              ruryAudio.muted = false;
-              ruryAudio.volume = 1.0;
-              ruryAudio.play().then(() => {
-                console.log('Audio playing successfully');
-              }).catch(e => {
-                console.log('Audio autoplay error:', e);
-                setTimeout(() => {
-                  ruryAudio.muted = false;
-                  ruryAudio.volume = 1.0;
-                  ruryAudio.play().catch(err => console.log('Audio retry error:', err));
-                }, 500);
-              });
-            };
-            if (ruryAudio.readyState >= 2) {
-              playAudio();
-            } else {
-              ruryAudio.addEventListener('canplay', playAudio, { once: true });
-              ruryAudio.addEventListener('loadeddata', playAudio, { once: true });
-              ruryAudio.addEventListener('canplaythrough', playAudio, { once: true });
-              ruryAudio.load();
-            }
+            ruryAudio.play().then(() => {
+              console.log('Audio playing successfully');
+            }).catch(e => {
+              console.log('Audio autoplay error:', e);
+              setTimeout(() => {
+                ruryAudio.muted = false;
+                ruryAudio.volume = 1.0;
+                ruryAudio.play().catch(err => console.log('Audio retry error:', err));
+              }, 500);
+            });
+          };
+          if (ruryAudio.readyState >= 2) {
+            playAudio();
+          } else {
+            ruryAudio.addEventListener('canplay', playAudio, { once: true });
+            ruryAudio.addEventListener('loadeddata', playAudio, { once: true });
+            ruryAudio.addEventListener('canplaythrough', playAudio, { once: true });
+            ruryAudio.load();
+          }
+        }
+
+        // Update photo component
+        const photoImg = document.getElementById('photo-component-img');
+        if (photoImg) {
+          const photoUrl = letterData.photo_url || letterData.photo || '';
+          if (photoUrl && photoUrl.trim() !== '') {
+            photoImg.src = photoUrl;
+            photoImg.style.display = 'block';
+          } else {
+            photoImg.style.display = 'none';
+          }
+        }
+
+        // Update sender name
+        const letterSender = document.getElementById('letter-component-sender');
+        if (letterSender) {
+          const senderName = letterData.name || letterData.senderName || '';
+          if (senderName && senderName.trim() !== '') {
+            letterSender.textContent = senderName;
+            letterSender.style.display = 'block';
+          } else {
+            letterSender.style.display = 'none';
+          }
+        }
+
+        // Update letter text component
+        const letterText = document.getElementById('letter-component-text');
+        if (letterText) {
+          const message = letterData.message || letterData.text || '';
+          if (message) {
+            letterText.textContent = message;
+          }
+        }
+
+        // Center letter if no video and no audio
+        if (!hasVideo && !hasAudio && letterComponent) {
+          letterComponent.style.left = '50%';
+          letterComponent.style.right = 'auto';
+          letterComponent.style.transform = 'translateX(-50%) rotate(1deg)';
+        } else if (letterComponent) {
+          letterComponent.style.left = '0';
+          letterComponent.style.right = '0';
+          letterComponent.style.transform = 'rotate(1deg)';
+        }
+
+        lettersDetail.style.display = 'block';
+      }
+    });
+
+    // Close modal when overlay is clicked
+    if (lettersDetailOverlay) {
+      lettersDetailOverlay.addEventListener('click', () => {
+        if (lettersDetail) {
+          // Stop video and audio when closing
+          if (ruryVideo) {
+            ruryVideo.pause();
+            ruryVideo.currentTime = 0;
+          }
+          if (ruryAudio) {
+            ruryAudio.pause();
+            ruryAudio.currentTime = 0;
           }
 
-          // Update photo component
-          const photoImg = document.getElementById('photo-component-img');
-          if (photoImg) {
-            const photoUrl = letterData.photo_url || letterData.photo || '';
-            if (photoUrl && photoUrl.trim() !== '') {
-              photoImg.src = photoUrl;
-              photoImg.style.display = 'block';
-            } else {
-              photoImg.style.display = 'none';
-            }
+          // Show the AR video again
+          const arsaVideo = document.getElementById('arsa-video');
+          if (arsaVideo) {
+            arsaVideo.style.display = '';
           }
 
-          // Update sender name
-          const letterSender = document.getElementById('letter-component-sender');
-          if (letterSender) {
-            const senderName = letterData.name || letterData.senderName || '';
-            if (senderName && senderName.trim() !== '') {
-              letterSender.textContent = senderName;
-              letterSender.style.display = 'block';
-            } else {
-              letterSender.style.display = 'none';
-            }
-          }
-
-          // Update letter text component
-          const letterText = document.getElementById('letter-component-text');
-          if (letterText) {
-            const message = letterData.message || letterData.text || '';
-            if (message) {
-              letterText.textContent = message;
-            }
-          }
-
-          // Center letter if no video and no audio
-          if (!hasVideo && !hasAudio && letterComponent) {
-            letterComponent.style.left = '50%';
-            letterComponent.style.right = 'auto';
-            letterComponent.style.transform = 'translateX(-50%) rotate(1deg)';
-          } else if (letterComponent) {
-            letterComponent.style.left = '0';
-            letterComponent.style.right = '0';
-            letterComponent.style.transform = 'rotate(1deg)';
-          }
-
-          lettersDetail.style.display = 'block';
+          lettersDetail.style.display = 'none';
         }
       });
+    }
+  </script>
+</body>
 
-      // Close modal when overlay is clicked
-      if (lettersDetailOverlay) {
-        lettersDetailOverlay.addEventListener('click', () => {
-          if (lettersDetail) {
-            // Stop video and audio when closing
-            if (ruryVideo) {
-              ruryVideo.pause();
-              ruryVideo.currentTime = 0;
-            }
-            if (ruryAudio) {
-              ruryAudio.pause();
-              ruryAudio.currentTime = 0;
-            }
-
-            // Show the AR video again
-            const arsaVideo = document.getElementById('arsa-video');
-            if (arsaVideo) {
-              arsaVideo.style.display = '';
-            }
-
-            lettersDetail.style.display = 'none';
-          }
-        });
-      }
-    </script>
-  </body>
 </html>
