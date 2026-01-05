@@ -395,28 +395,12 @@
               }));
               console.log(`✅ Using ${validItems.length} images from API/Supabase for AR content (exact count)`);
             } else {
-              // No valid images in API data, use static fallback with default count
-              const defaultCount = markerUrl === 'pattern-ribbon-final.patt' ? 11 :
-                markerUrl === 'pattern-smiley-final.patt' ? 6 : 20;
-              console.log('⚠️ No valid photo_url in API data, using static images');
-              for (let i = 0; i < defaultCount; i++) {
-                imageData.push({
-                  id: i + 1,
-                  src: `/assets/face-${((i % 4) + 1)}.png`
-                });
-              }
+              // No valid images in API data, do nothing or log
+              console.log('⚠️ No valid photo_url in API data, showing clear scene');
             }
           } else {
-            // No data provided, use static fallback with default count
-            const defaultCount = markerUrl === 'pattern-ribbon-final.patt' ? 11 :
-              markerUrl === 'pattern-smiley-final.patt' ? 6 : 20;
-            console.log('⚠️ No API data provided, using static images');
-            for (let i = 0; i < defaultCount; i++) {
-              imageData.push({
-                id: i + 1,
-                src: `/assets/face-${((i % 4) + 1)}.png`
-              });
-            }
+            // No data provided, do nothing or log
+            console.log('⚠️ No API data provided, showing clear scene');
           }
 
           generateImageGrid(marker, imageData, xOffset);
