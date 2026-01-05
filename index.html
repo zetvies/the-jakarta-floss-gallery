@@ -103,6 +103,37 @@
   </script>
   <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
   <script>
+    // Custom component to resize image based on aspect ratio while fitting within max dimensions
+    AFRAME.registerComponent('resize-on-load', {
+      init: function () {
+        this.el.addEventListener('materialtextureloaded', (evt) => {
+          const texture = evt.detail.texture;
+          const image = texture.image;
+          if (!image) return;
+
+          const width = image.width || image.naturalWidth;
+          const height = image.height || image.naturalHeight;
+          if (!width || !height) return;
+
+          const ratio = width / height;
+          const maxWidth = 1.5;
+          const maxHeight = 3;
+
+          let newWidth = maxWidth;
+          let newHeight = newWidth / ratio;
+
+          // If calculated height exceeds max height, scale down by height instead
+          if (newHeight > maxHeight) {
+            newHeight = maxHeight;
+            newWidth = newHeight * ratio;
+          }
+
+          this.el.setAttribute('width', newWidth);
+          this.el.setAttribute('height', newHeight);
+        });
+      }
+    });
+
     // Custom component for smooth, slow, irregular character animation
     AFRAME.registerComponent('character-animation', {
       schema: {
@@ -293,6 +324,7 @@
         imageEl.setAttribute('position', `${x} ${y} ${z}`);
         imageEl.setAttribute('rotation', '-90 0 0');
         imageEl.setAttribute('character-animation', '');
+        imageEl.setAttribute('resize-on-load', '');
 
         // Add material properties to prevent overlap glitches
         imageEl.setAttribute('material', {
