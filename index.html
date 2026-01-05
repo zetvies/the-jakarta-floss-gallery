@@ -1691,10 +1691,16 @@
           letterComponent.style.left = '50%';
           letterComponent.style.right = 'auto';
           letterComponent.style.transform = 'translateX(-50%) rotate(1deg)';
+          if (videoComponent) videoComponent.style.display = 'none';
+          const pinSvg = document.getElementById('pin-svg');
+          if (pinSvg) pinSvg.style.display = 'none';
         } else if (letterComponent) {
           letterComponent.style.left = '0';
           letterComponent.style.right = '0';
           letterComponent.style.transform = 'rotate(1deg)';
+          if (videoComponent) videoComponent.style.display = 'flex';
+          const pinSvg = document.getElementById('pin-svg');
+          if (pinSvg) pinSvg.style.display = 'block';
         }
 
         lettersDetail.style.display = 'block';
