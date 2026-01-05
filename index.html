@@ -856,18 +856,198 @@
       });
     }
 
-    // Global variable to control sequential display
-    let sequentialDisplayRunning = false;
-    let sequentialDisplayTimeout = null;
+    // Global state for slideshow
+    const slideshowState = {
+      currentIndex: 0,
+      isRightSide: true,
+      validItems: [],
+      isRunning: false,
+      timeout: null
+    };
+
+    // Helper functions exposed globally
+    window.pauseSlideshow = function () {
+      console.log('Pausing slideshow...');
+      slideshowState.isRunning = false;
+
+      if (slideshowState.timeout) {
+        clearTimeout(slideshowState.timeout);
+        slideshowState.timeout = null;
+      }
+
+      const contentAudio = document.getElementById('content-audio');
+      if (contentAudio) {
+        contentAudio.pause();
+        contentAudio.currentTime = 0;
+      }
+
+      const leftImage = document.getElementById('top-left-image');
+      const rightImage = document.getElementById('top-right-image');
+
+      if (leftImage) leftImage.style.left = '-50svh';
+      if (rightImage) rightImage.style.right = '-50svh';
+    };
+
+    window.resumeSlideshowNext = function () {
+      console.log('Resuming slideshow from next item...');
+      if (!window.sequentialContentData) return;
+
+      slideshowState.isRunning = true;
+      // Move to next item immediately
+      slideshowState.currentIndex++;
+      slideshowState.isRightSide = !slideshowState.isRightSide;
+
+      showNextImage();
+    };
+
+    // Core slideshow logic
+    async function showNextImage() {
+      if (!slideshowState.isRunning || slideshowState.validItems.length === 0) return;
+
+      // Reset index if out of bounds
+      if (slideshowState.currentIndex >= slideshowState.validItems.length) {
+        console.log('All images displayed, looping after 15s...');
+        slideshowState.timeout = setTimeout(() => {
+          if (slideshowState.isRunning) {
+            slideshowState.currentIndex = 0;
+            slideshowState.isRightSide = true;
+            showNextImage();
+          }
+        }, 15000);
+        return;
+      }
+
+      // Wrap index around if modified externally to be very large, or handle as above
+      // The above logic handles "end of list", but if we want infinite loop immediately after closing:
+      if (slideshowState.currentIndex >= slideshowState.validItems.length) {
+        slideshowState.currentIndex = 0; // Just in case resumeSlideshowNext pushed it over
+      }
+
+
+      const item = slideshowState.validItems[slideshowState.currentIndex];
+      const leftImage = document.getElementById('top-left-image');
+      const rightImage = document.getElementById('top-right-image');
+      const contentAudio = document.getElementById('content-audio');
+
+      if (!leftImage || !rightImage || !contentAudio) return;
+
+      const currentImage = slideshowState.isRightSide ? rightImage : leftImage;
+      const audioUrl = item.audio_url || item.video_url || '';
+
+      // Preload
+      try {
+        await preloadImage(item.photo_url);
+      } catch (e) {
+        console.warn('Preload failed', e);
+      }
+
+      currentImage.src = item.photo_url;
+
+      // Wait for image load
+      await new Promise(resolve => {
+        if (currentImage.complete) resolve();
+        else {
+          currentImage.onload = resolve;
+          currentImage.onerror = resolve;
+        }
+      });
+
+      if (audioUrl && audioUrl.trim() !== '') {
+        try { await preloadAudio(audioUrl); } catch (e) { }
+
+        contentAudio.src = audioUrl;
+        contentAudio.muted = false;
+        contentAudio.volume = 1.0;
+        contentAudio.load();
+
+        // Wait for audio ready
+        await new Promise(resolve => {
+          if (contentAudio.readyState >= 3) resolve();
+          else {
+            const h = () => {
+              contentAudio.removeEventListener('canplay', h);
+              resolve();
+            };
+            contentAudio.addEventListener('canplay', h);
+            setTimeout(() => {
+              contentAudio.removeEventListener('canplay', h);
+              resolve();
+            }, 5000);
+          }
+        });
+
+        if (!slideshowState.isRunning) return; // Check again in case paused during await
+
+        // Show
+        if (slideshowState.isRightSide) rightImage.style.right = '-5svh';
+        else leftImage.style.left = '-5svh';
+
+        console.log(`Showing image ${slideshowState.currentIndex + 1}`);
+
+        contentAudio.play().then(() => {
+          const onEnded = () => {
+            contentAudio.removeEventListener('ended', onEnded);
+
+            // Hide
+            if (slideshowState.isRightSide) rightImage.style.right = '-50svh';
+            else leftImage.style.left = '-50svh';
+
+            slideshowState.timeout = setTimeout(() => {
+              if (slideshowState.isRunning) {
+                slideshowState.currentIndex++;
+                slideshowState.isRightSide = !slideshowState.isRightSide;
+                showNextImage();
+              }
+            }, 3000);
+          };
+          contentAudio.addEventListener('ended', onEnded, { once: true });
+        }).catch(e => {
+          console.error('Audio play error', e);
+          // Fallback
+          setTimeout(() => {
+            if (slideshowState.isRightSide) rightImage.style.right = '-50svh';
+            else leftImage.style.left = '-50svh';
+
+            slideshowState.timeout = setTimeout(() => {
+              if (slideshowState.isRunning) {
+                slideshowState.currentIndex++;
+                slideshowState.isRightSide = !slideshowState.isRightSide;
+                showNextImage();
+              }
+            }, 3000);
+          }, 3000);
+        });
+      } else {
+        // No audio
+        if (!slideshowState.isRunning) return;
+        if (slideshowState.isRightSide) rightImage.style.right = '-5svh';
+        else leftImage.style.left = '-5svh';
+
+        setTimeout(() => {
+          if (slideshowState.isRightSide) rightImage.style.right = '-50svh';
+          else leftImage.style.left = '-50svh';
+
+          slideshowState.timeout = setTimeout(() => {
+            if (slideshowState.isRunning) {
+              slideshowState.currentIndex++;
+              slideshowState.isRightSide = !slideshowState.isRightSide;
+              showNextImage();
+            }
+          }, 3000);
+        }, 3000);
+      }
+    }
 
     // Function to start sequential image display with audio
     function startSequentialImageDisplay(contentData) {
+      if (slideshowState.isRunning) return; // Already running
+
       // Filter items that have photo_url
-      const validItems = contentData.filter(item =>
+      slideshowState.validItems = contentData.filter(item =>
         item.photo_url && item.photo_url.trim() !== ''
       );
 
-      if (validItems.length === 0) {
+      if (slideshowState.validItems.length === 0) {
         console.log('No valid items with photo_url for sequential display');
         return;
       }
@@ -885,181 +1065,11 @@
       leftImage.style.left = '-50svh';
       rightImage.style.right = '-50svh';
 
-      let currentIndex = 0;
-      let isRightSide = true; // Start with right side first
-      sequentialDisplayRunning = true;
+      // Start fresh
+      slideshowState.currentIndex = 0;
+      slideshowState.isRightSide = true;
+      slideshowState.isRunning = true;
 
-      async function showNextImage() {
-        if (!sequentialDisplayRunning) return;
-
-        if (currentIndex >= validItems.length) {
-          console.log('All images displayed, looping after 15s...');
-          // Loop after 15 seconds
-          sequentialDisplayTimeout = setTimeout(() => {
-            if (sequentialDisplayRunning) {
-              currentIndex = 0;
-              isRightSide = true;
-              showNextImage();
-            }
-          }, 15000);
-          return;
-        }
-
-        const item = validItems[currentIndex];
-        const currentImage = isRightSide ? rightImage : leftImage;
-
-        // Get audio URL (prefer audio_url, fallback to video_url)
-        const audioUrl = item.audio_url || item.video_url || '';
-
-        // Preload image and audio BEFORE showing anything
-        try {
-          await preloadImage(item.photo_url);
-          console.log(`✅ Image ${currentIndex + 1} preloaded`);
-        } catch (error) {
-          console.warn(`⚠️ Image ${currentIndex + 1} preload failed:`, error);
-        }
-
-        // Set image source but keep it hidden
-        currentImage.src = item.photo_url;
-
-        // Wait for image to load
-        await new Promise((resolve) => {
-          if (currentImage.complete) {
-            resolve();
-          } else {
-            currentImage.onload = resolve;
-            currentImage.onerror = resolve; // Continue even if image fails
-          }
-        });
-
-        if (audioUrl && audioUrl.trim() !== '') {
-          // Preload audio before showing image
-          try {
-            await preloadAudio(audioUrl);
-            console.log(`✅ Audio ${currentIndex + 1} preloaded`);
-          } catch (error) {
-            console.warn(`⚠️ Audio ${currentIndex + 1} preload failed:`, error);
-          }
-
-          // Load audio and wait for it to be ready
-          contentAudio.src = audioUrl;
-          contentAudio.muted = false;
-          contentAudio.volume = 1.0;
-          contentAudio.load();
-
-          // Wait for audio to be ready before showing image
-          await new Promise((resolve) => {
-            if (contentAudio.readyState >= 3) { // HAVE_FUTURE_DATA or HAVE_ENOUGH_DATA
-              resolve();
-            } else {
-              const onCanPlay = () => {
-                contentAudio.removeEventListener('canplay', onCanPlay);
-                contentAudio.removeEventListener('canplaythrough', onCanPlayThrough);
-                resolve();
-              };
-              const onCanPlayThrough = () => {
-                contentAudio.removeEventListener('canplay', onCanPlay);
-                contentAudio.removeEventListener('canplaythrough', onCanPlayThrough);
-                resolve();
-              };
-              contentAudio.addEventListener('canplay', onCanPlay);
-              contentAudio.addEventListener('canplaythrough', onCanPlayThrough);
-
-              // Timeout after 5 seconds to prevent infinite waiting
-              setTimeout(() => {
-                contentAudio.removeEventListener('canplay', onCanPlay);
-                contentAudio.removeEventListener('canplaythrough', onCanPlayThrough);
-                resolve();
-              }, 5000);
-            }
-          });
-
-          // Now show image and play audio together
-          if (isRightSide) {
-            rightImage.style.right = '-5svh';
-          } else {
-            leftImage.style.left = '-5svh';
-          }
-
-          console.log(`Showing image ${currentIndex + 1}/${validItems.length} on ${isRightSide ? 'right' : 'left'} side with audio`);
-
-          const playAudio = () => {
-            contentAudio.play().then(() => {
-              console.log('Audio playing for item', currentIndex + 1);
-
-              // When audio ends, hide current image and show next
-              const onEnded = () => {
-                contentAudio.removeEventListener('ended', onEnded);
-
-                // Hide current image
-                if (isRightSide) {
-                  rightImage.style.right = '-50svh';
-                } else {
-                  leftImage.style.left = '-50svh';
-                }
-
-                // Move to next item after 3s gap
-                sequentialDisplayTimeout = setTimeout(() => {
-                  if (sequentialDisplayRunning) {
-                    currentIndex++;
-                    isRightSide = !isRightSide; // Alternate sides
-
-                    // Show next image
-                    showNextImage();
-                  }
-                }, 3000); // 3 second gap between contents
-              };
-
-              contentAudio.addEventListener('ended', onEnded, { once: true });
-            }).catch((error) => {
-              console.error('Error playing audio:', error);
-              // If audio fails, still proceed to next image after 3 seconds
-              setTimeout(() => {
-                if (isRightSide) {
-                  rightImage.style.right = '-50svh';
-                } else {
-                  leftImage.style.left = '-50svh';
-                }
-
-                sequentialDisplayTimeout = setTimeout(() => {
-                  if (sequentialDisplayRunning) {
-                    currentIndex++;
-                    isRightSide = !isRightSide;
-                    showNextImage();
-                  }
-                }, 3000); // 3 second gap
-              }, 3000);
-            });
-          };
-
-          // Play audio immediately (already loaded and ready)
-          playAudio();
-        } else {
-          // No audio, just show image for 3 seconds then move to next
-          console.log('No audio for item', currentIndex + 1);
-          setTimeout(() => {
-            // Hide current image
-            if (isRightSide) {
-              rightImage.style.right = '-50svh';
-            } else {
-              leftImage.style.left = '-50svh';
-            }
-
-            // Move to next item after 3s gap
-            sequentialDisplayTimeout = setTimeout(() => {
-              if (sequentialDisplayRunning) {
-                currentIndex++;
-                isRightSide = !isRightSide; // Alternate sides
-
-                // Show next image
-                showNextImage();
-              }
-            }, 3000); // 3 second gap between contents
-          }, 3000);
-        }
-      }
-
-      // Start the sequence
       showNextImage();
     }
 
@@ -1364,11 +1374,45 @@
         }
       });
 
-      // Ensure the close button functionality remains
       const closeModalButton = document.getElementById("closeModalButton");
       closeModalButton.addEventListener("click", () => {
         messageModal.style.display = "none";
       });
+
+      // Close handlers for letter detail modal
+      const closeLetterDetail = () => {
+        if (lettersDetail) {
+          // Stop video and audio when closing
+          if (ruryVideo) {
+            ruryVideo.pause();
+            ruryVideo.currentTime = 0;
+          }
+          if (ruryAudio) {
+            ruryAudio.pause();
+            ruryAudio.currentTime = 0;
+          }
+
+          // Show the AR video again
+          const arsaVideo = document.getElementById('arsa-video');
+          if (arsaVideo) {
+            arsaVideo.style.display = '';
+          }
+
+          lettersDetail.style.display = 'none';
+
+          // Resulme slideshow from next item
+          resumeSlideshowNext();
+        }
+      };
+
+      if (lettersDetailOverlay) {
+        lettersDetailOverlay.addEventListener('click', closeLetterDetail);
+      }
+
+      // Note: If you have a specific close button inside letters-detail, add event listener here
+      // For example:
+      // const closeLetterBtn = document.getElementById('close-letter-btn');
+      // if (closeLetterBtn) closeLetterBtn.addEventListener('click', closeLetterDetail);
 
       const recordButton = document.getElementById("recordButton");
       const recordInner = document.getElementById("recordInner");
@@ -1441,7 +1485,7 @@
           }
 
           // Start sequential image display when marker is detected (only if not already running)
-          if (window.sequentialContentData && !sequentialDisplayRunning) {
+          if (window.sequentialContentData && !slideshowState.isRunning) {
             startSequentialImageDisplay(window.sequentialContentData);
           }
 
@@ -1516,11 +1560,7 @@
                 }
 
                 // Stop sequential display
-                sequentialDisplayRunning = false;
-                if (sequentialDisplayTimeout) {
-                  clearTimeout(sequentialDisplayTimeout);
-                  sequentialDisplayTimeout = null;
-                }
+                pauseSlideshow();
               }
 
               // Only show the overlay when ALL markers are lost
@@ -1558,20 +1598,9 @@
       if (lettersDetail && e.detail && e.detail.letterData) {
         const letterData = e.detail.letterData;
 
-        // Stop sequential image audio and pause display when modal opens
-        const contentAudio = document.getElementById('content-audio');
-        if (contentAudio) {
-          contentAudio.pause();
-          contentAudio.currentTime = 0;
-          console.log('Sequential image audio stopped (letter modal opened)');
-        }
 
         // Pause sequential display
-        sequentialDisplayRunning = false;
-        if (sequentialDisplayTimeout) {
-          clearTimeout(sequentialDisplayTimeout);
-          sequentialDisplayTimeout = null;
-        }
+        pauseSlideshow();
 
         // Hide the AR video behind letters
         const arsaVideo = document.getElementById('arsa-video');
@@ -1708,29 +1737,7 @@
     });
 
     // Close modal when overlay is clicked
-    if (lettersDetailOverlay) {
-      lettersDetailOverlay.addEventListener('click', () => {
-        if (lettersDetail) {
-          // Stop video and audio when closing
-          if (ruryVideo) {
-            ruryVideo.pause();
-            ruryVideo.currentTime = 0;
-          }
-          if (ruryAudio) {
-            ruryAudio.pause();
-            ruryAudio.currentTime = 0;
-          }
 
-          // Show the AR video again
-          const arsaVideo = document.getElementById('arsa-video');
-          if (arsaVideo) {
-            arsaVideo.style.display = '';
-          }
-
-          lettersDetail.style.display = 'none';
-        }
-      });
-    }
   </script>
 </body>
 
