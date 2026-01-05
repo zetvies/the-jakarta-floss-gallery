@@ -370,13 +370,22 @@
           // Determine X offset based on marker pattern
           let xOffset = 0;
           const markerUrl = marker.getAttribute('url');
+          let targetContainer = marker;
 
           if (markerUrl === 'pattern-ribbon-final.patt') {
             xOffset = -2; // Shift ribbon marker left by 2 units
           } else if (markerUrl === 'pattern-smiley-final.patt') {
             xOffset = -1; // Shift smiley marker left by 1 unit
+          } else if (markerUrl === 'pattern-confetti-final.patt') {
+            // Create wrapper for confetti transformations
+            const wrapper = document.createElement('a-entity');
+            // Move left 3, bottom 3.5. Rotate 60deg right (yaw -60)
+            wrapper.setAttribute('position', '-5, 0, 4.5');
+            wrapper.setAttribute('rotation', '0 0 -60');
+
+            marker.appendChild(wrapper);
+            targetContainer = wrapper;
           }
-          // pattern-confetti-final.patt stays at 0 offset
 
           // Use API data if available, otherwise fall back to static images
           let imageData = [];
@@ -403,7 +412,7 @@
             console.log('⚠️ No API data provided, showing clear scene');
           }
 
-          generateImageGrid(marker, imageData, xOffset);
+          generateImageGrid(targetContainer, imageData, xOffset);
         });
         console.log('✅ Generated trapezium image grids for', markers.length, 'markers');
       } else {
@@ -862,7 +871,9 @@
       isRightSide: true,
       validItems: [],
       isRunning: false,
-      timeout: null
+      timeout: null,
+      runId: 0,
+      isMuted: false
     };
 
     // Helper functions exposed globally
@@ -893,6 +904,8 @@
       if (!window.sequentialContentData) return;
 
       slideshowState.isRunning = true;
+      slideshowState.runId++; // Invalidates any previous pending async calls
+
       // Move to next item immediately
       slideshowState.currentIndex++;
       slideshowState.isRightSide = !slideshowState.isRightSide;
@@ -902,20 +915,24 @@
 
     // Core slideshow logic
     async function showNextImage() {
+      // Capture current runId
+      const thisRunId = slideshowState.runId;
+
       if (!slideshowState.isRunning || slideshowState.validItems.length === 0) return;
 
       // Reset index if out of bounds
       if (slideshowState.currentIndex >= slideshowState.validItems.length) {
         console.log('All images displayed, looping after 15s...');
         slideshowState.timeout = setTimeout(() => {
-          if (slideshowState.isRunning) {
+          if (slideshowState.isRunning && slideshowState.runId === thisRunId) {
             slideshowState.currentIndex = 0;
-            slideshowState.isRightSide = true;
+            // Don't reset isRightSide, let it alternate naturally
             showNextImage();
           }
         }, 15000);
         return;
       }
+
 
       // Wrap index around if modified externally to be very large, or handle as above
       // The above logic handles "end of list", but if we want infinite loop immediately after closing:
@@ -952,11 +969,15 @@
         }
       });
 
+      if (slideshowState.runId !== thisRunId) return; // Check concurrency
+
+
       if (audioUrl && audioUrl.trim() !== '') {
         try { await preloadAudio(audioUrl); } catch (e) { }
 
+
         contentAudio.src = audioUrl;
-        contentAudio.muted = false;
+        contentAudio.muted = slideshowState.isMuted;
         contentAudio.volume = 1.0;
         contentAudio.load();
 
@@ -976,6 +997,8 @@
           }
         });
 
+        if (slideshowState.runId !== thisRunId) return; // Check concurrency
+
         if (!slideshowState.isRunning) return; // Check again in case paused during await
 
         // Show
@@ -993,7 +1016,7 @@
             else leftImage.style.left = '-50svh';
 
             slideshowState.timeout = setTimeout(() => {
-              if (slideshowState.isRunning) {
+              if (slideshowState.isRunning && slideshowState.runId === thisRunId) {
                 slideshowState.currentIndex++;
                 slideshowState.isRightSide = !slideshowState.isRightSide;
                 showNextImage();
@@ -1004,12 +1027,12 @@
         }).catch(e => {
           console.error('Audio play error', e);
           // Fallback
-          setTimeout(() => {
+          slideshowState.timeout = setTimeout(() => {
             if (slideshowState.isRightSide) rightImage.style.right = '-50svh';
             else leftImage.style.left = '-50svh';
 
             slideshowState.timeout = setTimeout(() => {
-              if (slideshowState.isRunning) {
+              if (slideshowState.isRunning && slideshowState.runId === thisRunId) {
                 slideshowState.currentIndex++;
                 slideshowState.isRightSide = !slideshowState.isRightSide;
                 showNextImage();
@@ -1019,16 +1042,24 @@
         });
       } else {
         // No audio
+        if (slideshowState.runId !== thisRunId) return; // Check concurrency
         if (!slideshowState.isRunning) return;
+
         if (slideshowState.isRightSide) rightImage.style.right = '-5svh';
         else leftImage.style.left = '-5svh';
 
         setTimeout(() => {
+          // Check runId again before hiding/proceeding? 
+          if (slideshowState.runId !== thisRunId || !slideshowState.isRunning) {
+            // If interrupted, ensure we hide images if they were shown by this run
+            return;
+          }
+
           if (slideshowState.isRightSide) rightImage.style.right = '-50svh';
           else leftImage.style.left = '-50svh';
 
           slideshowState.timeout = setTimeout(() => {
-            if (slideshowState.isRunning) {
+            if (slideshowState.isRunning && slideshowState.runId === thisRunId) {
               slideshowState.currentIndex++;
               slideshowState.isRightSide = !slideshowState.isRightSide;
               showNextImage();
@@ -1043,14 +1074,16 @@
       if (slideshowState.isRunning) return; // Already running
 
       // Filter items that have photo_url
-      slideshowState.validItems = contentData.filter(item =>
+      const newValidItems = contentData.filter(item =>
         item.photo_url && item.photo_url.trim() !== ''
       );
 
-      if (slideshowState.validItems.length === 0) {
+      if (newValidItems.length === 0) {
         console.log('No valid items with photo_url for sequential display');
         return;
       }
+
+      slideshowState.validItems = newValidItems;
 
       const leftImage = document.getElementById('top-left-image');
       const rightImage = document.getElementById('top-right-image');
@@ -1065,10 +1098,20 @@
       leftImage.style.left = '-50svh';
       rightImage.style.right = '-50svh';
 
-      // Start fresh
-      slideshowState.currentIndex = 0;
-      slideshowState.isRightSide = true;
+      // Resume from previous state if possible, otherwise reset
+      // We check if currentIndex is within bounds.
+      if (slideshowState.currentIndex >= slideshowState.validItems.length) {
+        slideshowState.currentIndex = 0;
+      }
+      // Note: We do NOT reset isRightSide, to preserve pattern continuity
+      // But if it's the very first run (runId 0), we might ensure defaults?
+      // slideshowState.runId is initialized to 0. 
+      if (slideshowState.runId === 0 && slideshowState.currentIndex === 0) {
+        slideshowState.isRightSide = true;
+      }
+
       slideshowState.isRunning = true;
+      slideshowState.runId++;
 
       showNextImage();
     }
@@ -1329,14 +1372,21 @@
       // Add functionality to toggle mute state
       const soundOn = muteButton.querySelector("#sound-on");
       const soundOff = muteButton.querySelector("#sound-off");
-      let isMuted = false;
+      // Remove local isMuted, use slideshowState.isMuted
 
       muteButton.addEventListener("click", () => {
-        isMuted = !isMuted;
+        slideshowState.isMuted = !slideshowState.isMuted;
+        const isMuted = slideshowState.isMuted;
 
         // Toggle video mute
         if (videoElement) {
           videoElement.muted = isMuted;
+        }
+
+        // Toggle slideshow audio mute
+        const contentAudio = document.getElementById('content-audio');
+        if (contentAudio) {
+          contentAudio.muted = isMuted;
         }
 
         // Toggle background music
