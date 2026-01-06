@@ -106,9 +106,37 @@
     // Custom component to resize image based on aspect ratio while fitting within max dimensions
     AFRAME.registerComponent('resize-on-load', {
       init: function () {
-        this.el.addEventListener('materialtextureloaded', (evt) => {
-          const texture = evt.detail.texture;
-          const image = texture.image;
+        const handleResize = (evt) => {
+          const texture = evt.detail ? evt.detail.texture : null;
+          const image = texture ? texture.image : null;
+          
+          // Safari fallback: try to get image from material
+          if (!image && this.el.components && this.el.components.material) {
+            const material = this.el.components.material.material;
+            if (material && material.map && material.map.image) {
+              const img = material.map.image;
+              const width = img.width || img.naturalWidth;
+              const height = img.height || img.naturalHeight;
+              if (width && height) {
+                const ratio = width / height;
+                const maxWidth = 1.5;
+                const maxHeight = 3;
+
+                let newWidth = maxWidth;
+                let newHeight = newWidth / ratio;
+
+                if (newHeight > maxHeight) {
+                  newHeight = maxHeight;
+                  newWidth = newHeight * ratio;
+                }
+
+                this.el.setAttribute('width', newWidth);
+                this.el.setAttribute('height', newHeight);
+                return;
+              }
+            }
+          }
+          
           if (!image) return;
 
           const width = image.width || image.naturalWidth;
@@ -130,7 +158,21 @@
 
           this.el.setAttribute('width', newWidth);
           this.el.setAttribute('height', newHeight);
-        });
+        };
+        
+        // Safari compatibility: Listen to multiple events
+        this.el.addEventListener('materialtextureloaded', handleResize);
+        this.el.addEventListener('loaded', handleResize);
+        
+        // Safari fallback: Check after delay
+        setTimeout(() => {
+          if (this.el.components && this.el.components.material) {
+            const material = this.el.components.material.material;
+            if (material && material.map && material.map.image) {
+              handleResize({ detail: { texture: { image: material.map.image } } });
+            }
+          }
+        }, 500);
       }
     });
 
@@ -318,6 +360,13 @@
 
         // Create image element
         const imageEl = document.createElement('a-image');
+        
+        // Safari compatibility: Preload image and ensure CORS
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = faceSrc;
+        
+        // Set attributes
         imageEl.setAttribute('src', faceSrc);
         imageEl.setAttribute('width', width);
         imageEl.setAttribute('height', height);
@@ -327,13 +376,36 @@
         imageEl.setAttribute('resize-on-load', '');
 
         // Add material properties to prevent overlap glitches
+        // Safari compatibility: Use explicit material settings
         imageEl.setAttribute('material', {
           transparent: true,
           alphaTest: 0.1, // Discard pixels with alpha < 0.1 to prevent transparent part glitches
           depthTest: true,
           depthWrite: true,
-          side: 'double' // Render both sides to prevent flickering
+          side: 'double', // Render both sides to prevent flickering
+          shader: 'flat' // Use flat shader for better Safari compatibility
         });
+        
+        // Safari fix: Force material update after image loads
+        img.onload = function() {
+          // Trigger material refresh for Safari
+          if (imageEl.components && imageEl.components.material) {
+            imageEl.components.material.updateProperties();
+          }
+          // Force scene render update
+          const scene = document.querySelector('a-scene');
+          if (scene && scene.renderer && scene.object3D && scene.camera) {
+            scene.renderer.render(scene.object3D, scene.camera);
+          }
+        };
+        
+        // Safari fix: Force texture reload after image loads
+        img.onload = function() {
+          // Trigger material update for Safari
+          if (imageEl.components && imageEl.components.material) {
+            imageEl.components.material.updateProperties();
+          }
+        };
 
         // Store any additional data attributes
         if (data.id) imageEl.setAttribute('data-id', data.id);
@@ -413,6 +485,23 @@
           }
 
           generateImageGrid(targetContainer, imageData, xOffset);
+          
+          // Safari fix: Force scene render update after adding images
+          const scene = document.querySelector('a-scene');
+          if (scene) {
+            setTimeout(() => {
+              if (scene.renderer && scene.object3D && scene.camera) {
+                scene.renderer.render(scene.object3D, scene.camera);
+              }
+              // Force material updates for all images
+              const images = targetContainer.querySelectorAll('a-image');
+              images.forEach(img => {
+                if (img.components && img.components.material) {
+                  img.components.material.updateProperties();
+                }
+              });
+            }, 500);
+          }
         });
         console.log('✅ Generated trapezium image grids for', markers.length, 'markers');
       } else {

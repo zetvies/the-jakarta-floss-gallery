@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Test | Moon Muffin</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Playpen Sans', cursive, sans-serif;
+            background-color: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
+        }
+
+        #export-container {
+            width: calc(100svh * 9 / 16);
+            height: 100svh;
+            aspect-ratio: 9 / 16;
+            background-color: #FF5627;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Logo at top */
+        #logo-container {
+            position: absolute;
+            top: 3vh;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            height: 8vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #logo-container img {
+            height: 100%;
+            width: auto;
+            object-fit: contain;
+        }
+
+        /* Pin SVG decoration */
+        #pin-svg {
+            position: absolute;
+            top: 50%;
+            left: 25%;
+            width: 5svh;
+            height: 8svh;
+            z-index: 100;
+            pointer-events: none;
+        }
+
+        /* Video component - matching gallery.html */
+        #video-component {
+            position: absolute;
+            top: 16svh;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 25svh;
+            height: 40svh;
+            background-color: white;
+            z-index: 81;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        #rury-video {
+            width: 88%;
+            height: auto;
+            max-height: 80%;
+            object-fit: cover;
+            object-position: center;
+            margin-top: 5%;
+            aspect-ratio: 9 / 16;
+        }
+
+        #audio-icon {
+            width: 100%;
+            height: 100%;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Letter component - matching gallery.html */
+        #letter-component {
+            position: absolute;
+            bottom: 5svh;
+            left: 50%;
+            transform: translateX(-50%) rotate(1deg);
+            width: 80%;
+            height: 40%;
+            background-color: #F4F2E4;
+            padding: 3svh;
+            overflow-y: auto;
+            z-index: 83;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.15));
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        #letter-component-text {
+            font-size: 2svh;
+            line-height: 1.5;
+            color: #333;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal;
+        }
+
+        #letter-component-footer {
+            position: absolute;
+            bottom: 2svh;
+            right: 2svh;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 1svh;
+        }
+
+        #photo-component-img {
+            width: auto;
+            height: 13svh;
+            object-fit: cover;
+            display: none;
+            animation: rotate-snap-1 3s ease-in-out infinite;
+        }
+
+        @keyframes rotate-snap-1 {
+
+            0%,
+            100% {
+                transform: rotate(0deg);
+            }
+
+            50% {
+                transform: rotate(15deg);
+            }
+        }
+
+        #letter-component-sender {
+            font-size: 2.4svh;
+            font-weight: bold;
+            font-family: 'Playpen Sans', cursive;
+            display: none;
+        }
+
+
+        /* Controls */
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1000;
+            display: flex;
+            gap: 15px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px 25px;
+            border-radius: 10px;
+        }
+
+        #controls button {
+            padding: 10px 20px;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #FF5627;
+            color: white;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        #controls button:hover {
+            background-color: #e04a20;
+        }
+
+        #controls button:disabled {
+            background-color: #666;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Export Container -->
+    <div id="export-container">
+        <!-- Logo at top -->
+        <div id="logo-container">
+            <img src="./assets/images/slamatslimit-logo.png" alt="Slamat Slimit Logo" id="logo-img">
+        </div>
+
+        <!-- Pin SVG decoration -->
+        <svg id="pin-svg" width="47" height="64" viewBox="0 0 47 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+                d="M14.9882 30.5399C14.7575 30.798 14.4157 31.6758 13.811 32.4282C12.9256 33.5298 12.3032 34.3378 10.4444 36.6623C9.73858 37.545 8.61764 39.2652 7.07598 41.3014C6.04406 42.6644 5.22841 43.8583 4.5577 44.652C3.69027 45.6785 3.00772 46.9243 2.39982 47.978C1.98266 48.7011 1.54059 49.9758 1.45755 50.9851C1.39714 51.7194 2.3761 53.0561 3.07071 54.0032C3.58089 54.6988 4.31263 55.0905 5.0388 55.5007C5.72033 55.8858 6.5896 56.2402 7.46128 56.6079C8.09018 56.8731 9.36689 57.3075 10.8189 57.8307C13.3935 58.7583 14.2233 58.5021 15.045 58.4533C16.37 58.3746 17.2403 57.6981 18.4211 56.5079C18.6701 56.257 18.7457 56.1078 19.8318 54.7436C20.9179 53.3794 22.9977 50.791 24.1206 49.3647C26.0222 46.9496 27.2421 45.2976 28.1661 43.9595C28.6777 43.2186 29.2421 42.6572 29.9777 41.6183C31.8322 38.9993 32.8066 37.796 33.4229 36.8043C33.9325 35.9844 35.1348 34.1238 36.3971 31.8245C37.2155 30.3338 38.0476 28.2818 38.7255 26.5658C39.4023 24.8526 40.0234 23.5248 40.529 22.1472C40.8727 21.2111 41.3068 20.1462 41.6984 19.39C42.1792 18.4617 42.718 17.0863 43.1505 15.9815C43.4153 15.3053 43.8773 14.3756 44.312 13.2537C44.8712 11.8107 44.9395 10.6163 44.7699 10.2485C44.3814 9.4064 43.7203 8.94379 42.9568 8.28115C41.7375 7.22308 40.3804 6.75635 38.6826 6.3515C37.8641 6.15634 37.2155 7.08772 36.2078 8.4487C34.0471 11.3668 32.9506 13.755 32.4165 14.5481C30.5383 17.3378 29.9945 18.7695 28.4663 21.0541C27.1396 23.0374 24.9752 25.2734 23.7285 26.7667C23.198 27.4021 22.8443 27.9563 22.4497 28.5244C21.9775 29.2042 21.5388 29.8135 21.1554 30.4394C20.4575 31.5789 19.4896 33.0354 18.742 34.1251C17.8798 35.382 17.3123 36.5428 16.7805 37.4238C15.7038 39.2079 15.1499 39.7892 14.7802 40.3639C14.348 41.0356 13.8444 41.6464 13.2937 42.4957C12.8502 43.1796 12.708 43.8736 12.6346 44.446C12.5509 45.0984 14.6356 45.4709 16.2793 45.4024C17.3666 45.3571 17.8931 44.4083 18.6299 43.772C19.9264 42.6523 20.2726 41.7628 21.0296 41.048C22.1019 40.0354 23.8899 37.0903 25.0691 35.6169C26.7858 33.4719 27.227 32.6916 27.7377 31.9947C28.746 30.6187 29.0309 29.7821 29.3004 29.1805C29.654 28.391 30.1994 27.8333 30.5873 27.2901C31.0939 26.5808 31.7097 25.8145 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.8288 23.8508 32.9185 23.7149 33.1617 23.6153"
+                stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round" />
+            <path
+                d="M42.9478 16.6166C43.2126 15.9405 43.6746 15.0108 44.1093 13.8888C44.6684 12.4458 44.7368 11.2514 44.5672 10.8836C44.1787 10.0415 43.5176 9.5789 42.7541 8.91627C41.5348 7.8582 40.1777 7.39146 38.4799 6.98662C37.6614 6.79145 37.0127 7.72283 36.005 9.08381C33.8444 12.002 32.7479 14.3901 32.2138 15.1833C30.3355 17.9729 29.7918 19.4046 28.2636 21.6892C26.9369 23.6726 24.7725 25.9085 23.5258 27.4018C22.9953 28.0372 22.6416 28.5915 22.247 29.1595C21.7748 29.8393 21.3361 30.4486 20.9527 31.0746C20.2548 32.214 19.2869 33.6705 18.5393 34.7602C17.677 36.0171 17.1095 37.1779 16.5778 38.0589C15.501 39.843 14.9471 40.4243 14.5775 40.999C14.1453 41.6708 13.6417 42.2815 13.091 43.1308C12.6475 43.8147 12.5053 44.5087 12.4319 45.0812C12.3482 45.7335 14.4329 46.1061 16.0766 46.0376C17.1639 45.9922 17.6904 45.0434 18.4272 44.4071C19.7237 43.2875 20.0698 42.3979 20.8269 41.6831C21.8992 40.6705 23.6872 37.7254 24.8664 36.252C26.5831 34.107 27.0243 33.3267 27.535 32.6298C28.5433 31.2539 28.8282 30.4172 29.0977 29.8157C29.4513 29.0261 29.9967 28.4684 30.3845 27.9252C30.8912 27.2159 31.507 26.4496 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.6261 24.4859 32.7158 24.35 32.959 24.2504"
+                stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round" />
+        </svg>
+
+        <!-- Video component -->
+        <div id="video-component">
+            <video id="rury-video" src="" loop autoplay playsinline webkit-playsinline x5-playsinline
+                style="display: none;"></video>
+            <audio id="rury-audio" src="" loop style="display: none;"></audio>
+            <div id="audio-icon">
+                <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.48 8.71 14 7.97V16.02C15.48 15.29 16.5 13.77 16.5 12ZM14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.85 14 18.71V20.77C18.01 19.86 21 16.28 21 12C21 7.72 18.01 4.14 14 3.23Z"
+                        fill="#FF5627" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Letter component -->
+        <div id="letter-component">
+            <div id="letter-component-text"></div>
+            <div id="letter-component-footer">
+                <img id="photo-component-img" src="" alt="photo">
+                <div id="letter-component-sender"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Controls -->
+    <div id="controls">
+        <button id="load-sample-btn">Load Sample Data</button>
+        <button id="export-video-btn">Export Video</button>
+        <button id="screenshot-btn">Screenshot</button>
+        <button id="preview-btn">Preview</button>
+    </div>
+
+    <!-- Background Music -->
+    <audio id="bgm-audio" loop style="display: none;">
+        <source src="./assets/happy-birthday-orchestra.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        // Sample data object
+        const sampleData = {
+            logo_url: './assets/images/slamatslimit-logo.png',
+            video_url: './assets/videos/arsa.mp4', // Example video
+            message: 'Happy Birthday! Wishing you a wonderful day filled with joy, laughter, and all the things that make you smile. May this special day bring you endless happiness and may all your dreams come true!',
+            photo_url: './assets/face-1.png',
+            audio_url: './assets/happy-birthday-orchestra.mp3',
+            name: 'Anonymous'
+        };
+
+        // Current data object
+        let currentData = { ...sampleData };
+
+        // DOM elements
+        const exportContainer = document.getElementById('export-container');
+        const logoImg = document.getElementById('logo-img');
+        const ruryVideo = document.getElementById('rury-video');
+        const ruryAudio = document.getElementById('rury-audio');
+        const audioIcon = document.getElementById('audio-icon');
+        const letterText = document.getElementById('letter-component-text');
+        const photoImg = document.getElementById('photo-component-img');
+        const letterSender = document.getElementById('letter-component-sender');
+        const bgmAudio = document.getElementById('bgm-audio');
+        const loadSampleBtn = document.getElementById('load-sample-btn');
+        const exportVideoBtn = document.getElementById('export-video-btn');
+        const screenshotBtn = document.getElementById('screenshot-btn');
+        const previewBtn = document.getElementById('preview-btn');
+        const videoComponent = document.getElementById('video-component');
+        const letterComponent = document.getElementById('letter-component');
+        const pinSvg = document.getElementById('pin-svg');
+
+        // Initialize with sample data - matching gallery.html structure
+        function loadData(data) {
+            currentData = { ...data };
+
+            // Load logo
+            if (data.logo_url) {
+                logoImg.src = data.logo_url;
+            }
+
+            // Hide both video and audio initially
+            if (ruryVideo) {
+                ruryVideo.style.display = 'none';
+                ruryVideo.src = '';
+                ruryVideo.pause();
+            }
+            if (ruryAudio) {
+                ruryAudio.style.display = 'none';
+                ruryAudio.src = '';
+                ruryAudio.pause();
+            }
+            if (audioIcon) {
+                audioIcon.style.display = 'none';
+            }
+
+            // Update media component - prioritize video, then audio
+            const hasVideo = (data.video_url && data.video_url.trim() !== '') ||
+                (data.video && data.video.trim() !== '');
+            const hasAudio = (data.audio_url && data.audio_url.trim() !== '') ||
+                (data.audio && data.audio.trim() !== '');
+
+            const videoUrl = data.video_url || data.video || '';
+            const audioUrl = data.audio_url || data.audio || '';
+
+            if (hasVideo && ruryVideo && videoUrl) {
+                if (audioIcon) audioIcon.style.display = 'none';
+                ruryVideo.src = videoUrl;
+                ruryVideo.style.display = 'block';
+                const playVideo = () => {
+                    ruryVideo.play().catch(e => {
+                        console.log('Video autoplay error:', e);
+                        setTimeout(() => {
+                            ruryVideo.play().catch(err => console.log('Video retry error:', err));
+                        }, 500);
+                    });
+                };
+                if (ruryVideo.readyState >= 2) {
+                    playVideo();
+                } else {
+                    ruryVideo.addEventListener('canplay', playVideo, { once: true });
+                    ruryVideo.load();
+                }
+            } else if (hasAudio && ruryAudio && audioUrl) {
+                if (ruryVideo) ruryVideo.style.display = 'none';
+                if (audioIcon) audioIcon.style.display = 'flex';
+                ruryAudio.muted = false;
+                ruryAudio.volume = 1.0;
+                ruryAudio.src = audioUrl;
+                ruryAudio.style.display = 'block';
+                const playAudio = () => {
+                    ruryAudio.muted = false;
+                    ruryAudio.volume = 1.0;
+                    ruryAudio.play().then(() => {
+                        console.log('Audio playing successfully');
+                    }).catch(e => {
+                        console.log('Audio autoplay error:', e);
+                        setTimeout(() => {
+                            ruryAudio.muted = false;
+                            ruryAudio.volume = 1.0;
+                            ruryAudio.play().catch(err => console.log('Audio retry error:', err));
+                        }, 500);
+                    });
+                };
+                if (ruryAudio.readyState >= 2) {
+                    playAudio();
+                } else {
+                    ruryAudio.addEventListener('canplay', playAudio, { once: true });
+                    ruryAudio.addEventListener('loadeddata', playAudio, { once: true });
+                    ruryAudio.addEventListener('canplaythrough', playAudio, { once: true });
+                    ruryAudio.load();
+                }
+            }
+
+            // Update photo component
+            if (photoImg) {
+                const photoUrl = data.photo_url || data.photo || '';
+                if (photoUrl && photoUrl.trim() !== '') {
+                    photoImg.src = photoUrl;
+                    photoImg.style.display = 'block';
+                } else {
+                    photoImg.style.display = 'none';
+                }
+            }
+
+            // Update sender name
+            if (letterSender) {
+                const senderName = data.name || data.senderName || '';
+                if (senderName && senderName.trim() !== '') {
+                    letterSender.textContent = senderName;
+                    letterSender.style.display = 'block';
+                } else {
+                    letterSender.style.display = 'none';
+                }
+            }
+
+            // Update letter text component
+            if (letterText) {
+                const message = data.message || data.text || '';
+                if (message) {
+                    letterText.textContent = message;
+                }
+            }
+
+            // Center letter if no video and no audio
+            if (!hasVideo && !hasAudio) {
+                if (letterComponent) {
+                    letterComponent.style.left = '50%';
+                    letterComponent.style.right = 'auto';
+                    letterComponent.style.transform = 'translateX(-50%) rotate(1deg)';
+                }
+                if (videoComponent) videoComponent.style.display = 'none';
+                if (pinSvg) pinSvg.style.display = 'none';
+            } else {
+                if (letterComponent) {
+                    letterComponent.style.left = '50%';
+                    letterComponent.style.right = 'auto';
+                    letterComponent.style.transform = 'translateX(-50%) rotate(1deg)';
+                }
+                if (videoComponent) videoComponent.style.display = 'flex';
+                if (pinSvg) pinSvg.style.display = 'block';
+            }
+
+            // Load BGM
+            if (data.audio_url) {
+                bgmAudio.src = data.audio_url;
+                bgmAudio.load();
+            }
+        }
+
+        // Load sample data on button click
+        loadSampleBtn.addEventListener('click', () => {
+            loadData(sampleData);
+            alert('Sample data loaded!');
+        });
+
+        // Preview with audio
+        previewBtn.addEventListener('click', () => {
+            bgmAudio.volume = 0.3;
+            bgmAudio.play().catch(e => {
+                console.log('BGM play error:', e);
+            });
+
+            if (ruryVideo && ruryVideo.src) {
+                ruryVideo.muted = false;
+                ruryVideo.volume = 1.0;
+                ruryVideo.play().catch(e => {
+                    console.log('Video play error:', e);
+                });
+            }
+
+            if (ruryAudio && ruryAudio.src) {
+                ruryAudio.muted = false;
+                ruryAudio.volume = 1.0;
+                ruryAudio.play().catch(e => {
+                    console.log('Audio play error:', e);
+                });
+            }
+        });
+
+        // Export video function
+        async function exportVideo() {
+            exportVideoBtn.disabled = true;
+            exportVideoBtn.textContent = 'Exporting...';
+
+            try {
+                // Check if MediaRecorder is supported
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+                    throw new Error('Screen recording not supported. Use canvas-based export instead.');
+                }
+
+                // For now, we'll use a canvas-based approach with html2canvas
+                // You'll need to include html2canvas library
+                if (typeof html2canvas === 'undefined') {
+                    // Fallback: Use MediaRecorder API with canvas
+                    await exportWithCanvas();
+                } else {
+                    await exportWithHtml2Canvas();
+                }
+            } catch (error) {
+                console.error('Export error:', error);
+                alert('Export failed: ' + error.message);
+            } finally {
+                exportVideoBtn.disabled = false;
+                exportVideoBtn.textContent = 'Export Video';
+            }
+        }
+
+        // Canvas-based export with html2canvas
+        async function exportWithCanvas() {
+            if (typeof html2canvas === 'undefined') {
+                throw new Error('html2canvas library is required. Please include it in the page.');
+            }
+
+            // Get container's actual dimensions for reference
+            const containerRect = exportContainer.getBoundingClientRect();
+            const containerWidth = containerRect.width;
+            const containerHeight = containerRect.height;
+
+            // Set HD resolution: 1080x1920 (9:16 aspect ratio, Full HD portrait)
+            const hdWidth = 1080;
+            const hdHeight = 1920;
+
+            // Calculate scale factor to capture at high quality
+            const scale = Math.max(hdWidth / containerWidth, hdHeight / containerHeight) * (window.devicePixelRatio || 1);
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Set canvas to HD resolution
+            canvas.width = hdWidth;
+            canvas.height = hdHeight;
+
+            // Create video stream from canvas
+            const stream = canvas.captureStream(30); // 30 FPS
+
+            // Get audio context for mixing
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            let destination = null;
+            const audioSources = [];
+
+            // Create audio destination for mixing
+            destination = audioContext.createMediaStreamDestination();
+
+            // Create gain nodes for volume control
+            const bgmGainNode = audioContext.createGain();
+            const mediaGainNode = audioContext.createGain();
+
+            // Set volume levels: media audio louder than BGM
+            bgmGainNode.gain.value = 0.2; // BGM at 20% volume
+            mediaGainNode.gain.value = 0.8; // Media audio at 80% volume
+
+            // Connect gain nodes to destination
+            bgmGainNode.connect(destination);
+            mediaGainNode.connect(destination);
+
+            // Add BGM audio if available
+            if (bgmAudio.src && bgmAudio.src !== '') {
+                try {
+                    bgmAudio.currentTime = 0;
+                    bgmAudio.volume = 1.0; // Set to max, control via gain node
+                    const bgmSource = audioContext.createMediaElementSource(bgmAudio);
+                    bgmSource.connect(bgmGainNode);
+                    audioSources.push(bgmSource);
+                } catch (e) {
+                    console.warn('Could not add BGM to stream:', e);
+                }
+            }
+
+            // Add media audio (from video or audio element) if available
+            if (ruryVideo && ruryVideo.src && !ruryVideo.muted) {
+                try {
+                    ruryVideo.volume = 1.0; // Set to max, control via gain node
+                    const videoSource = audioContext.createMediaElementSource(ruryVideo);
+                    videoSource.connect(mediaGainNode);
+                    audioSources.push(videoSource);
+                } catch (e) {
+                    console.warn('Could not add video audio to stream:', e);
+                }
+            } else if (ruryAudio && ruryAudio.src && !ruryAudio.muted) {
+                try {
+                    ruryAudio.volume = 1.0; // Set to max, control via gain node
+                    const audioSource = audioContext.createMediaElementSource(ruryAudio);
+                    audioSource.connect(mediaGainNode);
+                    audioSources.push(audioSource);
+                } catch (e) {
+                    console.warn('Could not add audio to stream:', e);
+                }
+            }
+
+            // Mix canvas video stream with audio
+            const audioTracks = destination.stream.getAudioTracks();
+            if (audioTracks.length > 0) {
+                stream.addTrack(audioTracks[0]);
+            }
+
+            // Create MediaRecorder - prefer MP4 format
+            const chunks = [];
+            let mimeType = 'video/mp4';
+
+            // Check for MP4 support first, then fallback to WebM
+            if (MediaRecorder.isTypeSupported('video/mp4')) {
+                mimeType = 'video/mp4';
+            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
+                mimeType = 'video/webm;codecs=vp9';
+            } else if (MediaRecorder.isTypeSupported('video/webm')) {
+                mimeType = 'video/webm';
+            }
+
+            const recorder = new MediaRecorder(stream, {
+                mimeType: mimeType,
+                videoBitsPerSecond: 10000000 // 10 Mbps for higher quality
+            });
+
+            recorder.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    chunks.push(e.data);
+                }
+            };
+
+            recorder.onstop = () => {
+                const blob = new Blob(chunks, { type: mimeType });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `export-video-${Date.now()}.${mimeType.includes('webm') ? 'webm' : 'mp4'}`;
+                a.click();
+                URL.revokeObjectURL(url);
+
+                // Cleanup
+                audioSources.forEach(source => {
+                    try {
+                        source.disconnect();
+                    } catch (e) {
+                        console.warn('Error disconnecting audio source:', e);
+                    }
+                });
+                if (destination) {
+                    try {
+                        destination.disconnect();
+                    } catch (e) {
+                        console.warn('Error disconnecting destination:', e);
+                    }
+                }
+                audioContext.close();
+            };
+
+            // Start recording
+            recorder.start(1000); // Collect data every second
+
+            // Play BGM if available
+            if (bgmAudio.src && bgmAudio.src !== '') {
+                try {
+                    bgmAudio.play();
+                } catch (e) {
+                    console.warn('BGM play error:', e);
+                }
+            }
+
+            // Play media audio/video if available
+            if (ruryVideo && ruryVideo.src) {
+                try {
+                    ruryVideo.muted = false;
+                    ruryVideo.play();
+                } catch (e) {
+                    console.warn('Video play error:', e);
+                }
+            } else if (ruryAudio && ruryAudio.src) {
+                try {
+                    ruryAudio.muted = false;
+                    ruryAudio.play();
+                } catch (e) {
+                    console.warn('Audio play error:', e);
+                }
+            }
+
+            // Capture frames
+            const duration = 10000; // 10 seconds
+            const startTime = Date.now();
+            const fps = 30;
+            const frameInterval = 1000 / fps;
+            let lastFrameTime = 0;
+
+            async function captureFrame() {
+                const currentTime = Date.now();
+                const elapsed = currentTime - startTime;
+
+                if (elapsed >= duration) {
+                    recorder.stop();
+                    bgmAudio.pause();
+                    bgmAudio.currentTime = 0;
+                    if (ruryVideo) {
+                        ruryVideo.pause();
+                        ruryVideo.currentTime = 0;
+                    }
+                    if (ruryAudio) {
+                        ruryAudio.pause();
+                        ruryAudio.currentTime = 0;
+                    }
+                    return;
+                }
+
+                // Throttle to 30 FPS
+                if (currentTime - lastFrameTime >= frameInterval) {
+                    try {
+                        // Temporarily expand letter component to show all content
+                        const letterComponent = document.getElementById('letter-component');
+                        let originalHeight = null;
+                        let originalOverflow = null;
+                        let scrollPosition = 0;
+
+                        if (letterComponent) {
+                            scrollPosition = letterComponent.scrollTop;
+                            originalHeight = letterComponent.style.height;
+                            originalOverflow = letterComponent.style.overflow;
+
+                            // Temporarily expand to show all content
+                            const scrollHeight = letterComponent.scrollHeight;
+                            letterComponent.style.height = scrollHeight + 'px';
+                            letterComponent.style.overflow = 'visible';
+                            letterComponent.scrollTop = 0;
+                        }
+
+                        // Wait a bit to ensure video frame is ready
+                        await new Promise(resolve => setTimeout(resolve, 50));
+
+                        // Capture the container using html2canvas with container's actual dimensions
+                        const canvasElement = await html2canvas(exportContainer, {
+                            useCORS: true,
+                            allowTaint: true,
+                            backgroundColor: '#FF5627',
+                            scale: scale,
+                            logging: false,
+                            width: containerWidth,
+                            height: containerHeight,
+                            windowWidth: containerWidth,
+                            windowHeight: containerHeight,
+                            scrollX: 0,
+                            scrollY: 0,
+                            onclone: (clonedDoc) => {
+                                // Inject animation keyframes into cloned document
+                                const style = clonedDoc.createElement('style');
+                                style.textContent = `
+                  @keyframes rotate-snap-1 {
+                    0%, 100% {
+                      transform: rotate(0deg);
+                    }
+                    50% {
+                      transform: rotate(15deg);
+                    }
+                  }
+                `;
+                                clonedDoc.head.appendChild(style);
+
+                                // Ensure video component and video are properly styled in cloned document
+                                const clonedVideoComponent = clonedDoc.getElementById('video-component');
+                                const clonedVideo = clonedDoc.getElementById('rury-video');
+                                const clonedPinSvg = clonedDoc.getElementById('pin-svg');
+
+                                if (clonedVideoComponent) {
+                                    clonedVideoComponent.style.overflow = 'visible';
+                                    clonedVideoComponent.style.display = 'flex';
+                                    clonedVideoComponent.style.transform = 'scaleX(0.8) translateX(-60%)';
+                                }
+
+                                if (clonedVideo) {
+                                    clonedVideo.style.display = 'block';
+                                    // Make video content slightly smaller horizontally to fix stretching
+                                    clonedVideo.style.width = '82%'; // Further reduced to fix stretching
+                                    clonedVideo.style.height = 'auto';
+                                    clonedVideo.style.maxHeight = '80%';
+                                    clonedVideo.style.aspectRatio = '9 / 16';
+                                    clonedVideo.style.objectFit = 'cover';
+                                    clonedVideo.style.objectPosition = 'center';
+                                    clonedVideo.style.marginTop = '5%';
+                                    clonedVideo.style.position = 'relative';
+                                    clonedVideo.style.left = 'auto';
+                                    clonedVideo.style.right = 'auto';
+                                }
+
+                                // Ensure pin SVG is visible and properly rendered
+                                if (clonedPinSvg) {
+                                    clonedPinSvg.style.display = 'block';
+                                    clonedPinSvg.style.visibility = 'visible';
+                                    clonedPinSvg.style.opacity = '1';
+                                    clonedPinSvg.style.position = 'absolute';
+                                    clonedPinSvg.style.pointerEvents = 'none';
+                                    // Force SVG to render by ensuring it has dimensions
+                                    if (!clonedPinSvg.getAttribute('width') || !clonedPinSvg.getAttribute('height')) {
+                                        clonedPinSvg.setAttribute('width', '47');
+                                        clonedPinSvg.setAttribute('height', '64');
+                                    }
+                                }
+
+                                // Ensure photo animation is visible and running
+                                const clonedPhotoImg = clonedDoc.getElementById('photo-component-img');
+                                if (clonedPhotoImg) {
+                                    clonedPhotoImg.style.display = 'block';
+                                    clonedPhotoImg.style.visibility = 'visible';
+                                    clonedPhotoImg.style.opacity = '1';
+
+                                    // Remove any inline transform that might override animation
+                                    clonedPhotoImg.style.transform = '';
+
+                                    // Ensure animation is applied and running
+                                    clonedPhotoImg.style.animation = 'rotate-snap-1 3s ease-in-out infinite';
+                                    clonedPhotoImg.style.animationPlayState = 'running';
+                                    clonedPhotoImg.style.animationFillMode = 'both';
+
+                                    // Force reflow to ensure animation starts
+                                    clonedPhotoImg.offsetHeight;
+
+                                    // Trigger animation by removing and re-adding
+                                    const animationName = clonedPhotoImg.style.animation;
+                                    clonedPhotoImg.style.animation = 'none';
+                                    clonedPhotoImg.offsetHeight; // Force reflow
+                                    clonedPhotoImg.style.animation = animationName;
+                                }
+                            },
+                            ignoreElements: (element) => {
+                                // Don't capture controls
+                                return element.id === 'controls';
+                            }
+                        });
+
+                        // Draw captured frame to canvas at full size (already scaled)
+                        ctx.clearRect(0, 0, canvas.width, canvas.height);
+                        ctx.drawImage(canvasElement, 0, 0, canvas.width, canvas.height);
+
+                        // Restore letter component
+                        if (letterComponent) {
+                            letterComponent.style.height = originalHeight || '';
+                            letterComponent.style.overflow = originalOverflow || '';
+                            letterComponent.scrollTop = scrollPosition;
+                        }
+
+                        lastFrameTime = currentTime;
+                    } catch (error) {
+                        console.error('Error capturing frame:', error);
+                    }
+                }
+
+                requestAnimationFrame(captureFrame);
+            }
+
+            captureFrame();
+        }
+
+        // Export with html2canvas (wrapper)
+        async function exportWithHtml2Canvas() {
+            return exportWithCanvas();
+        }
+
+        // Export button click
+        exportVideoBtn.addEventListener('click', exportVideo);
+
+        // Screenshot function - capture single frame
+        async function takeScreenshot() {
+            if (typeof html2canvas === 'undefined') {
+                alert('html2canvas library is required for screenshots');
+                return;
+            }
+
+            screenshotBtn.disabled = true;
+            screenshotBtn.textContent = 'Capturing...';
+
+            try {
+                // Temporarily expand letter component to show all content
+                const letterComponent = document.getElementById('letter-component');
+                let originalHeight = null;
+                let originalOverflow = null;
+                let scrollPosition = 0;
+
+                if (letterComponent) {
+                    scrollPosition = letterComponent.scrollTop;
+                    originalHeight = letterComponent.style.height;
+                    originalOverflow = letterComponent.style.overflow;
+
+                    // Temporarily expand to show all content
+                    const scrollHeight = letterComponent.scrollHeight;
+                    letterComponent.style.height = scrollHeight + 'px';
+                    letterComponent.style.overflow = 'visible';
+                    letterComponent.scrollTop = 0;
+                }
+
+                // Get container dimensions
+                const containerRect = exportContainer.getBoundingClientRect();
+                const containerWidth = containerRect.width;
+                const containerHeight = containerRect.height;
+
+                // Use HD resolution for screenshot
+                const hdWidth = 1080;
+                const hdHeight = 1920;
+                const scale = Math.max(hdWidth / containerWidth, hdHeight / containerHeight) * (window.devicePixelRatio || 1);
+
+                // Wait a bit to ensure video frame is ready
+                await new Promise(resolve => setTimeout(resolve, 100));
+
+                // Capture the container using html2canvas
+                const canvasElement = await html2canvas(exportContainer, {
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#FF5627',
+                    scale: scale,
+                    logging: false,
+                    width: containerWidth,
+                    height: containerHeight,
+                    windowWidth: containerWidth,
+                    windowHeight: containerHeight,
+                    scrollX: 0,
+                    scrollY: 0,
+                    onclone: (clonedDoc) => {
+                        // Inject animation keyframes into cloned document
+                        const style = clonedDoc.createElement('style');
+                        style.textContent = `
+              @keyframes rotate-snap-1 {
+                0%, 100% {
+                  transform: rotate(0deg);
+                }
+                50% {
+                  transform: rotate(15deg);
+                }
+              }
+            `;
+                        clonedDoc.head.appendChild(style);
+
+                        // Ensure video component and video are properly styled in cloned document
+                        const clonedVideoComponent = clonedDoc.getElementById('video-component');
+                        const clonedVideo = clonedDoc.getElementById('rury-video');
+                        const clonedPinSvg = clonedDoc.getElementById('pin-svg');
+
+                        if (clonedVideoComponent) {
+                            clonedVideoComponent.style.overflow = 'visible';
+                            clonedVideoComponent.style.display = 'flex';
+                            clonedVideoComponent.style.transform = 'scaleX(0.8) translateX(-60%)';
+                        }
+
+                        if (clonedVideo) {
+                            clonedVideo.style.display = 'block';
+                            clonedVideo.style.width = '82%';
+                            clonedVideo.style.height = 'auto';
+                            clonedVideo.style.maxHeight = '80%';
+                            clonedVideo.style.aspectRatio = '9 / 16';
+                            clonedVideo.style.objectFit = 'cover';
+                            clonedVideo.style.objectPosition = 'center';
+                            clonedVideo.style.marginTop = '5%';
+                            clonedVideo.style.position = 'relative';
+                            clonedVideo.style.left = 'auto';
+                            clonedVideo.style.right = 'auto';
+                        }
+
+                        // Ensure pin SVG is visible and properly rendered
+                        if (clonedPinSvg) {
+                            clonedPinSvg.style.display = 'block';
+                            clonedPinSvg.style.visibility = 'visible';
+                            clonedPinSvg.style.opacity = '1';
+                            clonedPinSvg.style.position = 'absolute';
+                            clonedPinSvg.style.pointerEvents = 'none';
+                            clonedPinSvg.style.zIndex = '100';
+                            clonedPinSvg.style.top = '50%';
+                            clonedPinSvg.style.left = '25%';
+                            clonedPinSvg.style.width = '5svh';
+                            clonedPinSvg.style.height = '8svh';
+
+                            // Ensure SVG has proper attributes
+                            if (!clonedPinSvg.getAttribute('width')) {
+                                clonedPinSvg.setAttribute('width', '47');
+                            }
+                            if (!clonedPinSvg.getAttribute('height')) {
+                                clonedPinSvg.setAttribute('height', '64');
+                            }
+                            if (!clonedPinSvg.getAttribute('viewBox')) {
+                                clonedPinSvg.setAttribute('viewBox', '0 0 47 64');
+                            }
+
+                            // Force SVG to render by ensuring paths are visible
+                            const paths = clonedPinSvg.querySelectorAll('path');
+                            paths.forEach(path => {
+                                path.setAttribute('stroke', '#28B7FF');
+                                path.setAttribute('stroke-width', '2.91137');
+                                path.setAttribute('stroke-linecap', 'round');
+                                path.style.display = 'block';
+                                path.style.visibility = 'visible';
+                            });
+                        }
+
+                        // Ensure photo animation is visible and running
+                        const clonedPhotoImg = clonedDoc.getElementById('photo-component-img');
+                        if (clonedPhotoImg) {
+                            clonedPhotoImg.style.display = 'block';
+                            clonedPhotoImg.style.visibility = 'visible';
+                            clonedPhotoImg.style.opacity = '1';
+
+                            // Remove any inline transform that might override animation
+                            clonedPhotoImg.style.transform = '';
+
+                            // Ensure animation is applied and running
+                            clonedPhotoImg.style.animation = 'rotate-snap-1 3s ease-in-out infinite';
+                            clonedPhotoImg.style.animationPlayState = 'running';
+                            clonedPhotoImg.style.animationFillMode = 'both';
+
+                            // Force reflow to ensure animation starts
+                            clonedPhotoImg.offsetHeight;
+
+                            // Trigger animation by removing and re-adding
+                            const animationName = clonedPhotoImg.style.animation;
+                            clonedPhotoImg.style.animation = 'none';
+                            clonedPhotoImg.offsetHeight; // Force reflow
+                            clonedPhotoImg.style.animation = animationName;
+                        }
+                    },
+                    ignoreElements: (element) => {
+                        return element.id === 'controls';
+                    }
+                });
+
+                // Create HD canvas and scale the captured image
+                const hdCanvas = document.createElement('canvas');
+                const hdCtx = hdCanvas.getContext('2d');
+                hdCanvas.width = hdWidth;
+                hdCanvas.height = hdHeight;
+
+                // Draw and scale to HD
+                hdCtx.drawImage(canvasElement, 0, 0, hdWidth, hdHeight);
+
+                // Convert to blob and download
+                hdCanvas.toBlob((blob) => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `screenshot-${Date.now()}.png`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }, 'image/png');
+
+                // Restore letter component
+                if (letterComponent) {
+                    letterComponent.style.height = originalHeight || '';
+                    letterComponent.style.overflow = originalOverflow || '';
+                    letterComponent.scrollTop = scrollPosition;
+                }
+
+            } catch (error) {
+                console.error('Screenshot error:', error);
+                alert('Screenshot failed: ' + error.message);
+            } finally {
+                screenshotBtn.disabled = false;
+                screenshotBtn.textContent = 'Screenshot';
+            }
+        }
+
+        // Screenshot button click
+        screenshotBtn.addEventListener('click', takeScreenshot);
+
+        // Initialize with sample data on load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadData(sampleData);
+        });
+
+        // Allow setting data from URL or external source
+        window.setExportData = function (data) {
+            loadData(data);
+        };
+
+        // Allow getting current data
+        window.getExportData = function () {
+            return currentData;
+        };
+    </script>
+
+    <!-- Include html2canvas for better export quality -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+</body>
+
+</html>
