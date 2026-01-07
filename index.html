@@ -163,8 +163,9 @@
         // Safari compatibility: Listen to multiple events
         this.el.addEventListener('materialtextureloaded', handleResize);
         this.el.addEventListener('loaded', handleResize);
+        this.el.addEventListener('materialchanged', handleResize);
         
-        // Safari fallback: Check after delay
+        // Safari fallback: Check after multiple delays (Safari loads textures asynchronously)
         setTimeout(() => {
           if (this.el.components && this.el.components.material) {
             const material = this.el.components.material.material;
@@ -173,6 +174,16 @@
             }
           }
         }, 500);
+        
+        // Additional Safari check after longer delay
+        setTimeout(() => {
+          if (this.el.components && this.el.components.material) {
+            const material = this.el.components.material.material;
+            if (material && material.map && material.map.image) {
+              handleResize({ detail: { texture: { image: material.map.image } } });
+            }
+          }
+        }, 1500);
       }
     });
 
@@ -361,13 +372,7 @@
         // Create image element
         const imageEl = document.createElement('a-image');
         
-        // Safari compatibility: Preload image and ensure CORS
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = faceSrc;
-        
-        // Set attributes
-        imageEl.setAttribute('src', faceSrc);
+        // Set attributes first
         imageEl.setAttribute('width', width);
         imageEl.setAttribute('height', height);
         imageEl.setAttribute('position', `${x} ${y} ${z}`);
@@ -385,33 +390,97 @@
           side: 'double', // Render both sides to prevent flickering
           shader: 'flat' // Use flat shader for better Safari compatibility
         });
-        
-        // Safari fix: Force material update after image loads
-        img.onload = function() {
-          // Trigger material refresh for Safari
-          if (imageEl.components && imageEl.components.material) {
-            imageEl.components.material.updateProperties();
-          }
-          // Force scene render update
-          const scene = document.querySelector('a-scene');
-          if (scene && scene.renderer && scene.object3D && scene.camera) {
-            scene.renderer.render(scene.object3D, scene.camera);
-          }
-        };
-        
-        // Safari fix: Force texture reload after image loads
-        img.onload = function() {
-          // Trigger material update for Safari
-          if (imageEl.components && imageEl.components.material) {
-            imageEl.components.material.updateProperties();
-          }
-        };
 
         // Store any additional data attributes
         if (data.id) imageEl.setAttribute('data-id', data.id);
         if (data.class) imageEl.setAttribute('class', data.class);
 
+        // Safari compatibility: Preload image and ensure it loads before setting src
+        const img = new Image();
+        
+        // Try with CORS first, fallback to no CORS if it fails
+        img.crossOrigin = 'anonymous';
+        
+        // Safari fix: Wait for image to load before setting src on a-image
+        const loadImage = () => {
+          return new Promise((resolve, reject) => {
+            img.onload = () => {
+              // Set src after image is loaded (Safari needs this)
+              imageEl.setAttribute('src', faceSrc);
+              
+              // Safari fix: Force material and texture update after image loads
+              setTimeout(() => {
+                if (imageEl.components && imageEl.components.material) {
+                  // Force material update
+                  imageEl.components.material.updateProperties();
+                  
+                  // Force texture refresh for Safari
+                  const material = imageEl.components.material.material;
+                  if (material && material.map) {
+                    material.map.needsUpdate = true;
+                  }
+                }
+                
+                // Force scene render update for Safari
+                const scene = document.querySelector('a-scene');
+                if (scene && scene.renderer && scene.object3D && scene.camera) {
+                  scene.renderer.render(scene.object3D, scene.camera);
+                }
+              }, 50);
+              
+              resolve();
+            };
+            
+            img.onerror = () => {
+              // If CORS fails, try without CORS
+              if (img.crossOrigin === 'anonymous') {
+                console.warn(`CORS failed for ${faceSrc}, retrying without CORS`);
+                const imgRetry = new Image();
+                imgRetry.onload = () => {
+                  imageEl.setAttribute('src', faceSrc);
+                  setTimeout(() => {
+                    if (imageEl.components && imageEl.components.material) {
+                      imageEl.components.material.updateProperties();
+                      const material = imageEl.components.material.material;
+                      if (material && material.map) {
+                        material.map.needsUpdate = true;
+                      }
+                    }
+                    const scene = document.querySelector('a-scene');
+                    if (scene && scene.renderer && scene.object3D && scene.camera) {
+                      scene.renderer.render(scene.object3D, scene.camera);
+                    }
+                  }, 50);
+                  resolve();
+                };
+                imgRetry.onerror = () => {
+                  console.error(`Failed to load image: ${faceSrc}`);
+                  // Still add the element, it might work
+                  imageEl.setAttribute('src', faceSrc);
+                  resolve();
+                };
+                imgRetry.src = faceSrc;
+              } else {
+                console.error(`Failed to load image: ${faceSrc}`);
+                // Still add the element, it might work
+                imageEl.setAttribute('src', faceSrc);
+                resolve();
+              }
+            };
+            
+            img.src = faceSrc;
+          });
+        };
+
+        // Add element to marker first (Safari needs DOM element before texture loads)
         marker.appendChild(imageEl);
+        
+        // Load image asynchronously
+        loadImage().catch(err => {
+          console.error(`Error loading image ${faceSrc}:`, err);
+          // Still try to set src
+          imageEl.setAttribute('src', faceSrc);
+        });
 
         // Move to next position
         itemIndex++;
@@ -489,6 +558,7 @@
           // Safari fix: Force scene render update after adding images
           const scene = document.querySelector('a-scene');
           if (scene) {
+            // Multiple timeouts to ensure Safari renders properly
             setTimeout(() => {
               if (scene.renderer && scene.object3D && scene.camera) {
                 scene.renderer.render(scene.object3D, scene.camera);
@@ -498,9 +568,32 @@
               images.forEach(img => {
                 if (img.components && img.components.material) {
                   img.components.material.updateProperties();
+                  // Force texture update for Safari
+                  const material = img.components.material.material;
+                  if (material && material.map) {
+                    material.map.needsUpdate = true;
+                  }
                 }
               });
             }, 500);
+            
+            // Additional Safari fix: Force another render after a longer delay
+            setTimeout(() => {
+              if (scene.renderer && scene.object3D && scene.camera) {
+                scene.renderer.render(scene.object3D, scene.camera);
+              }
+              const images = targetContainer.querySelectorAll('a-image');
+              images.forEach(img => {
+                if (img.components && img.components.material) {
+                  const material = img.components.material.material;
+                  if (material && material.map) {
+                    material.map.needsUpdate = true;
+                  }
+                  // Force component update
+                  img.components.material.updateProperties();
+                }
+              });
+            }, 1500);
           }
         });
         console.log('✅ Generated trapezium image grids for', markers.length, 'markers');
