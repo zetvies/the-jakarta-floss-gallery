@@ -860,7 +860,7 @@
 
   <!-- Letters List (Stories Style) -->
   <div id="letters-list-bottom"
-    style="display: none; align-items: center; justify-content: center; position: fixed; bottom: 13.3svh; left: 50%; transform: translateX(-50%); z-index: 10; width: 95vw; height: 70px; padding: 0 15px; overflow-x: auto; overflow-y: visible; gap: 16px;">
+    style="display: none; align-items: center; justify-content: flex-start; position: fixed; bottom: 13.3svh; left: 50%; transform: translateX(-50%); z-index: 10; width: 95vw; height: 70px; padding: 0; overflow-x: auto; overflow-y: visible; gap: 16px; -webkit-overflow-scrolling: touch;">
   </div>
 
   <!-- Background Music -->
@@ -1366,6 +1366,15 @@
         storyButton.style.position = 'relative';
         storyButton.style.cursor = 'pointer';
         storyButton.style.transition = 'transform 0.3s ease';
+        storyButton.style.flexShrink = '0'; // Prevent shrinking
+        
+        // Add margin-left to first letter and margin-right to last letter
+        if (i === 0) {
+          storyButton.style.marginLeft = '15px';
+        }
+        if (i === lettersData.length - 1) {
+          storyButton.style.marginRight = '15px';
+        }
 
         // Store letter data
         storyButton.dataset.letterData = JSON.stringify({
@@ -1439,6 +1448,16 @@
 
         lettersListBottom.appendChild(storyButton);
       });
+      
+      // Ensure the list scrolls to the left (first letter) after rendering
+      // Use setTimeout to ensure DOM is updated
+      setTimeout(() => {
+        lettersListBottom.scrollLeft = 0;
+        // Force scroll to ensure first letter is visible on mobile
+        requestAnimationFrame(() => {
+          lettersListBottom.scrollLeft = 0;
+        });
+      }, 0);
     }
 
     document.addEventListener("DOMContentLoaded", function () {
