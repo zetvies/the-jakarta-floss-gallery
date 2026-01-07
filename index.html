@@ -6,6 +6,29 @@
   <link rel="icon" type="image/x-icon" href="/icon.ico" />
   <link rel="stylesheet" href="/styles.css" />
   <style>
+    /* Safari fixes: Prevent scrolling on html and body */
+    html, body {
+      overflow: hidden !important;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+      -webkit-overflow-scrolling: none;
+    }
+    
+    /* Ensure a-scene is not scrollable */
+    a-scene {
+      overflow: hidden !important;
+      position: fixed;
+      width: 100%;
+      height: 100%;
+    }
+    
+    /* Safari fix: Enable smooth scrolling for letter component */
+    #letter-component {
+      -webkit-overflow-scrolling: touch !important;
+      overflow-y: auto !important;
+    }
+    
     @keyframes slowRotate {
 
       0%,
@@ -264,8 +287,8 @@
   </script>
 </head>
 
-<body style="margin: 0; overflow: hidden; z-index: 0">
-  <a-scene style="z-index: 1" embedded arjs="debugUIEnabled: false; patternRatio: 0.7; sourceType: webcam;"
+<body style="margin: 0; overflow: hidden; z-index: 0; position: fixed; width: 100%; height: 100%;">
+  <a-scene style="z-index: 1; overflow: hidden; position: fixed; width: 100%; height: 100%;" embedded arjs="debugUIEnabled: false; patternRatio: 0.7; sourceType: webcam;"
     device-orientation-permission-ui="enabled: false" vr-mode-ui="enabled: false">
     <!-- Define markers - images will be generated dynamically -->
     <a-marker type="pattern" url="pattern-confetti-final.patt"></a-marker>
@@ -896,7 +919,7 @@
       </div>
     </div>
     <div id="letter-component" class="component"
-      style="cursor: pointer; transform: rotate(1deg); background-color: #F4F2E4; width: 75svw; height: 40svh; padding: 3svh; overflow-y: auto; position: absolute; bottom: 5svh; left: 0; right: 0; margin: 0 auto; z-index: 83; font-family: 'Playpen Sans', cursive;">
+      style="cursor: pointer; transform: rotate(1deg); background-color: #F4F2E4; width: 75svw; height: 40svh; padding: 3svh; overflow-y: auto; -webkit-overflow-scrolling: touch; position: absolute; bottom: 5svh; left: 0; right: 0; margin: 0 auto; z-index: 83; font-family: 'Playpen Sans', cursive;">
       <div id="letter-component-text"
         style="font-size: 2svh; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;"></div>
       <div id="letter-component-footer"
@@ -964,7 +987,7 @@
       audio: new Map()
     };
 
-    // Function to preload image
+    // Function to preload image - Safari compatible with CORS fallback
     function preloadImage(src) {
       return new Promise((resolve, reject) => {
         if (assetCache.images.has(src)) {
@@ -972,17 +995,36 @@
           return;
         }
 
+        // Try with CORS first (for Safari)
         const img = new Image();
+        img.crossOrigin = 'anonymous';
+        
         img.onload = () => {
           assetCache.images.set(src, img);
           resolve(img);
         };
-        img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
+        
+        img.onerror = () => {
+          // If CORS fails, try without CORS (Safari fallback)
+          console.warn(`CORS preload failed for ${src}, retrying without CORS`);
+          const imgRetry = new Image();
+          imgRetry.onload = () => {
+            assetCache.images.set(src, imgRetry);
+            resolve(imgRetry);
+          };
+          imgRetry.onerror = () => {
+            console.error(`Failed to preload image: ${src}`);
+            // Still resolve to prevent blocking, but log error
+            reject(new Error(`Failed to load image: ${src}`));
+          };
+          imgRetry.src = src;
+        };
+        
         img.src = src;
       });
     }
 
-    // Function to preload audio/video
+    // Function to preload audio/video - Safari compatible
     function preloadAudio(src) {
       return new Promise((resolve, reject) => {
         if (assetCache.audio.has(src)) {
@@ -992,13 +1034,34 @@
 
         const audio = new Audio();
         audio.preload = 'auto';
-        audio.oncanplaythrough = () => {
+        audio.crossOrigin = 'anonymous'; // Safari CORS support
+        
+        // Safari: Listen to multiple events for better compatibility
+        const handleLoad = () => {
           assetCache.audio.set(src, audio);
           resolve(audio);
         };
-        audio.onerror = () => reject(new Error(`Failed to load audio: ${src}`));
+        
+        audio.addEventListener('canplaythrough', handleLoad, { once: true });
+        audio.addEventListener('loadeddata', handleLoad, { once: true });
+        audio.addEventListener('canplay', handleLoad, { once: true });
+        
+        audio.onerror = () => {
+          console.error(`Failed to preload audio: ${src}`);
+          reject(new Error(`Failed to load audio: ${src}`));
+        };
+        
         audio.src = src;
         audio.load();
+        
+        // Safari fallback: If not loaded after timeout, try to resolve anyway
+        setTimeout(() => {
+          if (!assetCache.audio.has(src)) {
+            console.warn(`Audio preload timeout for ${src}, but continuing...`);
+            assetCache.audio.set(src, audio);
+            resolve(audio);
+          }
+        }, 5000);
       });
     }
 
@@ -1947,22 +2010,28 @@
           }
         }
 
-        // Center letter if no video and no audio
-        if (!hasVideo && !hasAudio && letterComponent) {
-          letterComponent.style.left = '50%';
-          letterComponent.style.right = 'auto';
-          letterComponent.style.transform = 'translateX(-50%) rotate(1deg)';
-          if (videoComponent) videoComponent.style.display = 'none';
-          const pinSvg = document.getElementById('pin-svg');
-          if (pinSvg) pinSvg.style.display = 'none';
-        } else if (letterComponent) {
-          letterComponent.style.left = '0';
-          letterComponent.style.right = '0';
-          letterComponent.style.transform = 'rotate(1deg)';
-          if (videoComponent) videoComponent.style.display = 'flex';
-          const pinSvg = document.getElementById('pin-svg');
-          if (pinSvg) pinSvg.style.display = 'block';
-        }
+          // Center letter if no video and no audio
+          if (!hasVideo && !hasAudio && letterComponent) {
+            letterComponent.style.left = '50%';
+            letterComponent.style.right = 'auto';
+            letterComponent.style.transform = 'translateX(-50%) rotate(1deg)';
+            // Ensure scrolling is enabled for Safari
+            letterComponent.style.overflowY = 'auto';
+            letterComponent.style.webkitOverflowScrolling = 'touch';
+            if (videoComponent) videoComponent.style.display = 'none';
+            const pinSvg = document.getElementById('pin-svg');
+            if (pinSvg) pinSvg.style.display = 'none';
+          } else if (letterComponent) {
+            letterComponent.style.left = '0';
+            letterComponent.style.right = '0';
+            letterComponent.style.transform = 'rotate(1deg)';
+            // Ensure scrolling is enabled for Safari
+            letterComponent.style.overflowY = 'auto';
+            letterComponent.style.webkitOverflowScrolling = 'touch';
+            if (videoComponent) videoComponent.style.display = 'flex';
+            const pinSvg = document.getElementById('pin-svg');
+            if (pinSvg) pinSvg.style.display = 'block';
+          }
 
         lettersDetail.style.display = 'block';
       }

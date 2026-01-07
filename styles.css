@@ -18,6 +18,24 @@
   font-style: normal;
 }
 
+/* Define Playpen Sans font family */
+@font-face {
+  font-family: "Playpen Sans";
+  src: url("/assets/fonts/PlaypenSans-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Define Barrio font family */
+@font-face {
+  font-family: "Barrio";
+  src: url("/assets/fonts/Barrio-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Example usage */
 body {
   font-family: "OtherHand", "Inter", sans-serif;
