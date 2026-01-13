@@ -210,7 +210,7 @@
     <div id="export-container">
         <!-- Logo at top -->
         <div id="logo-container">
-            <img src="./assets/images/slamatslimit-logo.png" alt="Slamat Slimit Logo" id="logo-img">
+            <img src="./assets/images/slamatslimit-logo.png" alt="Slamat Slimit Logo" id="logo-img" crossorigin="anonymous">
         </div>
 
         <!-- Pin SVG decoration -->
@@ -226,8 +226,8 @@
         <!-- Video component -->
         <div id="video-component">
             <video id="rury-video" src="" loop autoplay playsinline webkit-playsinline x5-playsinline
-                style="display: none;"></video>
-            <audio id="rury-audio" src="" loop style="display: none;"></audio>
+                style="display: none;" crossorigin="anonymous"></video>
+            <audio id="rury-audio" src="" loop style="display: none;" crossorigin="anonymous"></audio>
             <div id="audio-icon">
                 <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path
@@ -241,7 +241,7 @@
         <div id="letter-component">
             <div id="letter-component-text"></div>
             <div id="letter-component-footer">
-                <img id="photo-component-img" src="" alt="photo">
+                <img id="photo-component-img" src="" alt="photo" crossorigin="anonymous">
                 <div id="letter-component-sender"></div>
             </div>
         </div>
@@ -257,7 +257,7 @@
     </div>
 
     <!-- Background Music -->
-    <audio id="bgm-audio" loop style="display: none;">
+    <audio id="bgm-audio" loop style="display: none;" crossorigin="anonymous">
         <source src="./assets/happy-birthday-orchestra.mp3" type="audio/mpeg">
     </audio>
 
@@ -328,6 +328,7 @@
 
             if (hasVideo && ruryVideo && videoUrl) {
                 if (audioIcon) audioIcon.style.display = 'none';
+                ruryVideo.crossOrigin = 'anonymous'; // Ensure CORS is set
                 ruryVideo.src = videoUrl;
                 ruryVideo.style.display = 'block';
                 const playVideo = () => {
@@ -431,6 +432,58 @@
             }
         }
 
+        // Function to get URL parameters
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
+            var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
+            var results = regex.exec(location.search);
+            return results === null
+                ? ""
+                : decodeURIComponent(results[1].replace(/\+/g, " "));
+        }
+
+        // Check for orderID and fetch data
+        document.addEventListener("DOMContentLoaded", function () {
+            const orderID = getUrlParameter("orderID");
+            if (orderID) {
+                console.log("Fetching content for orderID:", orderID);
+                fetch(`https://slamatslimit.byc.plus/api/gallery?order_id=${orderID}`)
+                    .then(response => {
+                        console.log("API Response status:", response.status);
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log("API Response data:", data);
+                        if (data && data.length > 0) {
+                            const item = data[0]; // Take the first item
+                            
+                            // Transform API data to match our structure
+                            const transformedData = {
+                                ...currentData, // Start with current defaults
+                                name: item.name || currentData.name,
+                                message: item.message || currentData.message,
+                                video_url: item.video_url || '',
+                                // Use photo_url from API if available, otherwise keep default or separate logic might be needed
+                                photo_url: item.photo_url || currentData.photo_url,
+                                // If API provides audio, use it
+                                audio_url: item.audio_url || '', 
+                                // Map signature if needed, though export-test doesn't explicitly use it yet in the same way as test.html
+                                // but we can store it in case we need it later
+                                signature_url: item.signature_url
+                            };
+
+                            console.log("Loading transformed data:", transformedData);
+                            loadData(transformedData);
+                        } else {
+                            console.log("No data found for orderID");
+                        }
+                    })
+                    .catch(e => {
+                        console.error("Error fetching content:", e);
+                    });
+            }
+        });
+
         // Load sample data on button click
         loadSampleBtn.addEventListener('click', () => {
             loadData(sampleData);
@@ -519,6 +572,7 @@
 
             // Get audio context for mixing
             const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            await audioContext.resume(); // Ensure context is running
             let destination = null;
             const audioSources = [];
 
@@ -553,19 +607,50 @@
             // Add media audio (from video or audio element) if available
             if (ruryVideo && ruryVideo.src && !ruryVideo.muted) {
                 try {
-                    ruryVideo.volume = 1.0; // Set to max, control via gain node
-                    const videoSource = audioContext.createMediaElementSource(ruryVideo);
-                    videoSource.connect(mediaGainNode);
-                    audioSources.push(videoSource);
+                    ruryVideo.volume = 1.0; 
+                    
+                    let videoSource;
+                    // Try to use captureStream which is cleaner and reusable
+                    if (ruryVideo.captureStream || ruryVideo.mozCaptureStream) {
+                        const vidStream = ruryVideo.captureStream ? ruryVideo.captureStream() : ruryVideo.mozCaptureStream();
+                        if (vidStream.getAudioTracks().length > 0) {
+                            videoSource = audioContext.createMediaStreamSource(vidStream);
+                        }
+                    } 
+                    
+                    // Fallback to ElementSource if captureStream didn't give audio or isn't supported
+                    if (!videoSource) {
+                         // Note: This might mute the video output on some browsers if not reconnected to destination
+                         // But for export it's fine. 
+                         videoSource = audioContext.createMediaElementSource(ruryVideo);
+                    }
+
+                    if (videoSource) {
+                        videoSource.connect(mediaGainNode);
+                        audioSources.push(videoSource);
+                    }
                 } catch (e) {
                     console.warn('Could not add video audio to stream:', e);
                 }
             } else if (ruryAudio && ruryAudio.src && !ruryAudio.muted) {
                 try {
-                    ruryAudio.volume = 1.0; // Set to max, control via gain node
-                    const audioSource = audioContext.createMediaElementSource(ruryAudio);
-                    audioSource.connect(mediaGainNode);
-                    audioSources.push(audioSource);
+                     // For audio element, captureStream is also safer if available
+                    let audioSource;
+                    if (ruryAudio.captureStream || ruryAudio.mozCaptureStream) {
+                         const audStream = ruryAudio.captureStream ? ruryAudio.captureStream() : ruryAudio.mozCaptureStream();
+                         if (audStream.getAudioTracks().length > 0) {
+                             audioSource = audioContext.createMediaStreamSource(audStream);
+                         }
+                    }
+
+                    if (!audioSource) {
+                        audioSource = audioContext.createMediaElementSource(ruryAudio);
+                    }
+
+                    if (audioSource) {
+                        audioSource.connect(mediaGainNode);
+                        audioSources.push(audioSource);
+                    }
                 } catch (e) {
                     console.warn('Could not add audio to stream:', e);
                 }
@@ -658,7 +743,21 @@
             }
 
             // Capture frames
-            const duration = 10000; // 10 seconds
+            // Determine duration based on media
+            let mediaDuration = 10; // Default 10s
+            
+            if (ruryVideo && ruryVideo.src && ruryVideo.readyState > 0 && ruryVideo.duration && !isNaN(ruryVideo.duration)) {
+                mediaDuration = ruryVideo.duration;
+            } else if (ruryAudio && ruryAudio.src && ruryAudio.readyState > 0 && ruryAudio.duration && !isNaN(ruryAudio.duration)) {
+                mediaDuration = ruryAudio.duration;
+            }
+
+            // If media is short (<10s), play it twice
+            if (mediaDuration < 10) {
+                mediaDuration = mediaDuration * 2;
+            }
+
+            const duration = mediaDuration * 1000; // Convert to ms
             const startTime = Date.now();
             const fps = 30;
             const frameInterval = 1000 / fps;
@@ -710,7 +809,6 @@
                         // Capture the container using html2canvas with container's actual dimensions
                         const canvasElement = await html2canvas(exportContainer, {
                             useCORS: true,
-                            allowTaint: true,
                             backgroundColor: '#FF5627',
                             scale: scale,
                             logging: false,
@@ -809,6 +907,9 @@
                         // Draw captured frame to canvas at full size (already scaled)
                         ctx.clearRect(0, 0, canvas.width, canvas.height);
                         ctx.drawImage(canvasElement, 0, 0, canvas.width, canvas.height);
+
+                        // Manually draw video has been removed as it was causing ghosting/duplication.
+                        // We rely on html2canvas properly capturing the video element now.
 
                         // Restore letter component
                         if (letterComponent) {
