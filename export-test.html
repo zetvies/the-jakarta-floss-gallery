@@ -615,325 +615,214 @@
         // Canvas-based export with html2canvas
         async function exportWithCanvas() {
             console.log("exportWithCanvas called - starting export process");
-            if (typeof html2canvas === 'undefined') {
-                console.error("html2canvas is missing!");
-                throw new Error('html2canvas library is required. Please include it in the page.');
-            }
+            
+            // Safely pause existing media
+            const v = document.getElementById('rury-video');
+            const a = document.getElementById('rury-audio');
+            if (v) v.pause();
+            if (a) a.pause();
+            if (typeof bgmAudio !== 'undefined' && bgmAudio) bgmAudio.pause();
 
             const exportBtn = document.getElementById('export-video-btn');
-            console.log("Export button found:", exportBtn);
             const originalBtnText = exportBtn.textContent;
+            exportBtn.disabled = true;
             exportBtn.textContent = 'Preparing...';
 
             try {
-                // Get container's actual dimensions for reference
-                const containerRect = exportContainer.getBoundingClientRect();
-                const containerWidth = containerRect.width;
-                const containerHeight = containerRect.height;
-
-                // Set HD resolution: 1080x1920 (9:16 aspect ratio, Full HD portrait)
+                // Setup Canvas
                 const hdWidth = 1080;
                 const hdHeight = 1920;
-
-                // Calculate scale factor to capture at high quality
-                const scale = Math.max(hdWidth / containerWidth, hdHeight / containerHeight);
-                // We use explicit scale for manual drawing, so we might need `scale` variable.
-
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-
-                // Set canvas to HD resolution
                 canvas.width = hdWidth;
                 canvas.height = hdHeight;
 
-                // --- AUDIO SETUP ---
+                // Setup Audio Context
                 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                await audioContext.resume();
-                
                 const destination = audioContext.createMediaStreamDestination();
-                const bgmGainNode = audioContext.createGain();
-                const mediaGainNode = audioContext.createGain();
-
-                bgmGainNode.gain.value = 0.2; // BGM level (20% as requested)
-                mediaGainNode.gain.value = 1.0; // Media level
-
-                bgmGainNode.connect(destination);
-                mediaGainNode.connect(destination);
-
                 const audioSources = [];
-                const tempElements = [];
 
-                // Helper: Clone and Add Audio Source
-                async function addAudioSource(originalElement, gainNode, fallbackUrl = null) {
-                    console.log("addAudioSource called for:", originalElement);
-                    if (originalElement) {
-                         console.log("  src:", originalElement.src);
-                         console.log("  currentSrc:", originalElement.currentSrc);
-                         console.log("  readyState:", originalElement.readyState);
-                    }
-                    
-                    let srcToUse = fallbackUrl;
-                    if (originalElement && (originalElement.src || originalElement.currentSrc)) {
-                        srcToUse = originalElement.src || originalElement.currentSrc;
-                    }
-                    
-                    if (!srcToUse) {
-                        console.warn("addAudioSource: No src found for element and no fallback provided.");
-                        return null;
-                    }
+                // Determine active media element
+                let activeMediaElement = null;
+                const v = document.getElementById('rury-video');
+                const a = document.getElementById('rury-audio');
+                if (v && v.src && v.style.display !== 'none') activeMediaElement = v;
+                else if (a && a.src && a.style.display !== 'none') activeMediaElement = a;
 
-                    try {
-                        // Create clone
-
-                        // actually cloneNode is safer for video attributes, but for audio new Audio() is cleaner
-                        // Let's stick to cloneNode but FORCE the src.
-                        
-                        // const clone = originalElement ? originalElement.cloneNode() : new Audio();
-                        // If we use cloneNode on a video element, we get a video element.
-                        // If we just want audio, we can use new Audio(src). 
-                        // But for video we might need the video track? No, this function connects to gainNode, so it's audio only.
-                        // However, creating a new Audio() for a video source file might work if format is supported.
-                        // Let's safe bet:
-                        const clone = originalElement ? originalElement.cloneNode() : new Audio();
-                        
-                        clone.src = srcToUse;
-                        clone.crossOrigin = "anonymous";
-                        if (srcToUse.startsWith('blob:') && !clone.src) {
-                            clone.src = srcToUse;
-                        }
-                        clone.muted = false;
-                        clone.volume = 1.0;
-                        clone.loop = true; 
-                        
-                        // Append to DOM (hidden)
-                        clone.style.display = 'none';
-                        document.body.appendChild(clone);
-
-                        // IMPORTANT: Wait for the clone to be ready before creating source
-                        await new Promise((resolve, reject) => {
-                            if (clone.readyState >= 3) {
-                                resolve();
-                                return;
-                            }
-                            
-                            const onCanPlay = () => {
-                                clone.removeEventListener('canplay', onCanPlay);
-                                clone.removeEventListener('error', onError);
-                                resolve();
-                            };
-                            const onError = (e) => {
-                                clone.removeEventListener('canplay', onCanPlay);
-                                clone.removeEventListener('error', onError);
-                                console.warn("Audio clone loading error", e);
-                                resolve(); 
-                            };
-
-                            clone.addEventListener('canplay', onCanPlay);
-                            clone.addEventListener('error', onError);
-
-                            // Timeout
-                            setTimeout(() => {
-                                console.warn("Audio clone load timeout for src:", srcToUse);
-                                resolve();
-                            }, 5000); 
-                        });
-                        
-                        const source = audioContext.createMediaElementSource(clone);
-                        source.connect(gainNode);
-                        
-                        audioSources.push(source);
-                        tempElements.push(clone);
-                        return clone;
-                    } catch (e) {
-                        console.warn("Error adding audio source:", e);
-                        return null;
-                    }
-                }
-
-                // Add BGM
-                let clonedBgm = null;
-                // Check if bgmAudio exists and has a source
-                console.log("Checking BGM:", bgmAudio, "src:", bgmAudio ? bgmAudio.src : 'null');
-                
-                const currentData = getExportData() || {};
-                const fallbackBgmUrl = currentData.bgm_url || currentData.bgm;
-                
-                // Add BGM using AudioBuffer (Robust)
+                // 1. Setup BGM
                 let bgmBufferSource = null;
-                // const currentData = getExportData() || {}; // Data is already retrieved above at line 758
-                // We reuse `currentData` from earlier line
-                // We reuse `currentData` from earlier line
-                const bgmUrlToFetch = currentData.bgm_url || currentData.bgm || (bgmAudio ? bgmAudio.src : null) || 'https://slamatslimit-experience.byc.plus/assets/happy-birthday-orchestra.mp3';
+                const bgmUrl = (typeof bgmAudio !== 'undefined' && bgmAudio && bgmAudio.src) ? bgmAudio.src : 'https://slamatslimit-experience.byc.plus/assets/happy-birthday-orchestra.mp3';
                 
-                if (bgmUrlToFetch) {
-                    console.log("Fetching BGM AudioBuffer from:", bgmUrlToFetch);
-                    try {
-                        const response = await fetch(bgmUrlToFetch);
+                if (bgmUrl) {
+                     try {
+                        const response = await fetch(bgmUrl);
                         const arrayBuffer = await response.arrayBuffer();
                         const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
                         
                         bgmBufferSource = audioContext.createBufferSource();
                         bgmBufferSource.buffer = audioBuffer;
                         bgmBufferSource.loop = true;
-                        bgmBufferSource.connect(bgmGainNode);
-                        console.log("BGM AudioBuffer ready");
-                    } catch (e) {
-                         console.error("Failed to load BGM AudioBuffer:", e);
-                         // FINAL FALLBACK TO USER PROVIDED URL
-                         console.log("Attempting final fallback to global URL...");
-                         try {
-                              const fallbackResponse = await fetch('https://slamatslimit-experience.byc.plus/assets/happy-birthday-orchestra.mp3');
-                              const fallbackBuffer = await fallbackResponse.arrayBuffer();
-                              const fallbackAudioBuffer = await audioContext.decodeAudioData(fallbackBuffer);
-                              bgmBufferSource = audioContext.createBufferSource();
-                              bgmBufferSource.buffer = fallbackAudioBuffer;
-                              bgmBufferSource.loop = true;
-                              bgmBufferSource.connect(bgmGainNode);
-                              console.log("BGM AudioBuffer ready (Fallback)");
-                         } catch(e2) {
-                              console.error("Final fallback failed:", e2);
-                              alert("BGM Load Error: " + e.message + "\nCheck console for details.");
-                         }
-                    }
-                } else {
-                     console.warn("No BGM URL found for AudioBuffer");
+                        
+                        const val = (typeof bgmAudio !== 'undefined' && bgmAudio && bgmAudio.volume !== undefined) ? bgmAudio.volume : 0.2;
+                        const gainNode = audioContext.createGain();
+                        gainNode.gain.value = val;
+                        
+                        bgmBufferSource.connect(gainNode);
+                        gainNode.connect(destination);
+                     } catch (e) {
+                         console.error("Failed to load BGM for export:", e);
+                     }
                 }
 
-                // Add Media Audio
-                let clonedMedia = null; // Used for audio
-                let activeMediaElement = null; // Used for duration calculation
-
-                if (ruryVideo && ruryVideo.src && !ruryVideo.muted && ruryVideo.style.display !== 'none') {
-                    clonedMedia = await addAudioSource(ruryVideo, mediaGainNode);
-                    activeMediaElement = ruryVideo; // Use original for duration
-                } else if (ruryAudio && ruryAudio.src && !ruryAudio.muted && ruryAudio.style.display !== 'none') {
-                    clonedMedia = await addAudioSource(ruryAudio, mediaGainNode);
-                    activeMediaElement = ruryAudio;
+                // 2. Setup Video/Audio Element Audio
+                let clonedMedia = null;
+                if (activeMediaElement && activeMediaElement.src) {
+                     clonedMedia = activeMediaElement.cloneNode();
+                     clonedMedia.crossOrigin = "anonymous";
+                     
+                     // Wait for metadata
+                     await new Promise((resolve) => {
+                         clonedMedia.onloadedmetadata = resolve;
+                         clonedMedia.onerror = resolve; 
+                         if(clonedMedia.readyState >= 1) resolve();
+                     });
+                     
+                     const source = audioContext.createMediaElementSource(clonedMedia);
+                     const gainNode = audioContext.createGain();
+                     gainNode.gain.value = 1.0;
+                     source.connect(gainNode);
+                     gainNode.connect(destination);
+                     audioSources.push(source);
+                     
+                     // Append to DOM to ensure it plays (browsers may throttle detached elements)
+                     clonedMedia.style.position = 'fixed';
+                     clonedMedia.style.top = '-9999px';
+                     clonedMedia.style.left = '-9999px';
+                     clonedMedia.style.width = '1px';
+                     clonedMedia.style.height = '1px';
+                     clonedMedia.style.opacity = '0';
+                     clonedMedia.style.pointerEvents = 'none';
+                     document.body.appendChild(clonedMedia);
                 }
 
-                // --- STATIC BACKGROUND CAPTURE ---
-                // We capture everything EXCEPT the dynamic content (video, photo, audio icon, controls)
-                // This gives us a static image to draw as background every frame.
-                
-                // Hide dynamic elements temporarily for capture
-                const originalVideoDisplay = ruryVideo ? ruryVideo.style.display : 'none';
-                const originalPhotoDisplay = photoImg ? photoImg.style.display : 'none';
-                const originalAudioIconDisplay = audioIcon ? audioIcon.style.display : 'none';
+                // --- LAYERED CAPTURE STRATEGY ---
+                console.log("Starting multi-pass static capture...");
+                const containerWidth = exportContainer.getBoundingClientRect().width;
+                const containerHeight = exportContainer.getBoundingClientRect().height;
+                const scale = hdWidth / containerWidth;
 
-                // We'll use the 'ignoreElements' option of html2canvas, but setting display none is safer to avoid layout shifts?
-                // Actually, html2canvas ignoreElements is better as it doesn't affect the live DOM layout if we are careful.
-                // But to be 100% sure we get a "clean" background where the video SHOULD be, we might want the video container to be empty/transparent?
-                // The video container has a background color/image? 
-                // Looking at CSS: #video-component doesn't have a background. 
-                // So ignoring the video tag should be fine.
-
-                // --- EXPAND MESSAGE COMPONENT ---
-                // Temporarily expand letter component to show all text content in the static capture
-                const letterComponent = document.getElementById('letter-component');
-                let originalLetterHeight = null;
-                let originalLetterOverflow = null;
-                let originalScrollTop = 0;
-
-                if (letterComponent) {
-                    originalScrollTop = letterComponent.scrollTop;
-                    originalLetterHeight = letterComponent.style.height;
-                    originalLetterOverflow = letterComponent.style.overflow;
-
-                    // Expand to show all content
-                    letterComponent.style.height = letterComponent.scrollHeight + 'px';
-                    letterComponent.style.overflow = 'visible';
-                    letterComponent.scrollTop = 0;
-                }
-
-                const staticCanvas = await html2canvas(exportContainer, {
-                    useCORS: true,
-                    backgroundColor: '#FF5627', // Match body background
-                    scale: scale,
+                const commonConfig = {
                     width: containerWidth,
-                    height: containerHeight, // Note: if container grew due to letter expansion, we should capture full height? 
-                    // Actually, exportContainer size might not have changed, just the letter component overflowing?
-                    // We want to capture the "visible scence". 
-                    // If we expand the letter component, does it push other elements?
-                    // It likely expands downwards.
-                    // We still capture the fixed container size.
+                    height: containerHeight,
                     windowWidth: containerWidth,
                     windowHeight: containerHeight,
+                    scale: scale * (window.devicePixelRatio || 1), 
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: null, 
+                    logging: false,
+                };
+                
+                const setTransparentBg = (doc) => {
+                     const el = doc.getElementById('export-container');
+                     if(el) el.style.background = 'transparent';
+                };
+
+                // A. Background Layer
+                const bgCanvas = await html2canvas(exportContainer, {
+                    ...commonConfig,
                     ignoreElements: (element) => {
-                        if (element.id === 'controls') return true;
-                        if (element.id === 'rury-video') return true;
-                        if (element.id === 'photo-component-img') return true;
-                        if (element.id === 'audio-icon') return true; 
-                        return false; 
-                    },
-                    onclone: (clonedDoc) => {
-                         // Ensure elements are in correct state for static capture
+                        const id = element.id;
+                        return id === 'video-component' || id === 'letter-component' || id === 'pin-svg' || id === 'controls';
                     }
                 });
 
-                // RESTORE LETTER COMPONENT
+                // B. Video Component Layer
+                const videoCompCanvas = await html2canvas(exportContainer, {
+                    ...commonConfig,
+                    onclone: setTransparentBg,
+                    ignoreElements: (element) => {
+                         const id = element.id;
+                         return id === 'letter-component' || id === 'pin-svg' || id === 'logo-container' || id === 'controls' || id === 'rury-video' || id === 'audio-icon';
+                    }
+                });
+
+                // C. Letter Component Layer
+                // Temporarily expand letter component and container to capture full text
+                const originalLetterHeight = letterComponent ? letterComponent.style.height : '';
+                const originalLetterOverflow = letterComponent ? letterComponent.style.overflow : '';
+                const originalContainerOverflow = exportContainer ? exportContainer.style.overflow : '';
+
+                if (letterComponent) {
+                    letterComponent.style.height = letterComponent.scrollHeight + 'px';
+                    letterComponent.style.overflow = 'visible';
+                }
+                if (exportContainer) {
+                    exportContainer.style.overflow = 'visible';
+                }
+
+                const letterCompCanvas = await html2canvas(exportContainer, {
+                    ...commonConfig,
+                    onclone: setTransparentBg,
+                    ignoreElements: (element) => {
+                        const id = element.id;
+                        return id === 'video-component' || id === 'pin-svg' || id === 'logo-container' || id === 'controls' || id === 'photo-component-img';
+                    }
+                });
+
+                // Restore styles
                 if (letterComponent) {
                     letterComponent.style.height = originalLetterHeight;
                     letterComponent.style.overflow = originalLetterOverflow;
-                    letterComponent.scrollTop = originalScrollTop;
+                }
+                if (exportContainer) {
+                    exportContainer.style.overflow = originalContainerOverflow;
                 }
 
-                // --- RECORDING LOOP ---
+                // D. Pin Layer
+                const pinCanvas = await html2canvas(exportContainer, {
+                    ...commonConfig,
+                    onclone: setTransparentBg,
+                    ignoreElements: (element) => {
+                        const id = element.id;
+                        return id === 'video-component' || id === 'letter-component' || id === 'logo-container' || id === 'controls';
+                    }
+                });
 
-                // Determine duration based on active media (video/audio)
-                let mediaDuration = 30; // Default cap
+                // --- RECORDING LOOP ---
+                let mediaDuration = 30; 
                 if (activeMediaElement && activeMediaElement.duration && isFinite(activeMediaElement.duration)) {
                      mediaDuration = activeMediaElement.duration;
-                     // Ensure minimum duration of 5s
                      if (mediaDuration < 5) mediaDuration = 5;
-                     
-                     // OPTIONAL: Cap at 30s only if desired, otherwise let it run full length?
-                     // User complained "always have duration of 30s", implying they want it SHORTER if the clip is shorter.
-                     // The logic below was forcing it to 10 if < 5, and capping at 30.
-                     // If existing logic was: if (mediaDuration < 5) mediaDuration = 10;
-                     // We should trust the clip duration but ensure reasonable bounds.
-                     if (mediaDuration > 60) mediaDuration = 60; // Let's cap at 60s for safety
+                     if (mediaDuration > 60) mediaDuration = 60;
                 } else {
-                     // If no media or invalid duration, default to 10s
                      mediaDuration = 10;
                 }
                 
-                console.log("Export Duration calculated:", mediaDuration, "Active Element:", activeMediaElement);
-
+                console.log("Export Duration (s):", mediaDuration);
                 const duration = mediaDuration * 1000;
                 const fps = 30;
                 const stream = canvas.captureStream(fps);
                 
-                // Mix audio
                 const audioTracks = destination.stream.getAudioTracks();
                 if (audioTracks.length > 0) {
                     stream.addTrack(audioTracks[0]);
                 }
 
-                // Recorder
-                // Recorder - ENFORCE MP4 with WhatsApp-compatible codecs (H.264 + AAC)
-                let mimeType = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'; // Constrained Baseline Profile + AAC-LC
+                // Recorder - ENFORCE H.264/AAC for WhatsApp
+                let mimeType = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'; 
                 
                 if (!MediaRecorder.isTypeSupported(mimeType)) {
-                     console.warn(`Strict MIME type ${mimeType} not supported. Trying fallbacks.`);
-                     // Fallback 1: Generic MP4
-                     if (MediaRecorder.isTypeSupported('video/mp4')) {
-                         mimeType = 'video/mp4';
-                     } 
-                     // Fallback 2: H.264 generic
-                     else if (MediaRecorder.isTypeSupported('video/mp4;codecs=h264')) {
-                         mimeType = 'video/mp4;codecs=h264';
-                     } 
-                     // Fallback 3: AVC1 generic
-                     else if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) {
-                         mimeType = 'video/mp4;codecs=avc1';
-                     }
-                     // Fallback 4: WebM (Last resort, user will be warned)
+                     if (MediaRecorder.isTypeSupported('video/mp4')) mimeType = 'video/mp4';
+                     else if (MediaRecorder.isTypeSupported('video/mp4;codecs=h264')) mimeType = 'video/mp4;codecs=h264';
+                     else if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) mimeType = 'video/mp4;codecs=avc1';
                      else {
                          mimeType = 'video/webm';
-                         alert("Your browser does not support MP4 recording. Exporting as WebM which may not work in WhatsApp.");
                      }
+                     console.log("Falling back to MIME:", mimeType);
+                } else {
+                    console.log("Using Strict MIME:", mimeType);
                 }
-                console.log("Using MIME type:", mimeType);
 
                 const recorder = new MediaRecorder(stream, {
                     mimeType: mimeType,
@@ -952,19 +841,22 @@
                    a.click();
                    URL.revokeObjectURL(url);
                    
-                   // Cleanup
                    exportBtn.textContent = originalBtnText;
                    exportBtn.disabled = false;
                    audioSources.forEach(s => s.disconnect());
                    destination.disconnect();
                    audioContext.close();
-                   tempElements.forEach(el => {
-                       el.pause();
-                       el.src = '';
-                   });
-                   // Reset original video check
+                   if(clonedMedia) {
+                       clonedMedia.pause();
+                       clonedMedia.src = '';
+                       try { document.body.removeChild(clonedMedia); } catch(e){}
+                       clonedMedia = null;
+                   }
+                   if(bgmBufferSource) {
+                       try { bgmBufferSource.stop(); } catch(e){}
+                   }
                    if(ruryVideo) {
-                        ruryVideo.muted = false; // Unmute user video
+                        ruryVideo.muted = false;
                         ruryVideo.currentTime = 0;
                    }
                    if(bgmAudio) bgmAudio.currentTime = 0;
@@ -972,22 +864,12 @@
 
                 recorder.start();
 
-                // Start playback for recording
-                if (bgmBufferSource) {
-                    bgmBufferSource.start(0);
-                    // bgmBufferSource.noteOn(0); // old api fallback? no, start() is standard
-                }
+                if (bgmBufferSource) bgmBufferSource.start(0);
                 if (clonedMedia) clonedMedia.play().catch(e=>console.log("Media clone play error", e));
                 
-                // Also play original video if visible so we can draw its frames!
-                // Wait, we can't draw frames from the CLONE easily if it's not in DOM or not updated visually.
-                // We MUST draw frames from the ORIGINAL video element that is in the DOM (or invisible but loading).
-                // But the original video might be muted or controlled by user.
-                // Let's ensure original video plays cleanly for the draw loop.
-                // Also play original video if visible so we can draw its frames!
                 if (ruryVideo && ruryVideo.style.display !== 'none') {
-                    ruryVideo.muted = true; // Mute original to avoid double audio (we rely on clone for audio)
-                    ruryVideo.loop = true; // Loop the original video so we always have frames to draw
+                    ruryVideo.muted = true;
+                    ruryVideo.loop = true;
                     ruryVideo.currentTime = 0;
                     await ruryVideo.play();
                 }
@@ -995,6 +877,9 @@
                 const startTime = Date.now();
                 let lastFrameTime = 0;
                 const frameInterval = 1000 / fps;
+                
+                // Fade In Constants
+                const fadeDuration = 1500; // 1.5 seconds
 
                 exportBtn.textContent = 'Recording...';
 
@@ -1009,63 +894,78 @@
                     }
 
                     if (now - lastFrameTime >= frameInterval) {
-                        // 1. Draw Static Background
-                        ctx.drawImage(staticCanvas, 0, 0, hdWidth, hdHeight);
+                        ctx.clearRect(0,0,hdWidth,hdHeight);
 
-                        // 2. Draw Video (if applicable)
-                        if (ruryVideo && ruryVideo.style.display !== 'none') {
-                            // Calculate position relative to HD canvas
-                            // We need to map the DOM coordinates to the Canvas coordinates
+                        // 1. Draw Static Background (Opaque)
+                        ctx.globalAlpha = 1.0;
+                        ctx.drawImage(bgCanvas, 0, 0, hdWidth, hdHeight);
+
+                        // Calculate Fade Opacity
+                        let fadeInOpacity = 1;
+                        if (elapsed < fadeDuration) {
+                            fadeInOpacity = elapsed / fadeDuration;
+                        }
+
+                        // Apply Opacity
+                        ctx.globalAlpha = fadeInOpacity;
+
+                        // 2. Video Comp
+                        ctx.drawImage(videoCompCanvas, 0, 0, hdWidth, hdHeight);
+
+                        // 3. Video Element
+                        if (ruryVideo && ruryVideo.style.display !== 'none') { // keep using ruryVideo for rect
+                            // Use clonedMedia for drawing if available (audio sync source), otherwise ruryVideo
+                            const videoSource = (clonedMedia && clonedMedia.tagName === 'VIDEO') ? clonedMedia : ruryVideo;
+                            
                             const videoRect = ruryVideo.getBoundingClientRect();
                             const containerRect = exportContainer.getBoundingClientRect();
-
-                            // Relative position in percent or pixels relative to container
                             const relX = videoRect.left - containerRect.left;
                             const relY = videoRect.top - containerRect.top;
-                            
-                            
-                            console.log(`Drawing video frame. Time: ${elapsed}, Src: ${ruryVideo.currentSrc}, CurrentTime: ${ruryVideo.currentTime}, Rect: ${JSON.stringify(videoRect)}`);
-                            
                             const drawX = relX * scale;
                             const drawY = relY * scale;
                             const drawW = videoRect.width * scale;
                             const drawH = videoRect.height * scale;
 
-                            ctx.drawImage(ruryVideo, drawX, drawY, drawW, drawH);
-                        } else {
-                             console.warn("Video skipped. ruryVideo:", !!ruryVideo, "display:", ruryVideo ? ruryVideo.style.display : 'null');
+                            if (videoSource.videoWidth > 0 && videoSource.tagName === 'VIDEO') {
+                                // Object Fit Contain
+                                const vidRatio = videoSource.videoWidth / videoSource.videoHeight;
+                                const targetRatio = drawW / drawH;
+                                let renderW = drawW;
+                                let renderH = drawH;
+                                let renderX = drawX;
+                                let renderY = drawY;
+
+                                if (targetRatio > vidRatio) {
+                                    renderW = drawH * vidRatio;
+                                    renderX = drawX + (drawW - renderW) / 2;
+                                } else {
+                                    renderH = drawW / vidRatio;
+                                    renderY = drawY + (drawH - renderH) / 2;
+                                }
+                                ctx.drawImage(videoSource, renderX, renderY, renderW, renderH);
+                            }
                         }
 
-                        // 3. Draw Animated Photo (if applicable)
-                        // Animation: rotate-snap-1 (0% -> 0deg, 50% -> 15deg, 100% -> 0deg)
+                        // 4. Letter Comp
+                        ctx.drawImage(letterCompCanvas, 0, 0, hdWidth, hdHeight);
+
+                        // 5. Photo Element (Rotated)
                         if (photoImg && photoImg.src && photoImg.style.display !== 'none') {
                              const photoRect = photoImg.getBoundingClientRect();
                              const containerRect = exportContainer.getBoundingClientRect();
-
                              const relX = photoRect.left - containerRect.left;
                              const relY = photoRect.top - containerRect.top;
-                             
                              const drawX = relX * scale;
                              const drawY = relY * scale;
                              const drawW = photoRect.width * scale;
                              const drawH = photoRect.height * scale;
 
-                             // Calculate Rotation
-                             // Period is roughly 3s based on CSS 'rotate-snap-1 3s ease-in-out infinite'
-                             // Sine wave approximation: 0 to 15 to 0
-                             // Math.sin oscillates -1 to 1.
-                             // We want 0 -> 15 -> 0 over 3000ms.
-                             // Normalized time t = (elapsed % 3000) / 3000
-                             // Let's model it: 7.5 * (1 - cos(2*PI * t)) -> starts at 0, goes to 15 at t=0.5, back to 0 at t=1.
-                             
                              const cycle = 3000;
                              const t = (elapsed % cycle) / cycle;
                              const angleDeg = 7.5 * (1 - Math.cos(2 * Math.PI * t));
                              const angleRad = angleDeg * Math.PI / 180;
 
-                             // Draw Logic with Rotation
                              ctx.save();
-                             // Translate to center of photo
                              const centerX = drawX + drawW / 2;
                              const centerY = drawY + drawH / 2;
                              ctx.translate(centerX, centerY);
@@ -1073,6 +973,9 @@
                              ctx.drawImage(photoImg, -drawW / 2, -drawH / 2, drawW, drawH);
                              ctx.restore();
                         }
+
+                        // 6. Pin Layer (Also faded)
+                        ctx.drawImage(pinCanvas, 0, 0, hdWidth, hdHeight);
 
                         lastFrameTime = now;
                     }
