@@ -61,7 +61,7 @@
         /* Pin SVG decoration */
         #pin-svg {
             position: absolute;
-            top: 50%;
+            top: 55%;
             left: 25%;
             width: 5svh;
             height: 8svh;
@@ -75,8 +75,9 @@
             top: 16svh;
             left: 50%;
             transform: translateX(-50%);
-            width: 25svh;
-            height: 40svh;
+            width: 26svh;
+            height: 45svh;
+            padding: 3svh 0;
             background-color: white;
             z-index: 81;
             display: flex;
@@ -88,9 +89,8 @@
         }
 
         #rury-video {
-            width: 88%;
-            height: auto;
-            max-height: 80%;
+            width: auto;
+            height: 100%;
             object-fit: cover;
             object-position: center;
             margin-top: 5%;
@@ -112,7 +112,7 @@
             left: 50%;
             transform: translateX(-50%) rotate(1deg);
             width: 80%;
-            height: 40%;
+            height: 35svh;
             background-color: #F4F2E4;
             padding: 3svh;
             overflow-y: auto;
@@ -263,17 +263,18 @@
 
     <script>
         // Sample data object
-        const sampleData = {
-            logo_url: './assets/images/slamatslimit-logo.png',
-            video_url: './assets/videos/arsa.mp4', // Example video
-            message: 'Happy Birthday! Wishing you a wonderful day filled with joy, laughter, and all the things that make you smile. May this special day bring you endless happiness and may all your dreams come true!',
-            photo_url: './assets/face-1.png',
-            audio_url: './assets/happy-birthday-orchestra.mp3',
-            name: 'Anonymous'
-        };
+        // const sampleData = {
+        //     logo_url: './assets/images/slamatslimit-logo.png',
+        //     video_url: './assets/videos/arsa.mp4', // Example video
+        //     message: 'Happy Birthday! Wishing you a wonderful day filled with joy, laughter, and all the things that make you smile. May this special day bring you endless happiness and may all your dreams come true!',
+        //     photo_url: './assets/face-1.png',
+        //     audio_url: './assets/happy-birthday-orchestra.mp3',
+        //     name: 'Anonymous'
+        // };
+        const sampleData = {}; // Empty placeholder to prevent errors if referenced
 
         // Current data object
-        let currentData = { ...sampleData };
+        let currentData = {};
 
         // DOM elements
         const exportContainer = document.getElementById('export-container');
@@ -293,13 +294,36 @@
         const letterComponent = document.getElementById('letter-component');
         const pinSvg = document.getElementById('pin-svg');
 
+        // Helper to load asset as Blob to bypass CORS issues in html2canvas
+        async function preloadAssetAsBlob(url) {
+            if (!url) return null;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`Failed to fetch ${url}`);
+                const blob = await response.blob();
+                return URL.createObjectURL(blob);
+            } catch (e) {
+                console.warn('Error preloading asset:', url, e);
+                return null;
+            }
+        }
+
         // Initialize with sample data - matching gallery.html structure
         function loadData(data) {
             currentData = { ...data };
 
+            console.log("loadData called with:", data);
+
+            // 1. IMMEDIATE UPDATE: Set DOM elements using original URLs
+            // This ensures the user sees content immediately, even if blob loading takes time or fails.
+            
             // Load logo
             if (data.logo_url) {
                 logoImg.src = data.logo_url;
+                // Try to upgrade to blob in background
+                preloadAssetAsBlob(data.logo_url).then(blobUrl => {
+                    if (blobUrl) logoImg.src = blobUrl;
+                });
             }
 
             // Hide both video and audio initially
@@ -317,20 +341,21 @@
                 audioIcon.style.display = 'none';
             }
 
-            // Update media component - prioritize video, then audio
-            const hasVideo = (data.video_url && data.video_url.trim() !== '') ||
-                (data.video && data.video.trim() !== '');
-            const hasAudio = (data.audio_url && data.audio_url.trim() !== '') ||
-                (data.audio && data.audio.trim() !== '');
-
+            // Determine URLs
             const videoUrl = data.video_url || data.video || '';
             const audioUrl = data.audio_url || data.audio || '';
+            const photoUrl = data.photo_url || data.photo || '';
 
-            if (hasVideo && ruryVideo && videoUrl) {
+            const hasVideo = !!videoUrl;
+            const hasAudio = !!audioUrl;
+
+            // Handle Media
+            if (hasVideo && ruryVideo) {
                 if (audioIcon) audioIcon.style.display = 'none';
-                ruryVideo.crossOrigin = 'anonymous'; // Ensure CORS is set
+                ruryVideo.crossOrigin = 'anonymous'; 
                 ruryVideo.src = videoUrl;
                 ruryVideo.style.display = 'block';
+                
                 const playVideo = () => {
                     ruryVideo.play().catch(e => {
                         console.log('Video autoplay error:', e);
@@ -345,13 +370,29 @@
                     ruryVideo.addEventListener('canplay', playVideo, { once: true });
                     ruryVideo.load();
                 }
-            } else if (hasAudio && ruryAudio && audioUrl) {
+
+                // Upgrade to Blob
+                preloadAssetAsBlob(videoUrl).then(blobUrl => {
+                    if (blobUrl) {
+                        console.log("Swapping video source to blob");
+                        const encryptionKeys = ruryVideo.mediaKeys; // Preserve keys if any (unlikely here but good practice)
+                        const wasPlaying = !ruryVideo.paused;
+                        const currentTime = ruryVideo.currentTime;
+                        
+                        ruryVideo.src = blobUrl;
+                        ruryVideo.currentTime = currentTime;
+                        if (wasPlaying) ruryVideo.play().catch(console.error);
+                    }
+                });
+
+            } else if (hasAudio && ruryAudio) {
                 if (ruryVideo) ruryVideo.style.display = 'none';
                 if (audioIcon) audioIcon.style.display = 'flex';
                 ruryAudio.muted = false;
                 ruryAudio.volume = 1.0;
                 ruryAudio.src = audioUrl;
                 ruryAudio.style.display = 'block';
+                
                 const playAudio = () => {
                     ruryAudio.muted = false;
                     ruryAudio.volume = 1.0;
@@ -374,14 +415,67 @@
                     ruryAudio.addEventListener('canplaythrough', playAudio, { once: true });
                     ruryAudio.load();
                 }
+
+                // Upgrade to Blob
+                preloadAssetAsBlob(audioUrl).then(blobUrl => {
+                    if (blobUrl) {
+                        console.log("Swapping audio source to blob");
+                        const wasPlaying = !ruryAudio.paused;
+                        const currentTime = ruryAudio.currentTime;
+                        ruryAudio.src = blobUrl;
+                         ruryAudio.currentTime = currentTime;
+                        if (wasPlaying) ruryAudio.play().catch(console.error);
+                    }
+                });
+            }
+
+            // Update BGM
+            // NOTE: The previous code completely missed loading BGM from data!
+            // It relied on the default MP3 in the HTML.
+            const bgmUrl = data.bgm_url || data.bgm || 'https://slamatslimit-experience.byc.plus/assets/happy-birthday-orchestra.mp3';
+            if (bgmUrl && bgmAudio) {
+                bgmAudio.src = bgmUrl;
+                bgmAudio.volume = 0.2; // Match export volume (20%)
+                
+                // Try to play immediately to verify loading
+                const playBgm = () => {
+                     bgmAudio.play().catch(e => {
+                         console.warn("BGM Autoplay blocked (expected without user interaction):", e);
+                         // We can try to play it again on first interaction if needed, 
+                         // but user just wants to "make sure it's loaded".
+                         // If it fails to play due to policy, it might still be loaded.
+                         // Let's at least log if it's ready.
+                     });
+                };
+
+                if (bgmAudio.readyState >= 2) {
+                    playBgm();
+                } else {
+                    bgmAudio.addEventListener('canplay', playBgm, { once: true });
+                }
+
+                // Upgrade to Blob for export compatibility
+                preloadAssetAsBlob(bgmUrl).then(blobUrl => {
+                    if (blobUrl) {
+                        console.log("Swapping BGM source to blob");
+                        const wasPlaying = !bgmAudio.paused;
+                        const currentTime = bgmAudio.currentTime;
+                        bgmAudio.src = blobUrl;
+                        bgmAudio.currentTime = currentTime;
+                        if (wasPlaying) bgmAudio.play().catch(console.error);
+                    }
+                });
             }
 
             // Update photo component
             if (photoImg) {
-                const photoUrl = data.photo_url || data.photo || '';
-                if (photoUrl && photoUrl.trim() !== '') {
+                if (photoUrl) {
                     photoImg.src = photoUrl;
                     photoImg.style.display = 'block';
+                    // Upgrade to Blob
+                    preloadAssetAsBlob(photoUrl).then(blobUrl => {
+                        if (blobUrl) photoImg.src = blobUrl;
+                    });
                 } else {
                     photoImg.style.display = 'none';
                 }
@@ -427,8 +521,12 @@
 
             // Load BGM
             if (data.audio_url) {
-                bgmAudio.src = data.audio_url;
-                bgmAudio.load();
+                 // Try to preload BGM as blob too
+                 preloadAssetAsBlob(data.audio_url).then(blobUrl => {
+                     if (blobUrl) bgmAudio.src = blobUrl;
+                     else bgmAudio.src = data.audio_url;
+                     bgmAudio.load();
+                 });
             }
         }
 
@@ -514,420 +612,482 @@
             }
         });
 
-        // Export video function
-        async function exportVideo() {
-            exportVideoBtn.disabled = true;
-            exportVideoBtn.textContent = 'Exporting...';
-
-            try {
-                // Check if MediaRecorder is supported
-                if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-                    throw new Error('Screen recording not supported. Use canvas-based export instead.');
-                }
-
-                // For now, we'll use a canvas-based approach with html2canvas
-                // You'll need to include html2canvas library
-                if (typeof html2canvas === 'undefined') {
-                    // Fallback: Use MediaRecorder API with canvas
-                    await exportWithCanvas();
-                } else {
-                    await exportWithHtml2Canvas();
-                }
-            } catch (error) {
-                console.error('Export error:', error);
-                alert('Export failed: ' + error.message);
-            } finally {
-                exportVideoBtn.disabled = false;
-                exportVideoBtn.textContent = 'Export Video';
-            }
-        }
-
         // Canvas-based export with html2canvas
         async function exportWithCanvas() {
+            console.log("exportWithCanvas called - starting export process");
             if (typeof html2canvas === 'undefined') {
+                console.error("html2canvas is missing!");
                 throw new Error('html2canvas library is required. Please include it in the page.');
             }
 
-            // Get container's actual dimensions for reference
-            const containerRect = exportContainer.getBoundingClientRect();
-            const containerWidth = containerRect.width;
-            const containerHeight = containerRect.height;
+            const exportBtn = document.getElementById('export-video-btn');
+            console.log("Export button found:", exportBtn);
+            const originalBtnText = exportBtn.textContent;
+            exportBtn.textContent = 'Preparing...';
 
-            // Set HD resolution: 1080x1920 (9:16 aspect ratio, Full HD portrait)
-            const hdWidth = 1080;
-            const hdHeight = 1920;
+            try {
+                // Get container's actual dimensions for reference
+                const containerRect = exportContainer.getBoundingClientRect();
+                const containerWidth = containerRect.width;
+                const containerHeight = containerRect.height;
 
-            // Calculate scale factor to capture at high quality
-            const scale = Math.max(hdWidth / containerWidth, hdHeight / containerHeight) * (window.devicePixelRatio || 1);
+                // Set HD resolution: 1080x1920 (9:16 aspect ratio, Full HD portrait)
+                const hdWidth = 1080;
+                const hdHeight = 1920;
 
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
+                // Calculate scale factor to capture at high quality
+                const scale = Math.max(hdWidth / containerWidth, hdHeight / containerHeight);
+                // We use explicit scale for manual drawing, so we might need `scale` variable.
 
-            // Set canvas to HD resolution
-            canvas.width = hdWidth;
-            canvas.height = hdHeight;
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
 
-            // Create video stream from canvas
-            const stream = canvas.captureStream(30); // 30 FPS
+                // Set canvas to HD resolution
+                canvas.width = hdWidth;
+                canvas.height = hdHeight;
 
-            // Get audio context for mixing
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            await audioContext.resume(); // Ensure context is running
-            let destination = null;
-            const audioSources = [];
+                // --- AUDIO SETUP ---
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                await audioContext.resume();
+                
+                const destination = audioContext.createMediaStreamDestination();
+                const bgmGainNode = audioContext.createGain();
+                const mediaGainNode = audioContext.createGain();
 
-            // Create audio destination for mixing
-            destination = audioContext.createMediaStreamDestination();
+                bgmGainNode.gain.value = 0.2; // BGM level (20% as requested)
+                mediaGainNode.gain.value = 1.0; // Media level
 
-            // Create gain nodes for volume control
-            const bgmGainNode = audioContext.createGain();
-            const mediaGainNode = audioContext.createGain();
+                bgmGainNode.connect(destination);
+                mediaGainNode.connect(destination);
 
-            // Set volume levels: media audio louder than BGM
-            bgmGainNode.gain.value = 0.2; // BGM at 20% volume
-            mediaGainNode.gain.value = 0.8; // Media audio at 80% volume
+                const audioSources = [];
+                const tempElements = [];
 
-            // Connect gain nodes to destination
-            bgmGainNode.connect(destination);
-            mediaGainNode.connect(destination);
-
-            // Add BGM audio if available
-            if (bgmAudio.src && bgmAudio.src !== '') {
-                try {
-                    bgmAudio.currentTime = 0;
-                    bgmAudio.volume = 1.0; // Set to max, control via gain node
-                    const bgmSource = audioContext.createMediaElementSource(bgmAudio);
-                    bgmSource.connect(bgmGainNode);
-                    audioSources.push(bgmSource);
-                } catch (e) {
-                    console.warn('Could not add BGM to stream:', e);
-                }
-            }
-
-            // Add media audio (from video or audio element) if available
-            if (ruryVideo && ruryVideo.src && !ruryVideo.muted) {
-                try {
-                    ruryVideo.volume = 1.0; 
+                // Helper: Clone and Add Audio Source
+                async function addAudioSource(originalElement, gainNode, fallbackUrl = null) {
+                    console.log("addAudioSource called for:", originalElement);
+                    if (originalElement) {
+                         console.log("  src:", originalElement.src);
+                         console.log("  currentSrc:", originalElement.currentSrc);
+                         console.log("  readyState:", originalElement.readyState);
+                    }
                     
-                    let videoSource;
-                    // Try to use captureStream which is cleaner and reusable
-                    if (ruryVideo.captureStream || ruryVideo.mozCaptureStream) {
-                        const vidStream = ruryVideo.captureStream ? ruryVideo.captureStream() : ruryVideo.mozCaptureStream();
-                        if (vidStream.getAudioTracks().length > 0) {
-                            videoSource = audioContext.createMediaStreamSource(vidStream);
+                    let srcToUse = fallbackUrl;
+                    if (originalElement && (originalElement.src || originalElement.currentSrc)) {
+                        srcToUse = originalElement.src || originalElement.currentSrc;
+                    }
+                    
+                    if (!srcToUse) {
+                        console.warn("addAudioSource: No src found for element and no fallback provided.");
+                        return null;
+                    }
+
+                    try {
+                        // Create clone
+
+                        // actually cloneNode is safer for video attributes, but for audio new Audio() is cleaner
+                        // Let's stick to cloneNode but FORCE the src.
+                        
+                        // const clone = originalElement ? originalElement.cloneNode() : new Audio();
+                        // If we use cloneNode on a video element, we get a video element.
+                        // If we just want audio, we can use new Audio(src). 
+                        // But for video we might need the video track? No, this function connects to gainNode, so it's audio only.
+                        // However, creating a new Audio() for a video source file might work if format is supported.
+                        // Let's safe bet:
+                        const clone = originalElement ? originalElement.cloneNode() : new Audio();
+                        
+                        clone.src = srcToUse;
+                        clone.crossOrigin = "anonymous";
+                        if (srcToUse.startsWith('blob:') && !clone.src) {
+                            clone.src = srcToUse;
                         }
-                    } 
-                    
-                    // Fallback to ElementSource if captureStream didn't give audio or isn't supported
-                    if (!videoSource) {
-                         // Note: This might mute the video output on some browsers if not reconnected to destination
-                         // But for export it's fine. 
-                         videoSource = audioContext.createMediaElementSource(ruryVideo);
-                    }
+                        clone.muted = false;
+                        clone.volume = 1.0;
+                        clone.loop = true; 
+                        
+                        // Append to DOM (hidden)
+                        clone.style.display = 'none';
+                        document.body.appendChild(clone);
 
-                    if (videoSource) {
-                        videoSource.connect(mediaGainNode);
-                        audioSources.push(videoSource);
+                        // IMPORTANT: Wait for the clone to be ready before creating source
+                        await new Promise((resolve, reject) => {
+                            if (clone.readyState >= 3) {
+                                resolve();
+                                return;
+                            }
+                            
+                            const onCanPlay = () => {
+                                clone.removeEventListener('canplay', onCanPlay);
+                                clone.removeEventListener('error', onError);
+                                resolve();
+                            };
+                            const onError = (e) => {
+                                clone.removeEventListener('canplay', onCanPlay);
+                                clone.removeEventListener('error', onError);
+                                console.warn("Audio clone loading error", e);
+                                resolve(); 
+                            };
+
+                            clone.addEventListener('canplay', onCanPlay);
+                            clone.addEventListener('error', onError);
+
+                            // Timeout
+                            setTimeout(() => {
+                                console.warn("Audio clone load timeout for src:", srcToUse);
+                                resolve();
+                            }, 5000); 
+                        });
+                        
+                        const source = audioContext.createMediaElementSource(clone);
+                        source.connect(gainNode);
+                        
+                        audioSources.push(source);
+                        tempElements.push(clone);
+                        return clone;
+                    } catch (e) {
+                        console.warn("Error adding audio source:", e);
+                        return null;
                     }
-                } catch (e) {
-                    console.warn('Could not add video audio to stream:', e);
                 }
-            } else if (ruryAudio && ruryAudio.src && !ruryAudio.muted) {
-                try {
-                     // For audio element, captureStream is also safer if available
-                    let audioSource;
-                    if (ruryAudio.captureStream || ruryAudio.mozCaptureStream) {
-                         const audStream = ruryAudio.captureStream ? ruryAudio.captureStream() : ruryAudio.mozCaptureStream();
-                         if (audStream.getAudioTracks().length > 0) {
-                             audioSource = audioContext.createMediaStreamSource(audStream);
+
+                // Add BGM
+                let clonedBgm = null;
+                // Check if bgmAudio exists and has a source
+                console.log("Checking BGM:", bgmAudio, "src:", bgmAudio ? bgmAudio.src : 'null');
+                
+                const currentData = getExportData() || {};
+                const fallbackBgmUrl = currentData.bgm_url || currentData.bgm;
+                
+                // Add BGM using AudioBuffer (Robust)
+                let bgmBufferSource = null;
+                // const currentData = getExportData() || {}; // Data is already retrieved above at line 758
+                // We reuse `currentData` from earlier line
+                // We reuse `currentData` from earlier line
+                const bgmUrlToFetch = currentData.bgm_url || currentData.bgm || (bgmAudio ? bgmAudio.src : null) || 'https://slamatslimit-experience.byc.plus/assets/happy-birthday-orchestra.mp3';
+                
+                if (bgmUrlToFetch) {
+                    console.log("Fetching BGM AudioBuffer from:", bgmUrlToFetch);
+                    try {
+                        const response = await fetch(bgmUrlToFetch);
+                        const arrayBuffer = await response.arrayBuffer();
+                        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+                        
+                        bgmBufferSource = audioContext.createBufferSource();
+                        bgmBufferSource.buffer = audioBuffer;
+                        bgmBufferSource.loop = true;
+                        bgmBufferSource.connect(bgmGainNode);
+                        console.log("BGM AudioBuffer ready");
+                    } catch (e) {
+                         console.error("Failed to load BGM AudioBuffer:", e);
+                         // FINAL FALLBACK TO USER PROVIDED URL
+                         console.log("Attempting final fallback to global URL...");
+                         try {
+                              const fallbackResponse = await fetch('https://slamatslimit-experience.byc.plus/assets/happy-birthday-orchestra.mp3');
+                              const fallbackBuffer = await fallbackResponse.arrayBuffer();
+                              const fallbackAudioBuffer = await audioContext.decodeAudioData(fallbackBuffer);
+                              bgmBufferSource = audioContext.createBufferSource();
+                              bgmBufferSource.buffer = fallbackAudioBuffer;
+                              bgmBufferSource.loop = true;
+                              bgmBufferSource.connect(bgmGainNode);
+                              console.log("BGM AudioBuffer ready (Fallback)");
+                         } catch(e2) {
+                              console.error("Final fallback failed:", e2);
+                              alert("BGM Load Error: " + e.message + "\nCheck console for details.");
                          }
                     }
-
-                    if (!audioSource) {
-                        audioSource = audioContext.createMediaElementSource(ruryAudio);
-                    }
-
-                    if (audioSource) {
-                        audioSource.connect(mediaGainNode);
-                        audioSources.push(audioSource);
-                    }
-                } catch (e) {
-                    console.warn('Could not add audio to stream:', e);
+                } else {
+                     console.warn("No BGM URL found for AudioBuffer");
                 }
-            }
 
-            // Mix canvas video stream with audio
-            const audioTracks = destination.stream.getAudioTracks();
-            if (audioTracks.length > 0) {
-                stream.addTrack(audioTracks[0]);
-            }
+                // Add Media Audio
+                let clonedMedia = null; // Used for audio
+                let activeMediaElement = null; // Used for duration calculation
 
-            // Create MediaRecorder - prefer MP4 format
-            const chunks = [];
-            let mimeType = 'video/mp4';
-
-            // Check for MP4 support first, then fallback to WebM
-            if (MediaRecorder.isTypeSupported('video/mp4')) {
-                mimeType = 'video/mp4';
-            } else if (MediaRecorder.isTypeSupported('video/webm;codecs=vp9')) {
-                mimeType = 'video/webm;codecs=vp9';
-            } else if (MediaRecorder.isTypeSupported('video/webm')) {
-                mimeType = 'video/webm';
-            }
-
-            const recorder = new MediaRecorder(stream, {
-                mimeType: mimeType,
-                videoBitsPerSecond: 10000000 // 10 Mbps for higher quality
-            });
-
-            recorder.ondataavailable = (e) => {
-                if (e.data.size > 0) {
-                    chunks.push(e.data);
+                if (ruryVideo && ruryVideo.src && !ruryVideo.muted && ruryVideo.style.display !== 'none') {
+                    clonedMedia = await addAudioSource(ruryVideo, mediaGainNode);
+                    activeMediaElement = ruryVideo; // Use original for duration
+                } else if (ruryAudio && ruryAudio.src && !ruryAudio.muted && ruryAudio.style.display !== 'none') {
+                    clonedMedia = await addAudioSource(ruryAudio, mediaGainNode);
+                    activeMediaElement = ruryAudio;
                 }
-            };
 
-            recorder.onstop = () => {
-                const blob = new Blob(chunks, { type: mimeType });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `export-video-${Date.now()}.${mimeType.includes('webm') ? 'webm' : 'mp4'}`;
-                a.click();
-                URL.revokeObjectURL(url);
+                // --- STATIC BACKGROUND CAPTURE ---
+                // We capture everything EXCEPT the dynamic content (video, photo, audio icon, controls)
+                // This gives us a static image to draw as background every frame.
+                
+                // Hide dynamic elements temporarily for capture
+                const originalVideoDisplay = ruryVideo ? ruryVideo.style.display : 'none';
+                const originalPhotoDisplay = photoImg ? photoImg.style.display : 'none';
+                const originalAudioIconDisplay = audioIcon ? audioIcon.style.display : 'none';
 
-                // Cleanup
-                audioSources.forEach(source => {
-                    try {
-                        source.disconnect();
-                    } catch (e) {
-                        console.warn('Error disconnecting audio source:', e);
+                // We'll use the 'ignoreElements' option of html2canvas, but setting display none is safer to avoid layout shifts?
+                // Actually, html2canvas ignoreElements is better as it doesn't affect the live DOM layout if we are careful.
+                // But to be 100% sure we get a "clean" background where the video SHOULD be, we might want the video container to be empty/transparent?
+                // The video container has a background color/image? 
+                // Looking at CSS: #video-component doesn't have a background. 
+                // So ignoring the video tag should be fine.
+
+                // --- EXPAND MESSAGE COMPONENT ---
+                // Temporarily expand letter component to show all text content in the static capture
+                const letterComponent = document.getElementById('letter-component');
+                let originalLetterHeight = null;
+                let originalLetterOverflow = null;
+                let originalScrollTop = 0;
+
+                if (letterComponent) {
+                    originalScrollTop = letterComponent.scrollTop;
+                    originalLetterHeight = letterComponent.style.height;
+                    originalLetterOverflow = letterComponent.style.overflow;
+
+                    // Expand to show all content
+                    letterComponent.style.height = letterComponent.scrollHeight + 'px';
+                    letterComponent.style.overflow = 'visible';
+                    letterComponent.scrollTop = 0;
+                }
+
+                const staticCanvas = await html2canvas(exportContainer, {
+                    useCORS: true,
+                    backgroundColor: '#FF5627', // Match body background
+                    scale: scale,
+                    width: containerWidth,
+                    height: containerHeight, // Note: if container grew due to letter expansion, we should capture full height? 
+                    // Actually, exportContainer size might not have changed, just the letter component overflowing?
+                    // We want to capture the "visible scence". 
+                    // If we expand the letter component, does it push other elements?
+                    // It likely expands downwards.
+                    // We still capture the fixed container size.
+                    windowWidth: containerWidth,
+                    windowHeight: containerHeight,
+                    ignoreElements: (element) => {
+                        if (element.id === 'controls') return true;
+                        if (element.id === 'rury-video') return true;
+                        if (element.id === 'photo-component-img') return true;
+                        if (element.id === 'audio-icon') return true; 
+                        return false; 
+                    },
+                    onclone: (clonedDoc) => {
+                         // Ensure elements are in correct state for static capture
                     }
                 });
-                if (destination) {
-                    try {
-                        destination.disconnect();
-                    } catch (e) {
-                        console.warn('Error disconnecting destination:', e);
-                    }
+
+                // RESTORE LETTER COMPONENT
+                if (letterComponent) {
+                    letterComponent.style.height = originalLetterHeight;
+                    letterComponent.style.overflow = originalLetterOverflow;
+                    letterComponent.scrollTop = originalScrollTop;
                 }
-                audioContext.close();
-            };
 
-            // Start recording
-            recorder.start(1000); // Collect data every second
+                // --- RECORDING LOOP ---
 
-            // Play BGM if available
-            if (bgmAudio.src && bgmAudio.src !== '') {
-                try {
-                    bgmAudio.play();
-                } catch (e) {
-                    console.warn('BGM play error:', e);
+                // Determine duration based on active media (video/audio)
+                let mediaDuration = 30; // Default cap
+                if (activeMediaElement && activeMediaElement.duration && isFinite(activeMediaElement.duration)) {
+                     mediaDuration = activeMediaElement.duration;
+                     // Ensure minimum duration of 5s
+                     if (mediaDuration < 5) mediaDuration = 5;
+                     
+                     // OPTIONAL: Cap at 30s only if desired, otherwise let it run full length?
+                     // User complained "always have duration of 30s", implying they want it SHORTER if the clip is shorter.
+                     // The logic below was forcing it to 10 if < 5, and capping at 30.
+                     // If existing logic was: if (mediaDuration < 5) mediaDuration = 10;
+                     // We should trust the clip duration but ensure reasonable bounds.
+                     if (mediaDuration > 60) mediaDuration = 60; // Let's cap at 60s for safety
+                } else {
+                     // If no media or invalid duration, default to 10s
+                     mediaDuration = 10;
                 }
-            }
+                
+                console.log("Export Duration calculated:", mediaDuration, "Active Element:", activeMediaElement);
 
-            // Play media audio/video if available
-            if (ruryVideo && ruryVideo.src) {
-                try {
-                    ruryVideo.muted = false;
-                    ruryVideo.play();
-                } catch (e) {
-                    console.warn('Video play error:', e);
+                const duration = mediaDuration * 1000;
+                const fps = 30;
+                const stream = canvas.captureStream(fps);
+                
+                // Mix audio
+                const audioTracks = destination.stream.getAudioTracks();
+                if (audioTracks.length > 0) {
+                    stream.addTrack(audioTracks[0]);
                 }
-            } else if (ruryAudio && ruryAudio.src) {
-                try {
-                    ruryAudio.muted = false;
-                    ruryAudio.play();
-                } catch (e) {
-                    console.warn('Audio play error:', e);
+
+                // Recorder
+                // Recorder - ENFORCE MP4 with WhatsApp-compatible codecs (H.264 + AAC)
+                let mimeType = 'video/mp4; codecs="avc1.42E01E, mp4a.40.2"'; // Constrained Baseline Profile + AAC-LC
+                
+                if (!MediaRecorder.isTypeSupported(mimeType)) {
+                     console.warn(`Strict MIME type ${mimeType} not supported. Trying fallbacks.`);
+                     // Fallback 1: Generic MP4
+                     if (MediaRecorder.isTypeSupported('video/mp4')) {
+                         mimeType = 'video/mp4';
+                     } 
+                     // Fallback 2: H.264 generic
+                     else if (MediaRecorder.isTypeSupported('video/mp4;codecs=h264')) {
+                         mimeType = 'video/mp4;codecs=h264';
+                     } 
+                     // Fallback 3: AVC1 generic
+                     else if (MediaRecorder.isTypeSupported('video/mp4;codecs=avc1')) {
+                         mimeType = 'video/mp4;codecs=avc1';
+                     }
+                     // Fallback 4: WebM (Last resort, user will be warned)
+                     else {
+                         mimeType = 'video/webm';
+                         alert("Your browser does not support MP4 recording. Exporting as WebM which may not work in WhatsApp.");
+                     }
                 }
-            }
+                console.log("Using MIME type:", mimeType);
 
-            // Capture frames
-            // Determine duration based on media
-            let mediaDuration = 10; // Default 10s
-            
-            if (ruryVideo && ruryVideo.src && ruryVideo.readyState > 0 && ruryVideo.duration && !isNaN(ruryVideo.duration)) {
-                mediaDuration = ruryVideo.duration;
-            } else if (ruryAudio && ruryAudio.src && ruryAudio.readyState > 0 && ruryAudio.duration && !isNaN(ruryAudio.duration)) {
-                mediaDuration = ruryAudio.duration;
-            }
+                const recorder = new MediaRecorder(stream, {
+                    mimeType: mimeType,
+                    videoBitsPerSecond: 15000000 
+                });
 
-            // If media is short (<10s), play it twice
-            if (mediaDuration < 10) {
-                mediaDuration = mediaDuration * 2;
-            }
-
-            const duration = mediaDuration * 1000; // Convert to ms
-            const startTime = Date.now();
-            const fps = 30;
-            const frameInterval = 1000 / fps;
-            let lastFrameTime = 0;
-
-            async function captureFrame() {
-                const currentTime = Date.now();
-                const elapsed = currentTime - startTime;
-
-                if (elapsed >= duration) {
-                    recorder.stop();
-                    bgmAudio.pause();
-                    bgmAudio.currentTime = 0;
-                    if (ruryVideo) {
-                        ruryVideo.pause();
+                const chunks = [];
+                recorder.ondataavailable = (e) => { if(e.data.size > 0) chunks.push(e.data); };
+                
+                recorder.onstop = () => {
+                   const blob = new Blob(chunks, { type: mimeType });
+                   const url = URL.createObjectURL(blob);
+                   const a = document.createElement('a');
+                   a.href = url;
+                   a.download = `export-${Date.now()}.${mimeType.includes('webm') ? 'webm' : 'mp4'}`;
+                   a.click();
+                   URL.revokeObjectURL(url);
+                   
+                   // Cleanup
+                   exportBtn.textContent = originalBtnText;
+                   exportBtn.disabled = false;
+                   audioSources.forEach(s => s.disconnect());
+                   destination.disconnect();
+                   audioContext.close();
+                   tempElements.forEach(el => {
+                       el.pause();
+                       el.src = '';
+                   });
+                   // Reset original video check
+                   if(ruryVideo) {
+                        ruryVideo.muted = false; // Unmute user video
                         ruryVideo.currentTime = 0;
-                    }
-                    if (ruryAudio) {
-                        ruryAudio.pause();
-                        ruryAudio.currentTime = 0;
-                    }
-                    return;
+                   }
+                   if(bgmAudio) bgmAudio.currentTime = 0;
+                };
+
+                recorder.start();
+
+                // Start playback for recording
+                if (bgmBufferSource) {
+                    bgmBufferSource.start(0);
+                    // bgmBufferSource.noteOn(0); // old api fallback? no, start() is standard
+                }
+                if (clonedMedia) clonedMedia.play().catch(e=>console.log("Media clone play error", e));
+                
+                // Also play original video if visible so we can draw its frames!
+                // Wait, we can't draw frames from the CLONE easily if it's not in DOM or not updated visually.
+                // We MUST draw frames from the ORIGINAL video element that is in the DOM (or invisible but loading).
+                // But the original video might be muted or controlled by user.
+                // Let's ensure original video plays cleanly for the draw loop.
+                // Also play original video if visible so we can draw its frames!
+                if (ruryVideo && ruryVideo.style.display !== 'none') {
+                    ruryVideo.muted = true; // Mute original to avoid double audio (we rely on clone for audio)
+                    ruryVideo.loop = true; // Loop the original video so we always have frames to draw
+                    ruryVideo.currentTime = 0;
+                    await ruryVideo.play();
                 }
 
-                // Throttle to 30 FPS
-                if (currentTime - lastFrameTime >= frameInterval) {
-                    try {
-                        // Temporarily expand letter component to show all content
-                        const letterComponent = document.getElementById('letter-component');
-                        let originalHeight = null;
-                        let originalOverflow = null;
-                        let scrollPosition = 0;
+                const startTime = Date.now();
+                let lastFrameTime = 0;
+                const frameInterval = 1000 / fps;
 
-                        if (letterComponent) {
-                            scrollPosition = letterComponent.scrollTop;
-                            originalHeight = letterComponent.style.height;
-                            originalOverflow = letterComponent.style.overflow;
+                exportBtn.textContent = 'Recording...';
 
-                            // Temporarily expand to show all content
-                            const scrollHeight = letterComponent.scrollHeight;
-                            letterComponent.style.height = scrollHeight + 'px';
-                            letterComponent.style.overflow = 'visible';
-                            letterComponent.scrollTop = 0;
+                // --- DRAW LOOP ---
+                async function drawFrame() {
+                    const now = Date.now();
+                    const elapsed = now - startTime;
+
+                    if (elapsed >= duration) {
+                        recorder.stop();
+                        return;
+                    }
+
+                    if (now - lastFrameTime >= frameInterval) {
+                        // 1. Draw Static Background
+                        ctx.drawImage(staticCanvas, 0, 0, hdWidth, hdHeight);
+
+                        // 2. Draw Video (if applicable)
+                        if (ruryVideo && ruryVideo.style.display !== 'none') {
+                            // Calculate position relative to HD canvas
+                            // We need to map the DOM coordinates to the Canvas coordinates
+                            const videoRect = ruryVideo.getBoundingClientRect();
+                            const containerRect = exportContainer.getBoundingClientRect();
+
+                            // Relative position in percent or pixels relative to container
+                            const relX = videoRect.left - containerRect.left;
+                            const relY = videoRect.top - containerRect.top;
+                            
+                            
+                            console.log(`Drawing video frame. Time: ${elapsed}, Src: ${ruryVideo.currentSrc}, CurrentTime: ${ruryVideo.currentTime}, Rect: ${JSON.stringify(videoRect)}`);
+                            
+                            const drawX = relX * scale;
+                            const drawY = relY * scale;
+                            const drawW = videoRect.width * scale;
+                            const drawH = videoRect.height * scale;
+
+                            ctx.drawImage(ruryVideo, drawX, drawY, drawW, drawH);
+                        } else {
+                             console.warn("Video skipped. ruryVideo:", !!ruryVideo, "display:", ruryVideo ? ruryVideo.style.display : 'null');
                         }
 
-                        // Wait a bit to ensure video frame is ready
-                        await new Promise(resolve => setTimeout(resolve, 50));
+                        // 3. Draw Animated Photo (if applicable)
+                        // Animation: rotate-snap-1 (0% -> 0deg, 50% -> 15deg, 100% -> 0deg)
+                        if (photoImg && photoImg.src && photoImg.style.display !== 'none') {
+                             const photoRect = photoImg.getBoundingClientRect();
+                             const containerRect = exportContainer.getBoundingClientRect();
 
-                        // Capture the container using html2canvas with container's actual dimensions
-                        const canvasElement = await html2canvas(exportContainer, {
-                            useCORS: true,
-                            backgroundColor: '#FF5627',
-                            scale: scale,
-                            logging: false,
-                            width: containerWidth,
-                            height: containerHeight,
-                            windowWidth: containerWidth,
-                            windowHeight: containerHeight,
-                            scrollX: 0,
-                            scrollY: 0,
-                            onclone: (clonedDoc) => {
-                                // Inject animation keyframes into cloned document
-                                const style = clonedDoc.createElement('style');
-                                style.textContent = `
-                  @keyframes rotate-snap-1 {
-                    0%, 100% {
-                      transform: rotate(0deg);
-                    }
-                    50% {
-                      transform: rotate(15deg);
-                    }
-                  }
-                `;
-                                clonedDoc.head.appendChild(style);
+                             const relX = photoRect.left - containerRect.left;
+                             const relY = photoRect.top - containerRect.top;
+                             
+                             const drawX = relX * scale;
+                             const drawY = relY * scale;
+                             const drawW = photoRect.width * scale;
+                             const drawH = photoRect.height * scale;
 
-                                // Ensure video component and video are properly styled in cloned document
-                                const clonedVideoComponent = clonedDoc.getElementById('video-component');
-                                const clonedVideo = clonedDoc.getElementById('rury-video');
-                                const clonedPinSvg = clonedDoc.getElementById('pin-svg');
+                             // Calculate Rotation
+                             // Period is roughly 3s based on CSS 'rotate-snap-1 3s ease-in-out infinite'
+                             // Sine wave approximation: 0 to 15 to 0
+                             // Math.sin oscillates -1 to 1.
+                             // We want 0 -> 15 -> 0 over 3000ms.
+                             // Normalized time t = (elapsed % 3000) / 3000
+                             // Let's model it: 7.5 * (1 - cos(2*PI * t)) -> starts at 0, goes to 15 at t=0.5, back to 0 at t=1.
+                             
+                             const cycle = 3000;
+                             const t = (elapsed % cycle) / cycle;
+                             const angleDeg = 7.5 * (1 - Math.cos(2 * Math.PI * t));
+                             const angleRad = angleDeg * Math.PI / 180;
 
-                                if (clonedVideoComponent) {
-                                    clonedVideoComponent.style.overflow = 'visible';
-                                    clonedVideoComponent.style.display = 'flex';
-                                    clonedVideoComponent.style.transform = 'scaleX(0.8) translateX(-60%)';
-                                }
-
-                                if (clonedVideo) {
-                                    clonedVideo.style.display = 'block';
-                                    // Make video content slightly smaller horizontally to fix stretching
-                                    clonedVideo.style.width = '82%'; // Further reduced to fix stretching
-                                    clonedVideo.style.height = 'auto';
-                                    clonedVideo.style.maxHeight = '80%';
-                                    clonedVideo.style.aspectRatio = '9 / 16';
-                                    clonedVideo.style.objectFit = 'cover';
-                                    clonedVideo.style.objectPosition = 'center';
-                                    clonedVideo.style.marginTop = '5%';
-                                    clonedVideo.style.position = 'relative';
-                                    clonedVideo.style.left = 'auto';
-                                    clonedVideo.style.right = 'auto';
-                                }
-
-                                // Ensure pin SVG is visible and properly rendered
-                                if (clonedPinSvg) {
-                                    clonedPinSvg.style.display = 'block';
-                                    clonedPinSvg.style.visibility = 'visible';
-                                    clonedPinSvg.style.opacity = '1';
-                                    clonedPinSvg.style.position = 'absolute';
-                                    clonedPinSvg.style.pointerEvents = 'none';
-                                    // Force SVG to render by ensuring it has dimensions
-                                    if (!clonedPinSvg.getAttribute('width') || !clonedPinSvg.getAttribute('height')) {
-                                        clonedPinSvg.setAttribute('width', '47');
-                                        clonedPinSvg.setAttribute('height', '64');
-                                    }
-                                }
-
-                                // Ensure photo animation is visible and running
-                                const clonedPhotoImg = clonedDoc.getElementById('photo-component-img');
-                                if (clonedPhotoImg) {
-                                    clonedPhotoImg.style.display = 'block';
-                                    clonedPhotoImg.style.visibility = 'visible';
-                                    clonedPhotoImg.style.opacity = '1';
-
-                                    // Remove any inline transform that might override animation
-                                    clonedPhotoImg.style.transform = '';
-
-                                    // Ensure animation is applied and running
-                                    clonedPhotoImg.style.animation = 'rotate-snap-1 3s ease-in-out infinite';
-                                    clonedPhotoImg.style.animationPlayState = 'running';
-                                    clonedPhotoImg.style.animationFillMode = 'both';
-
-                                    // Force reflow to ensure animation starts
-                                    clonedPhotoImg.offsetHeight;
-
-                                    // Trigger animation by removing and re-adding
-                                    const animationName = clonedPhotoImg.style.animation;
-                                    clonedPhotoImg.style.animation = 'none';
-                                    clonedPhotoImg.offsetHeight; // Force reflow
-                                    clonedPhotoImg.style.animation = animationName;
-                                }
-                            },
-                            ignoreElements: (element) => {
-                                // Don't capture controls
-                                return element.id === 'controls';
-                            }
-                        });
-
-                        // Draw captured frame to canvas at full size (already scaled)
-                        ctx.clearRect(0, 0, canvas.width, canvas.height);
-                        ctx.drawImage(canvasElement, 0, 0, canvas.width, canvas.height);
-
-                        // Manually draw video has been removed as it was causing ghosting/duplication.
-                        // We rely on html2canvas properly capturing the video element now.
-
-                        // Restore letter component
-                        if (letterComponent) {
-                            letterComponent.style.height = originalHeight || '';
-                            letterComponent.style.overflow = originalOverflow || '';
-                            letterComponent.scrollTop = scrollPosition;
+                             // Draw Logic with Rotation
+                             ctx.save();
+                             // Translate to center of photo
+                             const centerX = drawX + drawW / 2;
+                             const centerY = drawY + drawH / 2;
+                             ctx.translate(centerX, centerY);
+                             ctx.rotate(angleRad);
+                             ctx.drawImage(photoImg, -drawW / 2, -drawH / 2, drawW, drawH);
+                             ctx.restore();
                         }
 
-                        lastFrameTime = currentTime;
-                    } catch (error) {
-                        console.error('Error capturing frame:', error);
+                        lastFrameTime = now;
                     }
+
+                    requestAnimationFrame(drawFrame);
                 }
 
-                requestAnimationFrame(captureFrame);
+                drawFrame();
+
+            } catch (err) {
+                 console.error("Hybrid export failed:", err);
+                 alert("Export failed: " + err.message);
+                 exportBtn.textContent = originalBtnText;
+                 exportBtn.disabled = false;
             }
-
-            captureFrame();
         }
 
         // Export with html2canvas (wrapper)
@@ -936,7 +1096,11 @@
         }
 
         // Export button click
-        exportVideoBtn.addEventListener('click', exportVideo);
+        // Export button click
+        exportVideoBtn.addEventListener('click', () => {
+            console.log("Export Video button clicked");
+            exportWithCanvas();
+        });
 
         // Screenshot function - capture single frame
         async function takeScreenshot() {
@@ -1136,9 +1300,9 @@
         // Screenshot button click
         screenshotBtn.addEventListener('click', takeScreenshot);
 
-        // Initialize with sample data on load
+        // Initialize with empty data on load, waiting for API
         window.addEventListener('DOMContentLoaded', () => {
-            loadData(sampleData);
+             // ensure checks for orderID are running (already in other listener, but this one was for sampleData)
         });
 
         // Allow setting data from URL or external source
