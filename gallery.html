@@ -371,7 +371,7 @@
 
       try {
         console.log('Fetching content for orderID:', orderID);
-        const response = await fetch(`https://slamatslimit.byc.plus/api/gallery?order_id=${orderID}`);
+        const response = await fetch(`https://slamatslimit.byc.plus/api/gallery?orderId=${orderID}`);
         console.log('API Response status:', response.status);
 
         if (!response.ok) {

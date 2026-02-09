@@ -447,7 +447,7 @@
         }
 
         // Fetch content from API
-        fetch(`https://slamatslimit.byc.plus/api/gallery?order_id=${orderID}`)
+        fetch(`https://slamatslimit.byc.plus/api/gallery?orderId=${orderID}`)
           .then((response) => {
             console.log("API Response status:", response.status);
             return response.json();
