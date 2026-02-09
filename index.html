@@ -5,6 +5,8 @@
   <title>AR App | Moon Muffin</title>
   <link rel="icon" type="image/x-icon" href="/icon.ico" />
   <link rel="stylesheet" href="/styles.css" />
+  <!-- reCAPTCHA v3 -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6Lcvk2AsAAAAAGcS4NE0cPn3bOM9TJf39w6-9m0F"></script>
   <style>
     @keyframes slowRotate {
 
@@ -1494,19 +1496,43 @@
         return;
       }
 
-      // Fetch content from API
-      fetch(`https://slamatslimit.byc.plus/api/gallery?orderId=${orderID}`)
-        .then((response) => {
+      // Fetch content from API with reCAPTCHA protection
+      const RECAPTCHA_SITE_KEY = '6Lcvk2AsAAAAAGcS4NE0cPn3bOM9TJf39w6-9m0F';
+      
+      // Get reCAPTCHA token and fetch gallery data
+      grecaptcha.ready(async () => {
+        try {
+          // Get reCAPTCHA token
+          let recaptchaToken = '';
+          try {
+            recaptchaToken = await grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'gallery_fetch' });
+            console.log('reCAPTCHA token obtained');
+          } catch (recaptchaError) {
+            console.error('Failed to get reCAPTCHA token:', recaptchaError);
+          }
+
+          // Build URL with reCAPTCHA token
+          const apiUrl = `https://slamatslimit.byc.plus/api/gallery?orderId=${orderID}&recaptchaToken=${encodeURIComponent(recaptchaToken)}`;
+          
+          const response = await fetch(apiUrl);
           console.log("API Response status:", response.status);
-          return response.json();
-        })
-        .then((data) => {
+          
+          if (!response.ok) {
+            if (response.status === 403) {
+              console.error('reCAPTCHA verification failed');
+              throw new Error('reCAPTCHA verification failed');
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          const data = await response.json();
           console.log("API Response data:", data);
+          
           if (!data || data.length === 0) {
             console.log(
               "No data received, redirecting to order-specific URL..."
             );
-            window.location.href = `https://slamatslimit.byc.plus/content/${orderID}`;
+            window.location.href = `https://slamatslimit.byc.plus/experience-app/ar/${orderID}`;
             return;
           }
 
@@ -1523,13 +1549,10 @@
 
           // Store content data globally for sequential display (will start when marker detected)
           window.sequentialContentData = data;
-        })
-        .catch((error) => {
+        } catch (error) {
           console.error("Error fetching content:", error);
-          // console.log("Redirecting due to error...");
-          // window.location.href =
-          //   "https://slamatslimit.byc.plus/experience-app/ar";
-        });
+        }
+      });
 
       const messageModal = document.getElementById("messageModal");
       const modalMessage = document.getElementById("modalMessage");
