@@ -5,15 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gallery | Moon Muffin</title>
   <link rel="icon" type="image/x-icon" href="./icon.ico" />
-  <!-- Google Fonts  -->
+  <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playpen+Sans:wght@400;500;600;700;800&family=Barrio&display=swap"
     rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- reCAPTCHA v3 -->
+  <script src="https://www.google.com/recaptcha/api.js?render=6Lcvk2AsAAAAAGcS4NE0cPn3bOM9TJf39w6-9m0F"></script>
   <script src="./svg-component.js" type="module"></script>
 
   <style>
+    .grecaptcha-badge {
+      visibility: hidden !important;
+    }
+
     .playpen {
       font-family: "Playpen Sans", cursive;
       font-optical-sizing: auto;
@@ -362,7 +368,26 @@
       });
     }
 
-    // Function to fetch letters from API
+    // reCAPTCHA site key
+    const RECAPTCHA_SITE_KEY = '6Lcvk2AsAAAAAGcS4NE0cPn3bOM9TJf39w6-9m0F';
+
+    // Function to get reCAPTCHA token
+    async function getRecaptchaToken(action) {
+      return new Promise((resolve, reject) => {
+        if (typeof grecaptcha === 'undefined') {
+          console.error('reCAPTCHA not loaded');
+          reject(new Error('reCAPTCHA not loaded'));
+          return;
+        }
+        grecaptcha.ready(() => {
+          grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: action })
+            .then(token => resolve(token))
+            .catch(err => reject(err));
+        });
+      });
+    }
+
+    // Function to fetch letters from API with reCAPTCHA protection
     async function fetchLettersFromAPI(orderID) {
       if (!orderID) {
         console.log('No orderID provided');
@@ -371,10 +396,29 @@
 
       try {
         console.log('Fetching content for orderID:', orderID);
-        const response = await fetch(`https://slamatslimit.byc.plus/api/gallery?orderId=${orderID}`);
+        
+        // Get reCAPTCHA token for gallery fetch action
+        let recaptchaToken = '';
+        try {
+          recaptchaToken = await getRecaptchaToken('gallery_fetch');
+          console.log('reCAPTCHA token obtained');
+        } catch (recaptchaError) {
+          console.error('Failed to get reCAPTCHA token:', recaptchaError);
+          // Continue without token - server will reject if required
+        }
+
+        // Build URL with reCAPTCHA token
+        const apiUrl = `https://slamatslimit.byc.plus/api/gallery?orderId=${orderID}&recaptchaToken=${encodeURIComponent(recaptchaToken)}`;
+        
+        const response = await fetch(apiUrl);
         console.log('API Response status:', response.status);
 
         if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          if (response.status === 403) {
+            console.error('reCAPTCHA verification failed:', errorData);
+            throw new Error('reCAPTCHA verification failed. Please refresh and try again.');
+          }
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
