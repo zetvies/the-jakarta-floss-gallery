@@ -11,6 +11,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
 
+    <!-- Supabase JS SDK & JSZip Client Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <!-- Tailwind CSS (Local vendor with CDN fallback) -->
     <script src="/assets/vendor/tailwind.js"></script>
     <script>
@@ -248,17 +252,16 @@
                 <span>SHARE LINK</span>
               </button>
 
-              <a
+              <button
                 id="btnDownloadAllZip"
-                href="#"
-                download
+                onclick="downloadSessionZip()"
                 class="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 border-2 border-charcoal bg-wine hover:bg-wine-dark text-white text-[11px] font-bold tracking-widest uppercase px-5 py-2.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] active:scale-95 transition-all cursor-pointer whitespace-nowrap"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                 </svg>
                 <span>DOWNLOAD ALL (ZIP)</span>
-              </a>
+              </button>
             </div>
           </div>
 
@@ -378,9 +381,24 @@
     </div>
 
     <script>
+      // Supabase Direct Client Configuration
+      const SUPABASE_URL = "https://fowdecmskhvfgmdwwnxg.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDE1MTk2MjUsImV4cCI6MjAxNzA5NTYyNX0.icC5QydnHRC-qu4Vf0Ik0_BxpaU39TCaU8bXijdqv9Y";
+      const STORAGE_BUCKET = "tjf_photos";
+
+      let supabaseClient = null;
+      if (window.supabase) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+
       let currentCode = "";
-      let sessionData = null;
-      let filesData = null;
+      let sessionRowData = null;
+      let filesData = {
+        frame_result: null,
+        frame_video: null,
+        raw_photos: [],
+        all_matched: [],
+      };
 
       window.onload = () => {
         const urlParams = new URLSearchParams(window.location.search);
@@ -397,40 +415,136 @@
         showLoading(true);
         hideAllStates();
 
-        try {
-          // Fetch session details & file manifest in parallel
-          const [sessionRes, filesRes] = await Promise.all([
-            fetch(`/api/session/${encodeURIComponent(currentCode)}`),
-            fetch(`/api/session/${encodeURIComponent(currentCode)}/files`),
-          ]);
+        let foundSuccess = false;
 
-          sessionData = await sessionRes.json();
-          filesData = await filesRes.json();
+        // 1. Primary: Direct Supabase Client Query
+        if (supabaseClient) {
+          try {
+            // A. Query tjf_sessions table for session metadata
+            let { data: sessionRow, error: dbErr } = await supabaseClient
+              .from("tjf_sessions")
+              .select("*")
+              .eq("code", currentCode)
+              .maybeSingle();
 
-          showLoading(false);
+            if (!sessionRow) {
+              const { data: fuzzyRows } = await supabaseClient
+                .from("tjf_sessions")
+                .select("*")
+                .ilike("code", `%${currentCode}%`);
+              if (fuzzyRows && fuzzyRows.length > 0) {
+                sessionRow = fuzzyRows[0];
+              }
+            }
 
-          if (!sessionData.success && (!filesData.success || (!filesData.files.frame_result && !filesData.files.raw_photos.length))) {
-            showError("Photo Session Not Found", `No photo session found for code "${currentCode}". Please check your printed voucher code and try again.`);
-            return;
+            sessionRowData = sessionRow;
+
+            // B. Build search prefixes
+            const prefixes = [currentCode, `TJF_${currentCode}`];
+            if (sessionRow && sessionRow.local_filename) {
+              const locFn = sessionRow.local_filename;
+              const pfx = locFn.includes("_booth-") ? locFn.split("_booth-")[0] : locFn.replace(/\.[^/.]+$/, "");
+              prefixes.push(pfx);
+              prefixes.push(pfx.replace(/^TJF_/, ""));
+            }
+
+            // C. List files from Supabase Storage tjf_photos bucket
+            const { data: storageFiles } = await supabaseClient
+              .storage
+              .from(STORAGE_BUCKET)
+              .list("photos", { limit: 100 });
+
+            let matchedFiles = [];
+            if (storageFiles && storageFiles.length > 0) {
+              matchedFiles = storageFiles.filter(sf => {
+                const name = sf.name;
+                if (!name) return false;
+                return prefixes.some(pfx => pfx && (name.includes(`_${pfx}_`) || name.startsWith(`${pfx}_`) || name.startsWith(`TJF_${pfx}_`) || name.includes(pfx)));
+              });
+            }
+
+            // D. Populate filesData dictionary
+            filesData = {
+              frame_result: null,
+              frame_video: null,
+              raw_photos: [],
+              all_matched: [],
+            };
+
+            if (sessionRow && sessionRow.storage_url) {
+              filesData.frame_result = { name: sessionRow.local_filename || "Frame_Result", url: sessionRow.storage_url };
+            }
+
+            matchedFiles.forEach(sf => {
+              const name = sf.name;
+              const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/photos/${name}`;
+              filesData.all_matched.push({ name, url: publicUrl });
+
+              if (name.includes("_raw_")) {
+                if (!filesData.raw_photos.some(r => r.name === name)) {
+                  filesData.raw_photos.push({ name, url: publicUrl });
+                }
+              } else if (name.includes("_video.")) {
+                filesData.frame_video = { name, url: publicUrl };
+              } else if ((name.endsWith(".jpg") || name.endsWith(".png")) && !filesData.frame_result) {
+                filesData.frame_result = { name, url: publicUrl };
+              }
+            });
+
+            // Sort raw photos
+            filesData.raw_photos.sort((a, b) => a.name.localeCompare(b.name));
+
+            if (sessionRow || filesData.frame_result || filesData.raw_photos.length > 0) {
+              foundSuccess = true;
+            }
+
+          } catch (supaErr) {
+            console.warn("[SOFTFILE] Direct Supabase query error:", supaErr);
           }
-
-          renderSoftfilePage();
-
-        } catch (err) {
-          console.error("Softfile load error:", err);
-          showLoading(false);
-          showError("Connection Error", "Could not connect to the server. Please check your internet connection.");
         }
+
+        // 2. Fallback: Local / API query (for offline testing)
+        if (!foundSuccess) {
+          try {
+            const [sessionRes, filesRes] = await Promise.all([
+              fetch(`/api/session/${encodeURIComponent(currentCode)}`),
+              fetch(`/api/session/${encodeURIComponent(currentCode)}/files`),
+            ]);
+
+            const sJson = await sessionRes.json();
+            const fJson = await filesRes.json();
+
+            if (sJson.success || (fJson.success && fJson.files)) {
+              sessionRowData = sJson;
+              if (fJson.files) {
+                filesData = {
+                  frame_result: fJson.files.frame_result,
+                  frame_video: fJson.files.frame_video,
+                  raw_photos: fJson.files.raw_photos || [],
+                  all_matched: (fJson.files.raw_photos || []).concat(fJson.files.frame_result ? [fJson.files.frame_result] : []).concat(fJson.files.frame_video ? [fJson.files.frame_video] : []),
+                };
+              }
+              foundSuccess = true;
+            }
+          } catch (apiErr) {
+            console.warn("[SOFTFILE] API fallback notice:", apiErr);
+          }
+        }
+
+        showLoading(false);
+
+        if (!foundSuccess || (!filesData.frame_result && !filesData.raw_photos.length)) {
+          showError("Photo Session Not Found", `No photo session found for code "${currentCode}". Please check your QR code or access link and try again.`);
+          return;
+        }
+
+        renderSoftfilePage();
       }
 
       function renderSoftfilePage() {
-        // Set ZIP Download link
-        const btnZip = document.getElementById("btnDownloadAllZip");
-        btnZip.href = `/api/session/${currentCode}/zip`;
-
         // 1. Render Frame Result Section
-        const frameResult = filesData.files ? filesData.files.frame_result : null;
-        const frameImgUrl = frameResult ? frameResult.url : (sessionData.photo_url || "");
+        const frameResult = filesData.frame_result;
+        const frameImgUrl = frameResult ? frameResult.url : (sessionRowData ? sessionRowData.storage_url || sessionRowData.photo_url : "");
         
         if (frameImgUrl) {
           document.getElementById("frameResultImg").src = frameImgUrl;
@@ -440,7 +554,7 @@
         }
 
         // 2. Render Animated Video Section
-        const frameVideo = filesData.files ? filesData.files.frame_video : null;
+        const frameVideo = filesData.frame_video;
 
         if (frameVideo && frameVideo.url) {
           document.getElementById("frameVideoPlayer").src = frameVideo.url;
@@ -460,7 +574,7 @@
         }
 
         // 3. Render Raw Photos Section
-        const rawPhotos = (filesData.files && filesData.files.raw_photos) ? filesData.files.raw_photos : [];
+        const rawPhotos = filesData.raw_photos || [];
         const rawGrid = document.getElementById("rawPhotosGrid");
         rawGrid.innerHTML = "";
 
@@ -501,8 +615,59 @@
         document.getElementById("galleryContent").classList.add("grid");
       }
 
+      async function downloadSessionZip() {
+        if (!filesData || (!filesData.frame_result && !filesData.raw_photos.length && !filesData.frame_video)) {
+          showToast("No files available to package.");
+          return;
+        }
+
+        showToast("Building ZIP package, please wait...");
+        try {
+          const zip = new JSZip();
+          const folder = zip.folder(`TJF_Session_${currentCode}`);
+
+          const filesToFetch = [];
+
+          if (filesData.frame_result) {
+            filesToFetch.push({ url: filesData.frame_result.url, name: `Frame_Result_4R.jpg` });
+          }
+          if (filesData.frame_video) {
+            filesToFetch.push({ url: filesData.frame_video.url, name: `Frame_Video_Clip.mp4` });
+          }
+          filesData.raw_photos.forEach((r, idx) => {
+            filesToFetch.push({ url: r.url, name: `Raw_Photo_${idx + 1}.jpg` });
+          });
+
+          await Promise.all(
+            filesToFetch.map(async (item) => {
+              try {
+                const res = await fetch(item.url);
+                const blob = await res.blob();
+                folder.file(item.name, blob);
+              } catch (e) {
+                console.error("ZIP item fetch error:", e);
+              }
+            })
+          );
+
+          const content = await zip.generateAsync({ type: "blob" });
+          const downloadUrl = URL.createObjectURL(content);
+          const a = document.createElement("a");
+          a.href = downloadUrl;
+          a.download = `TJF_Session_${currentCode}.zip`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          setTimeout(() => URL.revokeObjectURL(downloadUrl), 5000);
+          showToast("ZIP Archive Downloaded!");
+        } catch (err) {
+          console.error("Client ZIP error:", err);
+          showToast("Could not generate ZIP package.");
+        }
+      }
+
       function downloadAllRawPhotos() {
-        const rawPhotos = (filesData && filesData.files && filesData.files.raw_photos) ? filesData.files.raw_photos : [];
+        const rawPhotos = filesData ? filesData.raw_photos : [];
         if (!rawPhotos.length) {
           showToast("No raw photos available to download.");
           return;
