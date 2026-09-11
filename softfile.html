@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Jakarta Floss — Softfile Bento Gallery</title>
+
+    <!-- Offline & Online Fonts: Instrument Serif + Plus Jakarta Sans -->
+    <link rel="stylesheet" href="/assets/fonts/fonts.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS (Local vendor with CDN fallback) -->
+    <script src="/assets/vendor/tailwind.js"></script>
+    <script>
+      if (typeof tailwind === "undefined") {
+        document.write('<script src="https://cdn.tailwindcss.com"><\/script>');
+      }
+    </script>
+    <script>
+      window.tailwindConfig = {
+        theme: {
+          extend: {
+            colors: {
+              cream: "#F9F6F0",
+              "cream-dark": "#F0EAE1",
+              wine: "#801A20",
+              "wine-dark": "#631318",
+              "wine-light": "#96232A",
+              forest: "#323B33",
+              charcoal: "#1F201E",
+              gold: "#C49A45",
+              "gold-light": "#E5C882",
+            },
+            fontFamily: {
+              serif: ['"Instrument Serif"', "serif"],
+              sans: ['"Plus Jakarta Sans"', "sans-serif"],
+            },
+          },
+        },
+      };
+      if (typeof tailwind !== "undefined") {
+        tailwind.config = window.tailwindConfig;
+      }
+    </script>
+
+    <style>
+      :root {
+        --color-cream: #f9f6f0;
+        --color-cream-dark: #f0eae1;
+        --color-wine: #801a20;
+        --color-wine-dark: #631318;
+        --color-wine-light: #96232a;
+        --color-forest: #323b33;
+        --color-charcoal: #1f201e;
+        --color-gold: #c49a45;
+      }
+
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background-color: var(--color-cream);
+        color: var(--color-charcoal);
+      }
+
+      .font-instrument {
+        font-family: "Instrument Serif", serif;
+      }
+
+      /* Bento & Vintage Box Styling - 1:1 match with admin.html */
+      .bento-card {
+        background: #ffffff;
+        border: 2px solid var(--color-charcoal);
+        position: relative;
+        box-shadow: 4px 4px 0px rgba(31, 32, 30, 0.12);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .bento-card:hover {
+        box-shadow: 6px 6px 0px rgba(31, 32, 30, 0.16);
+      }
+
+      .editorial-badge {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+
+      /* Toast Notification */
+      .toast {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        background: var(--color-charcoal);
+        color: var(--color-cream);
+        padding: 14px 24px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        border: 1px solid var(--color-gold);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        z-index: 1000;
+        animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        border-radius: 2px;
+      }
+      @keyframes slideIn {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+
+      /* Ticker Bar */
+      .ticker-bar {
+        background: var(--color-forest);
+        color: #e5ede3;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        border-bottom: 2px solid var(--color-charcoal);
+      }
+
+      /* Image / Media Lightbox Overlay */
+      .lightbox-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(31, 32, 30, 0.88);
+        backdrop-filter: blur(5px);
+        z-index: 999;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        animation: fadeIn 0.2s ease;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+    </style>
+  </head>
+
+  <body class="bg-cream text-charcoal select-none min-h-screen flex flex-col">
+    <!-- ===== TOP TICKER / MARQUEE ===== -->
+    <div class="ticker-bar w-full py-1.5 px-4 flex items-center justify-between border-b border-charcoal/20 font-medium text-[11px] overflow-hidden">
+      <div class="flex items-center gap-4 flex-nowrap whitespace-nowrap">
+        <span class="flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-gold" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 100 4v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2a2 2 0 100-4V6z" />
+          </svg>
+          <span class="tracking-widest uppercase font-bold">The Jakarta Floss</span>
+        </span>
+        <span class="opacity-40">&bull;</span>
+        <span class="opacity-90 italic font-serif text-sm">Digital Softfile Bento Gallery</span>
+        <span class="opacity-40">&bull;</span>
+        <span class="tracking-wide">Timeless Photo Booth Memories</span>
+      </div>
+      <div class="hidden md:flex items-center gap-3 text-[10px] tracking-widest uppercase opacity-80">
+        <span>EST. 2026</span>
+        <span>&bull;</span>
+        <span class="font-semibold text-gold-light">Made with love by Moven Lab</span>
+      </div>
+    </div>
+
+    <!-- ===== MAIN BENTO CONTAINER ===== -->
+    <div class="flex-1 flex flex-col">
+      <!-- ===== BRAND HEADER ===== -->
+      <header class="w-full pt-8 pb-6 px-6 md:px-10 bg-cream border-b-2 border-charcoal/10">
+        <div class="max-w-[1100px] mx-auto flex items-center justify-between gap-4">
+          <div class="flex items-center gap-4">
+            <!-- Floss Bread Icon -->
+            <div class="w-12 h-12 text-wine flex-shrink-0">
+              <svg
+                viewBox="0 0 64 64"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="w-full h-full drop-shadow-sm"
+              >
+                <path
+                  d="M14 42 C8 38, 8 26, 18 20 C28 14, 46 16, 52 24 C58 32, 54 44, 44 48 C34 52, 20 46, 14 42 Z"
+                  fill="#FDF9F2"
+                  stroke="currentColor"
+                />
+                <path d="M24 24 C28 28, 30 36, 26 42" stroke="#C49A45" stroke-width="2.5" />
+                <path d="M34 22 C38 27, 40 35, 36 43" stroke="#C49A45" stroke-width="2.5" />
+                <path d="M44 26 C47 30, 48 36, 45 41" stroke="#C49A45" stroke-width="2.5" />
+                <path d="M22 14 Q24 10 22 7" stroke="currentColor" stroke-width="2" />
+                <path d="M34 12 Q36 8 34 5" stroke="currentColor" stroke-width="2" />
+                <path d="M46 15 Q48 11 46 8" stroke="currentColor" stroke-width="2" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="font-instrument text-3xl md:text-4xl text-wine leading-tight">
+                The Jakarta Floss
+              </h1>
+              <div class="text-[10px] md:text-[11px] editorial-badge text-forest/70 -mt-0.5">
+                Softfile & Digital Gallery
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== MAIN BENTO GRID BODY ===== -->
+      <main class="max-w-[1100px] w-full mx-auto px-6 md:px-10 py-8 flex-1">
+        <!-- Loading State -->
+        <div id="loadingState" class="bento-card p-16 text-center bg-white my-6">
+          <div class="inline-block animate-spin w-10 h-10 border-4 border-wine border-t-transparent rounded-full mb-4"></div>
+          <h3 class="font-instrument text-2xl text-wine">Retrieving Your Digital Memories...</h3>
+          <p class="text-xs editorial-badge text-forest/60 mt-1">FETCHING FRAME, VIDEO & RAW PHOTOS</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="errorState" class="hidden bento-card p-10 text-center bg-white border-2 border-wine my-6">
+          <h3 class="font-instrument text-2xl text-wine mb-2" id="errorTitle">Photo Session Not Found</h3>
+          <p class="text-sm text-charcoal/80 max-w-md mx-auto mb-4" id="errorDetail">
+            We couldn't locate any photo session with that code. Please check your access link or QR code and try again.
+          </p>
+        </div>
+
+        <!-- ===== BENTO GRID CONTAINER ===== -->
+        <div id="galleryContent" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+          <!-- ===== BENTO TILE 0: HERO ACTION BANNER (SPAN 12) ===== -->
+          <div class="lg:col-span-12 bento-card p-6 bg-cream-dark/30 flex flex-col md:flex-row items-center justify-between gap-4 border-2 border-charcoal">
+            <div class="flex items-center gap-3">
+              <div class="w-3 h-3 rounded-full bg-wine animate-pulse"></div>
+              <div>
+                <span class="editorial-badge text-[10px] text-forest/80">DIGITAL ARCHIVE</span>
+                <h2 class="font-instrument text-2xl md:text-3xl text-wine">Your Photobox Memories</h2>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-3 w-full md:w-auto">
+              <button
+                onclick="copyShareLink()"
+                class="flex-1 md:flex-initial inline-flex items-center justify-center gap-1.5 border-2 border-charcoal bg-white text-charcoal hover:bg-cream text-[11px] font-bold tracking-widest uppercase px-4 py-2.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] active:scale-95 transition-transform"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 100-2.684 3 3 0 000 2.684zm0 9a3 3 0 100-2.684 3 3 0 000 2.684z" />
+                </svg>
+                <span>SHARE LINK</span>
+              </button>
+
+              <a
+                id="btnDownloadAllZip"
+                href="#"
+                download
+                class="flex-1 md:flex-initial inline-flex items-center justify-center gap-2 border-2 border-charcoal bg-wine hover:bg-wine-dark text-white text-[11px] font-bold tracking-widest uppercase px-5 py-2.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] active:scale-95 transition-all cursor-pointer whitespace-nowrap"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>DOWNLOAD ALL (ZIP)</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- ===== BENTO TILE 1: COMPOSITE FRAME (SPAN 7) ===== -->
+          <div id="sectionFrame" class="lg:col-span-7 bento-card p-6 bg-white flex flex-col justify-between gap-6">
+            <div class="flex items-center justify-between border-b-2 border-charcoal/10 pb-3">
+              <div>
+                <span class="editorial-badge text-[10px] text-forest/70">01 / FEATURED STRIP</span>
+                <h3 class="font-instrument text-2xl text-wine">Composite Frame Result</h3>
+              </div>
+              <a
+                id="btnDownloadFrameResult"
+                href="#"
+                download
+                class="border-2 border-charcoal bg-forest hover:bg-forest/90 text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] active:scale-95 transition-all inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>DOWNLOAD 4R</span>
+              </a>
+            </div>
+
+            <!-- Frame Image Preview -->
+            <div class="relative w-full bg-cream border-2 border-charcoal p-3 shadow-[3px_3px_0px_rgba(31,32,30,0.08)] flex justify-center items-center my-auto">
+              <img
+                id="frameResultImg"
+                src=""
+                alt="TJF Frame Result"
+                class="max-h-[60vh] w-auto object-contain cursor-pointer transition-transform hover:scale-[1.01]"
+                onclick="openLightbox(this.src)"
+              />
+            </div>
+          </div>
+
+          <!-- ===== BENTO TILE 2: MOTION ANIMATED VIDEO (SPAN 5) ===== -->
+          <div id="sectionVideo" class="lg:col-span-5 bento-card p-6 bg-white flex flex-col justify-between gap-6">
+            <div class="flex items-center justify-between border-b-2 border-charcoal/10 pb-3">
+              <div>
+                <span class="editorial-badge text-[10px] text-forest/70">02 / ANIMATED CLIP</span>
+                <h3 class="font-instrument text-2xl text-wine">Motion Video</h3>
+              </div>
+              <a
+                id="btnDownloadVideo"
+                href="#"
+                download
+                class="border-2 border-charcoal bg-forest hover:bg-forest/90 text-white text-[10px] font-bold tracking-widest uppercase px-3 py-1.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] active:scale-95 transition-all inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>DOWNLOAD VIDEO</span>
+              </a>
+            </div>
+
+            <!-- Video Player -->
+            <div class="relative w-full bg-cream border-2 border-charcoal p-3 shadow-[3px_3px_0px_rgba(31,32,30,0.08)] flex justify-center items-center my-auto">
+              <video
+                id="frameVideoPlayer"
+                controls
+                autoplay
+                loop
+                muted
+                playsinline
+                class="max-h-[60vh] w-auto object-contain"
+              ></video>
+            </div>
+          </div>
+
+          <!-- ===== BENTO TILE 3: RAW PHOTOS GRID (SPAN 12) ===== -->
+          <div id="sectionRaw" class="lg:col-span-12 bento-card p-6 md:p-8 bg-white flex flex-col gap-6">
+            <div class="flex items-center justify-between border-b-2 border-charcoal/10 pb-3">
+              <div>
+                <span class="editorial-badge text-[10px] text-forest/70">03 / INDIVIDUAL CAMERA SHOTS</span>
+                <h3 class="font-instrument text-2xl md:text-3xl text-wine">Raw Photos</h3>
+              </div>
+              <button
+                id="btnDownloadAllRaw"
+                onclick="downloadAllRawPhotos()"
+                class="border-2 border-charcoal bg-forest hover:bg-forest/90 text-white text-[10px] font-bold tracking-widest uppercase px-3.5 py-1.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] active:scale-95 transition-all inline-flex items-center gap-1.5 cursor-pointer"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                <span>DOWNLOAD ALL RAW</span>
+              </button>
+            </div>
+
+            <!-- Bento Sub-Grid for Raw Photos -->
+            <div id="rawPhotosGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+        </div>
+      </main>
+
+      <!-- ===== FOOTER ===== -->
+      <footer class="w-full py-6 text-center text-[11px] text-forest/70 border-t-2 border-charcoal/10 bg-cream mt-auto">
+        <p class="font-serif italic text-base">
+          The Jakarta Floss &bull; Made with love by Moven Lab
+        </p>
+      </footer>
+    </div>
+
+    <!-- ===== LIGHTBOX OVERLAY ===== -->
+    <div id="lightboxOverlay" class="hidden lightbox-overlay" onclick="closeLightbox()">
+      <div class="relative max-w-[90vw] max-h-[90vh] flex flex-col items-center" onclick="event.stopPropagation()">
+        <button
+          onclick="closeLightbox()"
+          class="absolute -top-12 right-0 text-white hover:text-gold text-2xl font-bold transition-colors"
+        >
+          &times; CLOSE
+        </button>
+        <img id="lightboxImg" src="" alt="Enlarged View" class="max-w-full max-h-[85vh] object-contain border-2 border-white shadow-2xl" />
+      </div>
+    </div>
+
+    <script>
+      let currentCode = "";
+      let sessionData = null;
+      let filesData = null;
+
+      window.onload = () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const codeFromUrl = urlParams.get("code");
+        if (codeFromUrl) {
+          currentCode = codeFromUrl.toUpperCase().trim();
+          loadSoftfileData();
+        } else {
+          showError("Access Code Missing", "No photo session code was found in the link. Please check your QR code link and try again.");
+        }
+      };
+
+      async function loadSoftfileData() {
+        showLoading(true);
+        hideAllStates();
+
+        try {
+          // Fetch session details & file manifest in parallel
+          const [sessionRes, filesRes] = await Promise.all([
+            fetch(`/api/session/${encodeURIComponent(currentCode)}`),
+            fetch(`/api/session/${encodeURIComponent(currentCode)}/files`),
+          ]);
+
+          sessionData = await sessionRes.json();
+          filesData = await filesRes.json();
+
+          showLoading(false);
+
+          if (!sessionData.success && (!filesData.success || (!filesData.files.frame_result && !filesData.files.raw_photos.length))) {
+            showError("Photo Session Not Found", `No photo session found for code "${currentCode}". Please check your printed voucher code and try again.`);
+            return;
+          }
+
+          renderSoftfilePage();
+
+        } catch (err) {
+          console.error("Softfile load error:", err);
+          showLoading(false);
+          showError("Connection Error", "Could not connect to the server. Please check your internet connection.");
+        }
+      }
+
+      function renderSoftfilePage() {
+        // Set ZIP Download link
+        const btnZip = document.getElementById("btnDownloadAllZip");
+        btnZip.href = `/api/session/${currentCode}/zip`;
+
+        // 1. Render Frame Result Section
+        const frameResult = filesData.files ? filesData.files.frame_result : null;
+        const frameImgUrl = frameResult ? frameResult.url : (sessionData.photo_url || "");
+        
+        if (frameImgUrl) {
+          document.getElementById("frameResultImg").src = frameImgUrl;
+          document.getElementById("btnDownloadFrameResult").href = frameImgUrl;
+        } else {
+          document.getElementById("sectionFrame").classList.add("hidden");
+        }
+
+        // 2. Render Animated Video Section
+        const frameVideo = filesData.files ? filesData.files.frame_video : null;
+
+        if (frameVideo && frameVideo.url) {
+          document.getElementById("frameVideoPlayer").src = frameVideo.url;
+          document.getElementById("btnDownloadVideo").href = frameVideo.url;
+          document.getElementById("btnDownloadVideo").classList.remove("hidden");
+        } else {
+          document.getElementById("frameVideoPlayer").removeAttribute("src");
+          document.getElementById("btnDownloadVideo").classList.add("hidden");
+          
+          const videoContainer = document.getElementById("sectionVideo");
+          if (videoContainer && !videoContainer.querySelector(".no-video-notice")) {
+            const notice = document.createElement("div");
+            notice.className = "no-video-notice w-full p-6 text-center bg-cream/40 border border-charcoal/20 text-charcoal/70 text-sm font-medium";
+            notice.innerHTML = `🎬 <span class="font-bold">Note:</span> Motion video animation is automatically recorded for new photobox sessions. You can download the 4R composite photo strip on the left.`;
+            videoContainer.appendChild(notice);
+          }
+        }
+
+        // 3. Render Raw Photos Section
+        const rawPhotos = (filesData.files && filesData.files.raw_photos) ? filesData.files.raw_photos : [];
+        const rawGrid = document.getElementById("rawPhotosGrid");
+        rawGrid.innerHTML = "";
+
+        if (rawPhotos.length > 0) {
+          rawPhotos.forEach((photo, idx) => {
+            const card = document.createElement("div");
+            card.className = "bento-card p-3 bg-white border-2 border-charcoal flex flex-col items-center gap-3 hover:-translate-y-0.5 transition-transform";
+            card.innerHTML = `
+              <div class="relative w-full aspect-[4/3] bg-cream border border-charcoal/20 overflow-hidden cursor-pointer group" onclick="openLightbox('${photo.url}')">
+                <img src="${photo.url}" alt="Raw Shot ${idx + 1}" class="w-full h-full object-cover transition-transform group-hover:scale-105" />
+                <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white font-bold text-xs uppercase tracking-widest">
+                  🔍 ENLARGE
+                </div>
+              </div>
+              <div class="flex items-center justify-between w-full text-xs">
+                <span class="editorial-badge text-[10px] text-charcoal">SHOT #${idx + 1}</span>
+                <a
+                  href="${photo.url}"
+                  download="TJF_${currentCode}_Raw_${idx + 1}.jpg"
+                  class="px-2.5 py-1 bg-wine hover:bg-wine-dark text-white font-bold text-[10px] tracking-wider uppercase border border-charcoal shadow-[1px_1px_0px_#000] transition-all"
+                >
+                  DOWNLOAD
+                </a>
+              </div>
+            `;
+            rawGrid.appendChild(card);
+          });
+        } else {
+          rawGrid.innerHTML = `
+            <div class="col-span-full p-6 text-center bg-cream/40 border border-charcoal/20 text-charcoal/70 text-sm font-medium">
+              📷 <span class="font-bold">Note:</span> Individual raw photos are saved automatically for new photobox captures.
+            </div>
+          `;
+        }
+
+        // Show Bento Grid gallery content
+        document.getElementById("galleryContent").classList.remove("hidden");
+        document.getElementById("galleryContent").classList.add("grid");
+      }
+
+      function downloadAllRawPhotos() {
+        const rawPhotos = (filesData && filesData.files && filesData.files.raw_photos) ? filesData.files.raw_photos : [];
+        if (!rawPhotos.length) {
+          showToast("No raw photos available to download.");
+          return;
+        }
+        showToast(`Downloading ${rawPhotos.length} raw photos...`);
+        rawPhotos.forEach((photo, idx) => {
+          setTimeout(() => {
+            const a = document.createElement("a");
+            a.href = photo.url;
+            a.download = `TJF_${currentCode}_Raw_${idx + 1}.jpg`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }, idx * 300);
+        });
+      }
+
+      function hideAllStates() {
+        document.getElementById("loadingState").classList.add("hidden");
+        document.getElementById("errorState").classList.add("hidden");
+        document.getElementById("galleryContent").classList.add("hidden");
+      }
+
+      function showLoading(show) {
+        const el = document.getElementById("loadingState");
+        if (show) el.classList.remove("hidden");
+        else el.classList.add("hidden");
+      }
+
+      function showError(title, detail) {
+        document.getElementById("errorTitle").textContent = title;
+        document.getElementById("errorDetail").textContent = detail;
+        document.getElementById("errorState").classList.remove("hidden");
+      }
+
+      function copyShareLink() {
+        const shareUrl = window.location.origin + `/softfile?code=${encodeURIComponent(currentCode)}`;
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(shareUrl).then(() => {
+            showToast("Softfile link copied to clipboard!");
+          });
+        } else {
+          showToast(`Link: ${shareUrl}`);
+        }
+      }
+
+      function showToast(msg) {
+        const t = document.createElement("div");
+        t.className = "toast";
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3000);
+      }
+
+      function openLightbox(imgSrc) {
+        if (!imgSrc) return;
+        document.getElementById("lightboxImg").src = imgSrc;
+        document.getElementById("lightboxOverlay").classList.remove("hidden");
+      }
+
+      function closeLightbox() {
+        document.getElementById("lightboxOverlay").classList.add("hidden");
+      }
+    </script>
+  </body>
+</html>
