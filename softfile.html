@@ -220,12 +220,40 @@
           <p class="text-xs editorial-badge text-forest/60 mt-1">FETCHING FRAME, VIDEO & RAW PHOTOS</p>
         </div>
 
-        <!-- Error State -->
-        <div id="errorState" class="hidden bento-card p-10 text-center bg-white border-2 border-wine my-6">
-          <h3 class="font-instrument text-2xl text-wine mb-2" id="errorTitle">Photo Session Not Found</h3>
-          <p class="text-sm text-charcoal/80 max-w-md mx-auto mb-4" id="errorDetail">
-            We couldn't locate any photo session with that code. Please check your access link or QR code and try again.
+        <!-- Error State (Invalid Code) -->
+        <div id="errorState" class="hidden bento-card p-10 text-center bg-white border-2 border-wine my-6 flex flex-col items-center gap-3">
+          <div class="w-14 h-14 rounded-full bg-wine/10 flex items-center justify-center text-wine border border-wine text-2xl">
+            🔍
+          </div>
+          <h3 class="font-instrument text-3xl text-wine" id="errorTitle">Invalid Access Code</h3>
+          <p class="text-sm text-charcoal/80 max-w-md mx-auto" id="errorDetail">
+            We couldn't locate any photo session with that code. Please check your printed voucher code or scan your receipt QR link again.
           </p>
+        </div>
+
+        <!-- Coming Soon / Upload in Progress State -->
+        <div id="comingSoonState" class="hidden bento-card p-12 text-center bg-white border-2 border-charcoal my-6 flex flex-col items-center gap-4">
+          <div class="w-16 h-16 rounded-full bg-cream flex items-center justify-center text-wine border-2 border-charcoal text-2xl shadow-[2px_2px_0px_#000]">
+            ⏳
+          </div>
+          <div>
+            <span class="editorial-badge text-[10px] text-wine font-extrabold bg-wine/10 px-3 py-1 border border-wine/30">
+              ✦ UPLOAD IN PROGRESS ✦
+            </span>
+            <h3 class="font-instrument text-3xl text-wine mt-2.5">Your Content is Coming Soon!</h3>
+            <p class="text-sm text-charcoal/80 max-w-md mx-auto mt-2 leading-relaxed" id="comingSoonDetail">
+              Your photobox memories are currently uploading to our cloud archive. Please hang tight or refresh in a moment!
+            </p>
+          </div>
+          <button
+            onclick="loadSoftfileData()"
+            class="mt-2 inline-flex items-center gap-2 border-2 border-charcoal bg-wine hover:bg-wine-dark text-white text-xs font-bold tracking-widest uppercase px-6 py-2.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] active:scale-95 transition-all cursor-pointer"
+          >
+            <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            <span>REFRESH NOW</span>
+          </button>
         </div>
 
         <!-- ===== BENTO GRID CONTAINER ===== -->
@@ -533,8 +561,15 @@
 
         showLoading(false);
 
-        if (!foundSuccess || (!filesData.frame_result && !filesData.raw_photos.length)) {
-          showError("Photo Session Not Found", `No photo session found for code "${currentCode}". Please check your QR code or access link and try again.`);
+        const hasAnyFile = filesData && (filesData.frame_result || filesData.frame_video || filesData.raw_photos.length > 0);
+
+        if (!foundSuccess && !hasAnyFile) {
+          showError("Invalid Access Code 🔍", `We couldn't locate any photo session matching code "${currentCode}". Please verify the code printed on your photobox receipt or scan your QR link again.`);
+          return;
+        }
+
+        if (sessionRowData && !hasAnyFile) {
+          showComingSoon(`Your photobox session (Code: ${currentCode}) was recorded! We are currently uploading your high-resolution photos and video clip to the cloud. Please check back in a few moments.`);
           return;
         }
 
@@ -567,8 +602,13 @@
           const videoContainer = document.getElementById("sectionVideo");
           if (videoContainer && !videoContainer.querySelector(".no-video-notice")) {
             const notice = document.createElement("div");
-            notice.className = "no-video-notice w-full p-6 text-center bg-cream/40 border border-charcoal/20 text-charcoal/70 text-sm font-medium";
-            notice.innerHTML = `🎬 <span class="font-bold">Note:</span> Motion video animation is automatically recorded for new photobox sessions. You can download the 4R composite photo strip on the left.`;
+            notice.className = "no-video-notice w-full p-6 text-center bg-cream/60 border border-charcoal/20 text-charcoal/80 text-xs font-semibold flex flex-col items-center gap-2 my-auto";
+            notice.innerHTML = `
+              <span class="text-xl">🎬</span>
+              <span><strong>Motion Video Coming Soon!</strong></span>
+              <span class="text-[11px] opacity-75 max-w-xs">Your animated video clip is currently uploading to the cloud archive.</span>
+              <button onclick="loadSoftfileData()" class="mt-1 px-3 py-1.5 bg-wine hover:bg-wine-dark text-white font-bold text-[10px] uppercase border border-charcoal shadow-[1px_1px_0px_#000] tracking-wider transition-all cursor-pointer">CHECK PROGRESS</button>
+            `;
             videoContainer.appendChild(notice);
           }
         }
@@ -604,8 +644,11 @@
           });
         } else {
           rawGrid.innerHTML = `
-            <div class="col-span-full p-6 text-center bg-cream/40 border border-charcoal/20 text-charcoal/70 text-sm font-medium">
-              📷 <span class="font-bold">Note:</span> Individual raw photos are saved automatically for new photobox captures.
+            <div class="col-span-full p-8 text-center bg-cream/60 border border-charcoal/20 text-charcoal/80 text-xs font-semibold flex flex-col items-center gap-2">
+              <span class="text-xl">📷</span>
+              <span><strong>Raw Photos Coming Soon!</strong></span>
+              <span class="text-[11px] opacity-75 max-w-xs">Your individual camera shots are currently uploading to your digital gallery.</span>
+              <button onclick="loadSoftfileData()" class="mt-1 px-3 py-1.5 bg-wine hover:bg-wine-dark text-white font-bold text-[10px] uppercase border border-charcoal shadow-[1px_1px_0px_#000] tracking-wider transition-all cursor-pointer">CHECK PROGRESS</button>
             </div>
           `;
         }
@@ -688,6 +731,9 @@
       function hideAllStates() {
         document.getElementById("loadingState").classList.add("hidden");
         document.getElementById("errorState").classList.add("hidden");
+        document.getElementById("errorState").classList.remove("flex");
+        document.getElementById("comingSoonState").classList.add("hidden");
+        document.getElementById("comingSoonState").classList.remove("flex");
         document.getElementById("galleryContent").classList.add("hidden");
       }
 
@@ -697,10 +743,17 @@
         else el.classList.add("hidden");
       }
 
+      function showComingSoon(msg) {
+        if (msg) document.getElementById("comingSoonDetail").textContent = msg;
+        document.getElementById("comingSoonState").classList.remove("hidden");
+        document.getElementById("comingSoonState").classList.add("flex");
+      }
+
       function showError(title, detail) {
         document.getElementById("errorTitle").textContent = title;
         document.getElementById("errorDetail").textContent = detail;
         document.getElementById("errorState").classList.remove("hidden");
+        document.getElementById("errorState").classList.add("flex");
       }
 
       function copyShareLink() {
