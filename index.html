@@ -623,9 +623,9 @@
               </div>
             </div>
 
-            <!-- RIGHT COLUMN: Metadata & Video Attachment (Span 5) -->
+            <!-- RIGHT COLUMN: Details & Info (Span 5) -->
             <div class="lg:col-span-5 flex flex-col gap-4">
-              <span class="editorial-badge text-xs text-charcoal">2. DETAILS &amp; MOTION VIDEO</span>
+              <span class="editorial-badge text-xs text-charcoal">2. MARKER DETAILS</span>
 
               <!-- Marker Name -->
               <div>
@@ -633,64 +633,44 @@
                 <input
                   type="text"
                   id="modalMarkerName"
-                  placeholder="e.g. TJF VIP Strip 2026"
+                  placeholder="e.g. Balloon Pattern Target"
                   class="w-full border-2 border-charcoal px-3 py-2 text-xs font-bold outline-none bg-white focus:border-wine shadow-[2px_2px_0px_#1F201E]"
                 />
               </div>
 
-              <!-- Session Code Association -->
-              <div>
-                <label class="block editorial-badge text-[10px] text-charcoal/70 mb-1">Associated Session Code (Optional)</label>
-                <input
-                  type="text"
-                  id="modalSessionCode"
-                  placeholder="e.g. TJF-VIDEOBOX or TJF-XXXX"
-                  class="w-full border-2 border-charcoal px-3 py-2 text-xs font-bold uppercase outline-none bg-white focus:border-wine shadow-[2px_2px_0px_#1F201E]"
-                />
+              <!-- Information Banner about Dynamic Videobox Message -->
+              <div class="vintage-box p-4 bg-cream/40 border-2 border-charcoal flex flex-col gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">🎬</span>
+                  <span class="editorial-badge text-xs text-wine font-bold">AUTOMATIC VIDEOBOX MESSAGE</span>
+                </div>
+                <p class="text-[11px] text-charcoal/80 font-serif leading-relaxed">
+                  Marker ini cuma butuh foto &amp; nama. Saat di-scan di halaman Videobox (<code class="bg-white px-1 border border-charcoal/30">?code=XXXX</code>), video yang tampil secara otomatis adalah <strong>Videobox Message</strong> milik sesi tersebut.
+                </p>
               </div>
 
-              <!-- Video Source Selection -->
-              <div class="vintage-box p-4 bg-white border-2 border-charcoal flex flex-col gap-3">
-                <span class="editorial-badge text-[10px] text-charcoal">ATTACHED VIDEO</span>
-
-                <!-- Video Input Options -->
-                <div class="flex flex-col gap-2">
-                  <label class="cursor-pointer border-2 border-charcoal bg-cream/40 hover:bg-cream text-charcoal text-[11px] font-bold tracking-wider uppercase py-2 px-3 text-center shadow-[1px_1px_0px_#1F201E] transition-all">
-                    <span>🎬 UPLOAD VIDEO FILE (.MP4, .WEBM)</span>
-                    <input type="file" id="markerVideoInput" accept="video/mp4,video/webm,video/quicktime" class="hidden" onchange="handleMarkerVideoUpload(event)" />
-                  </label>
-
-                  <div class="text-center text-[10px] text-charcoal/40 uppercase font-bold">&mdash; OR &mdash;</div>
-
-                  <!-- Select from Recent Sessions -->
-                  <select
-                    id="selectRecentSessionVideo"
-                    onchange="handleSelectRecentVideo(this.value)"
-                    class="w-full border-2 border-charcoal px-2 py-2 text-xs font-semibold outline-none bg-white cursor-pointer"
-                  >
-                    <option value="">Choose from Recent Photo Sessions...</option>
-                  </select>
-
-                  <div class="text-center text-[10px] text-charcoal/40 uppercase font-bold">&mdash; OR &mdash;</div>
-
-                  <!-- Custom Direct Video URL -->
+              <!-- Optional Custom Video Override (Advanced) -->
+              <details class="vintage-box p-3 bg-white border border-charcoal/50 text-xs">
+                <summary class="cursor-pointer font-bold text-[10px] uppercase text-charcoal/60 hover:text-wine select-none">
+                  ⚙️ Custom Video Override (Optional)
+                </summary>
+                <div class="flex flex-col gap-2 mt-3 pt-3 border-t border-charcoal/10">
                   <input
                     type="url"
                     id="modalVideoUrlInput"
-                    placeholder="Paste direct video URL (https://...)"
+                    placeholder="Paste optional direct video URL (https://...)"
                     oninput="handleCustomVideoUrl(this.value)"
-                    class="w-full border-2 border-charcoal px-3 py-1.5 text-xs outline-none bg-white"
+                    class="w-full border border-charcoal px-2.5 py-1.5 text-xs outline-none bg-white"
                   />
+                  <label class="cursor-pointer border border-charcoal bg-white hover:bg-cream text-charcoal text-[10px] font-bold tracking-wider uppercase py-1.5 px-2 text-center transition-all">
+                    <span>Upload Custom MP4 Video</span>
+                    <input type="file" id="markerVideoInput" accept="video/mp4,video/webm" class="hidden" onchange="handleMarkerVideoUpload(event)" />
+                  </label>
+                  <video id="modalVideoPlayer" controls playsinline class="hidden w-full aspect-video bg-black mt-1"></video>
+                  <div id="videoPlaceholder" class="hidden"></div>
+                  <select id="selectRecentSessionVideo" class="hidden"><option value=""></option></select>
                 </div>
-
-                <!-- Video Preview Player -->
-                <div class="relative w-full aspect-video bg-black border-2 border-charcoal overflow-hidden flex items-center justify-center mt-1">
-                  <video id="modalVideoPlayer" controls playsinline class="w-full h-full object-contain"></video>
-                  <div id="videoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center text-white/50 text-xs font-bold uppercase tracking-wider pointer-events-none">
-                    <span>No video attached yet</span>
-                  </div>
-                </div>
-              </div>
+              </details>
             </div>
           </div>
         </div>
@@ -721,7 +701,7 @@
     <script>
       // 1. Configuration & Supabase Client
       const SUPABASE_URL = "https://fowdecmskhvfgmdwwnxg.supabase.co";
-      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzU0MzMsImV4cCI6MjA4NjMxMTQzM30.4i4k3H-T9D6W98Pq1R-3GjS5N5lQ2V3X7Y9Z1A2B3C4";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDE1MTk2MjUsImV4cCI6MjAxNzA5NTYyNX0.icC5QydnHRC-qu4Vf0Ik0_BxpaU39TCaU8bXijdqv9Y";
       const STORAGE_BUCKET = "tjf_photos";
 
       let supabaseClient = null;
@@ -1180,16 +1160,18 @@
       function onCropPointerDown(e) {
         if (!sourceImage) return;
         const rect = cropCanvas.getBoundingClientRect();
-        const scale = (sourceImage.naturalWidth * Math.min(1, 560 / sourceImage.naturalWidth)) / cropCanvas.width;
-        const realScale = cropCanvas.width / sourceImage.naturalWidth;
-        const px = (e.clientX - rect.left) / realScale;
-        const py = (e.clientY - rect.top) / realScale;
+        if (!rect.width || !rect.height) return;
 
-        // Find nearest corner within 30px radius
-        let minDist = 35 / realScale;
+        const mouseCssX = e.clientX - rect.left;
+        const mouseCssY = e.clientY - rect.top;
+
+        // Find nearest corner within 35px radius in CSS pixels
+        let minDist = 35;
         activeCornerIndex = -1;
         corners.forEach((c, i) => {
-          const dist = Math.hypot(c.x - px, c.y - py);
+          const cornerCssX = (c.x / sourceImage.naturalWidth) * rect.width;
+          const cornerCssY = (c.y / sourceImage.naturalHeight) * rect.height;
+          const dist = Math.hypot(cornerCssX - mouseCssX, cornerCssY - mouseCssY);
           if (dist < minDist) {
             minDist = dist;
             activeCornerIndex = i;
@@ -1200,12 +1182,13 @@
       function onCropPointerMove(e) {
         if (activeCornerIndex === -1 || !sourceImage) return;
         const rect = cropCanvas.getBoundingClientRect();
-        const realScale = cropCanvas.width / sourceImage.naturalWidth;
-        const px = Math.max(0, Math.min(sourceImage.naturalWidth, (e.clientX - rect.left) / realScale));
-        const py = Math.max(0, Math.min(sourceImage.naturalHeight, (e.clientY - rect.top) / realScale));
+        if (!rect.width || !rect.height) return;
 
-        corners[activeCornerIndex].x = px;
-        corners[activeCornerIndex].y = py;
+        const mouseCssX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+        const mouseCssY = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+
+        corners[activeCornerIndex].x = (mouseCssX / rect.width) * sourceImage.naturalWidth;
+        corners[activeCornerIndex].y = (mouseCssY / rect.height) * sourceImage.naturalHeight;
         renderCropCanvas();
       }
 
@@ -1372,7 +1355,8 @@
 
       async function saveMarkerToSupabase() {
         const name = document.getElementById("modalMarkerName").value.trim();
-        const sessionCode = document.getElementById("modalSessionCode").value.trim().toUpperCase() || null;
+        const sessionCodeEl = document.getElementById("modalSessionCode");
+        const sessionCode = sessionCodeEl ? (sessionCodeEl.value.trim().toUpperCase() || null) : null;
         const btnSave = document.getElementById("btnSaveMarker");
 
         if (!name) {
@@ -1381,10 +1365,6 @@
         }
         if (!sourceImage) {
           alert("Please upload or capture a marker image first.");
-          return;
-        }
-        if (!stagedVideoUrl && !stagedVideoFile) {
-          alert("Please attach a video for this marker.");
           return;
         }
 

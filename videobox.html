@@ -124,67 +124,106 @@
         <button
           id="btnToggleAudio"
           onclick="toggleAudio()"
-          class="bento-btn bg-white hover:bg-cream text-charcoal px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+          class="bento-btn bg-white hover:bg-cream text-charcoal px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
           title="Toggle Sound"
         >
           <span id="audioIcon">🔇</span>
           <span id="audioText" class="text-[10px]">Muted</span>
         </button>
 
-        <!-- Back to Softfile / Gallery -->
+        <!-- Soft File Foto-Foto Button -->
         <a
           id="btnBackSoftfile"
-          href="/softfile"
-          class="bento-btn bg-wine text-white hover:bg-wine-dark px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase flex items-center gap-1 shadow-sm"
+          href="softfile.html"
+          class="bento-btn bg-wine text-white hover:bg-wine-dark px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase flex items-center gap-1 shadow-sm cursor-pointer"
         >
-          &larr; GALLERY
+          📷 SOFT FILE FOTO-FOTO
         </a>
       </div>
     </div>
 
     <!-- Center Viewfinder Target Box -->
-    <div class="relative w-64 h-80 max-w-[80vw] max-h-[55vh] border-2 border-white/60 rounded-xl target-box flex flex-col items-center justify-between p-4 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+    <div id="centerViewfinder" class="relative w-72 h-80 max-w-[85vw] max-h-[55vh] border-2 border-white/70 rounded-xl target-box flex flex-col items-center justify-between p-4 shadow-[0_0_30px_rgba(0,0,0,0.6)]">
       <!-- 4 Corner Accents -->
       <div class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-gold rounded-tl"></div>
       <div class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-gold rounded-tr"></div>
       <div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-gold rounded-bl"></div>
       <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-gold rounded-br"></div>
 
-      <span class="editorial-badge text-[9px] text-white/80 bg-black/50 px-2 py-0.5 rounded tracking-widest">
-        AIM AT PHOTO OR MARKER
-      </span>
+      <!-- Instruction Text -->
+      <div class="editorial-badge text-[11px] text-white bg-wine/90 border border-gold/50 px-3 py-1.5 rounded tracking-wider text-center font-bold shadow-lg">
+        arahkan ke Cover Packaging Gift Station
+      </div>
 
       <div id="targetFoundBadge" class="hidden bg-emerald-500 text-white font-black text-[11px] px-3 py-1 rounded shadow-lg tracking-widest uppercase animate-bounce">
         ✦ MARKER DETECTED ✦
       </div>
 
-      <span class="text-[9px] text-white/60 text-center font-medium">
+      <span class="text-[9px] text-white/70 text-center font-medium">
         Keep image flat &amp; well-lit
       </span>
     </div>
 
-    <!-- Bottom Detected HUD / Status -->
+    <!-- Bottom Status / Session Indicator -->
     <div class="w-full max-w-sm pointer-events-auto flex flex-col items-center gap-2">
-      <div id="markerInfoCard" class="hud-card w-full p-3 flex items-center justify-between hidden transition-all">
-        <div class="flex items-center gap-2.5 overflow-hidden">
-          <span class="text-xl">🎬</span>
-          <div class="truncate">
-            <div class="editorial-badge text-[8px] text-forest/70">PLAYING ON MARKER</div>
-            <div id="activeMarkerTitle" class="font-bold text-xs text-charcoal truncate">Loading video...</div>
-          </div>
-        </div>
-        <button
-          onclick="replayCurrentVideo()"
-          class="bento-btn px-2.5 py-1 bg-wine text-white text-[9px] font-bold uppercase tracking-wider shrink-0"
-        >
-          REPLAY
-        </button>
-      </div>
-
-      <!-- Quick Session Indicator -->
-      <div id="sessionIndicator" class="text-center text-[10px] text-white/70 font-mono hidden">
+      <div id="sessionIndicator" class="text-center text-[10px] text-white/80 font-mono bg-black/60 px-3 py-1 rounded border border-white/20 hidden">
         Session: <span id="lblSessionCode" class="text-gold font-bold"></span>
       </div>
+    </div>
+  </div>
+
+  <!-- Centered Video Player Screen Overlay (Triggered on Target Detect) -->
+  <div id="centeredVideoOverlay" class="hidden fixed inset-0 z-40 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-6">
+    <!-- Header Controls -->
+    <div class="w-full max-w-md flex items-center justify-between text-white z-10">
+      <div class="flex items-center gap-2 overflow-hidden">
+        <span class="text-xl">🎬</span>
+        <span id="activeVideoTitle" class="font-bold text-xs tracking-wider truncate text-cream">Videobox Message</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button
+          onclick="toggleVideoRotation()"
+          class="bento-btn bg-white/20 hover:bg-white/30 text-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1 cursor-pointer"
+          title="Rotate Video 90°"
+        >
+          <span>🔄 ROTATE 90°</span>
+        </button>
+        <button
+          onclick="closeCenteredVideo()"
+          class="bento-btn bg-wine hover:bg-wine-dark text-white px-3 py-1 text-xs font-bold uppercase tracking-wider rounded cursor-pointer"
+        >
+          &times; CLOSE
+        </button>
+      </div>
+    </div>
+
+    <!-- Centered Video Container -->
+    <div class="relative w-full flex-1 flex items-center justify-center overflow-hidden my-2">
+      <video
+        id="centeredVideoPlayer"
+        playsinline
+        controls
+        loop
+        class="max-w-full max-h-[70vh] object-contain shadow-2xl transition-transform duration-300 rounded"
+      ></video>
+    </div>
+
+    <!-- Footer Controls & Soft File Link -->
+    <div class="w-full max-w-md flex items-center justify-between gap-3 z-10">
+      <a
+        id="btnModalSoftfile"
+        href="softfile.html"
+        class="bento-btn bg-wine text-white hover:bg-wine-dark px-4 py-2 text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5 shadow-md cursor-pointer"
+      >
+        📷 SOFT FILE FOTO-FOTO
+      </a>
+      <button
+        onclick="toggleAudio()"
+        class="bento-btn bg-white text-charcoal px-3 py-2 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer"
+      >
+        <span id="modalAudioIcon">🔇</span>
+        <span id="modalAudioText">Muted</span>
+      </button>
     </div>
   </div>
 
@@ -217,7 +256,7 @@
   <script>
     // Configuration & Supabase
     const SUPABASE_URL = "https://fowdecmskhvfgmdwwnxg.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzU0MzMsImV4cCI6MjA4NjMxMTQzM30.4i4k3H-T9D6W98Pq1R-3GjS5N5lQ2V3X7Y9Z1A2B3C4";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDE1MTk2MjUsImV4cCI6MjAxNzA5NTYyNX0.icC5QydnHRC-qu4Vf0Ik0_BxpaU39TCaU8bXijdqv9Y";
     const STORAGE_BUCKET = "tjf_photos";
 
     let supabaseClient = null;
@@ -235,24 +274,25 @@
     let isAudioUnmuted = false;
     let markersList = [];
     let currentMindBlobUrl = null;
+    let videoRotationDeg = 90;
     let activeVideoElements = {};
-    let lastActiveVideoId = null;
 
     // UI Elements
     const loadingOverlay = document.getElementById("loadingOverlay");
     const loadingStatusText = document.getElementById("loadingStatusText");
     const loadingProgressBar = document.getElementById("loadingProgressBar");
-    const targetFoundBadge = document.getElementById("targetFoundBadge");
-    const markerInfoCard = document.getElementById("markerInfoCard");
-    const activeMarkerTitle = document.getElementById("activeMarkerTitle");
-    const sessionIndicator = document.getElementById("sessionIndicator");
-    const lblSessionCode = document.getElementById("lblSessionCode");
-    const btnBackSoftfile = document.getElementById("btnBackSoftfile");
 
     if (sessionCode) {
-      sessionIndicator.classList.remove("hidden");
-      lblSessionCode.textContent = sessionCode;
-      btnBackSoftfile.href = `/softfile?code=${encodeURIComponent(sessionCode)}`;
+      const sessionIndicator = document.getElementById("sessionIndicator");
+      const lblSessionCode = document.getElementById("lblSessionCode");
+      const btnBackSoftfile = document.getElementById("btnBackSoftfile");
+      const btnModalSoftfile = document.getElementById("btnModalSoftfile");
+      const softfileUrl = `softfile.html?code=${encodeURIComponent(sessionCode)}`;
+
+      if (sessionIndicator) sessionIndicator.classList.remove("hidden");
+      if (lblSessionCode) lblSessionCode.textContent = sessionCode;
+      if (btnBackSoftfile) btnBackSoftfile.href = softfileUrl;
+      if (btnModalSoftfile) btnModalSoftfile.href = softfileUrl;
     }
 
     function updateProgress(percent, text) {
@@ -267,7 +307,16 @@
       if (audioIcon) audioIcon.textContent = isAudioUnmuted ? "🔊" : "🔇";
       if (audioText) audioText.textContent = isAudioUnmuted ? "Sound On" : "Muted";
 
-      // Apply to all instantiated video elements
+      const modalAudioIcon = document.getElementById("modalAudioIcon");
+      const modalAudioText = document.getElementById("modalAudioText");
+      if (modalAudioIcon) modalAudioIcon.textContent = isAudioUnmuted ? "🔊" : "🔇";
+      if (modalAudioText) modalAudioText.textContent = isAudioUnmuted ? "Sound On" : "Muted";
+
+      const videoPlayer = document.getElementById("centeredVideoPlayer");
+      if (videoPlayer) {
+        videoPlayer.muted = !isAudioUnmuted;
+        if (isAudioUnmuted) videoPlayer.play().catch(() => {});
+      }
       Object.values(activeVideoElements).forEach((vid) => {
         if (vid) {
           vid.muted = !isAudioUnmuted;
@@ -276,12 +325,51 @@
       });
     }
 
-    function replayCurrentVideo() {
-      if (lastActiveVideoId && activeVideoElements[lastActiveVideoId]) {
-        const vid = activeVideoElements[lastActiveVideoId];
-        vid.currentTime = 0;
-        vid.play().catch(() => {});
+    function toggleVideoRotation() {
+      videoRotationDeg = (videoRotationDeg + 90) % 360;
+      applyVideoRotation();
+    }
+
+    function applyVideoRotation() {
+      const videoPlayer = document.getElementById("centeredVideoPlayer");
+      if (videoPlayer) {
+        if (videoRotationDeg === 90 || videoRotationDeg === 270) {
+          videoPlayer.style.transform = `rotate(${videoRotationDeg}deg) scale(0.85)`;
+        } else {
+          videoPlayer.style.transform = `rotate(${videoRotationDeg}deg) scale(1)`;
+        }
       }
+    }
+
+    function openCenteredVideo(videoUrl, title, startTime = 0) {
+      const overlay = document.getElementById("centeredVideoOverlay");
+      const videoPlayer = document.getElementById("centeredVideoPlayer");
+      const titleEl = document.getElementById("activeVideoTitle");
+
+      if (titleEl && title) titleEl.textContent = title;
+
+      if (overlay && videoPlayer) {
+        overlay.classList.remove("hidden");
+        if (videoUrl && videoPlayer.src !== videoUrl) {
+          videoPlayer.src = videoUrl;
+        }
+        if (startTime > 0) {
+          try { videoPlayer.currentTime = startTime; } catch (_) {}
+        }
+        applyVideoRotation();
+        videoPlayer.muted = !isAudioUnmuted;
+        videoPlayer.play().catch(e => console.warn("Video play error:", e));
+      }
+    }
+
+    function closeCenteredVideo() {
+      const overlay = document.getElementById("centeredVideoOverlay");
+      const videoPlayer = document.getElementById("centeredVideoPlayer");
+      const centerViewfinder = document.getElementById("centerViewfinder");
+
+      if (videoPlayer) videoPlayer.pause();
+      if (overlay) overlay.classList.add("hidden");
+      if (centerViewfinder) centerViewfinder.classList.remove("hidden");
     }
 
     // Audio chime on marker detect
@@ -293,9 +381,9 @@
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.type = "sine";
-        osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08); // E5
-        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.16); // G5
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08);
+        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.16);
         gain.gain.setValueAtTime(0.12, ctx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
         osc.start();
@@ -336,31 +424,50 @@
         } catch (_) {}
       }
 
-      // 2. If session code provided, fetch session data for motion video or photo strip marker
-      if (sessionCode && supabaseClient) {
-        try {
-          const { data: sRow } = await supabaseClient
-            .from("tjf_sessions")
-            .select("*")
-            .eq("code", sessionCode)
-            .maybeSingle();
+      // 2. If session code provided, fetch session data for videobox message video
+      if (sessionCode) {
+        let sRow = null;
+        if (supabaseClient) {
+          try {
+            const { data } = await supabaseClient
+              .from("tjf_sessions")
+              .select("*")
+              .eq("code", sessionCode)
+              .maybeSingle();
+            if (data) sRow = data;
+          } catch (sErr) {
+            console.warn("Session marker check notice:", sErr);
+          }
+        }
+        if (!sRow) {
+          try {
+            const r = await fetch(`/api/session/${sessionCode}`);
+            const d = await r.json();
+            if (d.success && d.session) sRow = d.session;
+          } catch (_) {}
+        }
 
-          if (sRow && (sRow.frame_video_url || sRow.video_message_url)) {
-            const vidUrl = sRow.frame_video_url || sRow.video_message_url;
-            const photoUrl = sRow.storage_url || (sRow.local_filename ? `/photos/${sRow.local_filename}` : null);
-            if (photoUrl && vidUrl) {
-              // Add session photo as a dynamic target
+        if (sRow) {
+          const sessionVideoUrl = sRow.video_message_url || sRow.frame_video_url;
+          const photoUrl = sRow.storage_url || (sRow.local_filename ? `/photos/${sRow.local_filename}` : null);
+
+          if (sessionVideoUrl) {
+            markersList.forEach(m => {
+              if (!m.video_url || m.video_url.trim() === "") {
+                m.video_url = sessionVideoUrl;
+              }
+            });
+
+            if (photoUrl) {
               markersList.unshift({
                 id: `session-${sessionCode}`,
                 name: `Session Photo (${sessionCode})`,
                 image_url: photoUrl,
-                video_url: vidUrl,
+                video_url: sessionVideoUrl,
                 height: 1.5,
               });
             }
           }
-        } catch (sErr) {
-          console.warn("Session marker check notice:", sErr);
         }
       }
 
@@ -384,7 +491,6 @@
 
         updateProgress(25, `Preparing ${markers.length} image targets...`);
 
-        // Load images into Image elements
         const images = [];
         for (let i = 0; i < markers.length; i++) {
           const m = markers[i];
@@ -427,7 +533,6 @@
 
         updateProgress(50, "Compiling AR tracking features...");
 
-        // MindAR Image Compiler (Real-time in browser)
         const compiler = new window.MINDAR.IMAGE.Compiler();
         const dataList = await compiler.compileImageTargets(images, (progress) => {
           const pct = 50 + Math.round(progress * 0.45);
@@ -457,7 +562,7 @@
 
       const totalTrackLimit = markers.length;
 
-      // Build Video Asset Elements
+      // 1. Build Video Assets HTML for 3D AR Video Plane
       let assetsHTML = `<a-assets timeout="10000">`;
       markers.forEach((m, idx) => {
         assetsHTML += `
@@ -475,7 +580,7 @@
       });
       assetsHTML += `</a-assets>`;
 
-      // Build A-Frame Scene with Entities
+      // 2. Build A-Frame Scene HTML with 3D Video Plane tracking physical marker
       let sceneHTML = `
         <a-scene
           embedded
@@ -490,31 +595,21 @@
           <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
       `;
 
-      // Embed each target anchor
       markers.forEach((m, idx) => {
         const heightRatio = m.height || 1.33;
         sceneHTML += `
           <a-entity mindar-image-target="targetIndex: ${idx}" id="target-anchor-${idx}">
-            <!-- Vintage Card Border Backing -->
-            <a-plane
-              width="1.04"
-              height="${heightRatio + 0.04}"
-              position="0 0 -0.01"
-              material="color: #1F201E; shader: flat; side: double;"
-            ></a-plane>
             <a-plane
               width="1.0"
               height="${heightRatio}"
-              position="0 0 -0.005"
-              material="color: #F9F6F0; shader: flat; side: double;"
+              position="0 0 0"
+              material="color: #000; shader: flat; side: double;"
             ></a-plane>
-
-            <!-- Video Display Plane -->
             <a-video
               id="video-plane-${idx}"
               src="#video-asset-${idx}"
-              width="0.96"
-              height="${heightRatio - 0.04}"
+              width="1.0"
+              height="${heightRatio}"
               position="0 0 0.005"
               material="shader: flat; side: double; transparent: false;"
             ></a-video>
@@ -531,7 +626,7 @@
         if (vid) activeVideoElements[idx] = vid;
       });
 
-      // Attach Target Event Listeners
+      // 3. Attach Target Event Listeners
       markers.forEach((m, idx) => {
         const anchorId = `target-anchor-${idx}`;
         const checkInterval = setInterval(() => {
@@ -539,28 +634,39 @@
           if (anchorEl) {
             clearInterval(checkInterval);
 
+            // TARGET FOUND: Overlay video in 3D directly on physical marker, hide square & center UI!
             anchorEl.addEventListener("targetFound", () => {
               console.log(`[AR] Target detected: ${m.name}`);
               playDetectChime();
 
-              if (targetFoundBadge) targetFoundBadge.classList.remove("hidden");
-              if (markerInfoCard) markerInfoCard.classList.remove("hidden");
-              if (activeMarkerTitle) activeMarkerTitle.textContent = m.name;
+              // Hide center viewfinder square box & instructions when detected!
+              const centerViewfinder = document.getElementById("centerViewfinder");
+              if (centerViewfinder) centerViewfinder.classList.add("hidden");
 
-              lastActiveVideoId = idx;
-              const vid = activeVideoElements[idx];
-              if (vid) {
-                vid.muted = !isAudioUnmuted;
-                vid.play().catch((e) => console.warn("Video play notice:", e));
+              // Hide screen overlay if open, because video is overlaying directly in 3D on top of marker!
+              const overlay = document.getElementById("centeredVideoOverlay");
+              if (overlay) overlay.classList.add("hidden");
+
+              // Play 3D video on top of marker
+              const vid3D = activeVideoElements[idx];
+              if (vid3D) {
+                vid3D.muted = !isAudioUnmuted;
+                vid3D.play().catch((e) => console.warn("Video 3D play notice:", e));
               }
             });
 
+            // TARGET LOST (Marker is gone): Rotate video 90deg and make it centered on screen!
             anchorEl.addEventListener("targetLost", () => {
               console.log(`[AR] Target lost: ${m.name}`);
-              if (targetFoundBadge) targetFoundBadge.classList.add("hidden");
+              const vid3D = activeVideoElements[idx];
+              let currentSec = 0;
+              if (vid3D) {
+                currentSec = vid3D.currentTime;
+                vid3D.pause();
+              }
 
-              const vid = activeVideoElements[idx];
-              if (vid) vid.pause();
+              // Marker is gone: Open centered video rotated 90deg continuing from current time!
+              openCenteredVideo(m.video_url, m.name, currentSec);
             });
           }
         }, 100);
