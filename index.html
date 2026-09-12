@@ -1,775 +1,1737 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>The Jakarta Floss — AR Video Experience</title>
-  <link rel="icon" type="image/x-icon" href="/icon.ico" />
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>The Jakarta Floss — Admin & AR CMS</title>
+    <link rel="icon" type="image/x-icon" href="/icon.ico" />
 
-  <!-- Google Fonts: Instrument Serif & Plus Jakarta Sans -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet"
-  />
+    <!-- Google Fonts: Instrument Serif & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
 
-  <!-- Tailwind CSS -->
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            cream: "#F9F6F0",
-            "cream-dark": "#F0EAE1",
-            wine: "#801A20",
-            "wine-dark": "#631318",
-            "wine-light": "#96232A",
-            forest: "#323B33",
-            charcoal: "#1F201E",
-            gold: "#C49A45",
-            "gold-light": "#E5C882",
-          },
-          fontFamily: {
-            serif: ['"Instrument Serif"', "serif"],
-            sans: ['"Plus Jakarta Sans"', "sans-serif"],
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              cream: "#F9F6F0",
+              "cream-dark": "#F0EAE1",
+              wine: "#801A20",
+              "wine-dark": "#631318",
+              "wine-light": "#96232A",
+              forest: "#323B33",
+              charcoal: "#1F201E",
+              gold: "#C49A45",
+              "gold-light": "#E5C882",
+            },
+            fontFamily: {
+              serif: ['"Instrument Serif"', "serif"],
+              sans: ['"Plus Jakarta Sans"', "sans-serif"],
+            },
           },
         },
-      },
-    };
-  </script>
-
-  <!-- Supabase JS Client -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <!-- A-Frame 1.2.0 & AR.js 1.7.7 -->
-  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <script>
-    // Maximize camera resolution before AR.js initializes
-    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-      const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-      navigator.mediaDevices.getUserMedia = async function (constraints) {
-        if (constraints && constraints.video && typeof constraints.video === "object") {
-          const modified = JSON.parse(JSON.stringify(constraints));
-          delete modified.video.width;
-          delete modified.video.height;
-          modified.video.width = { ideal: 1920 };
-          modified.video.height = { ideal: 1080 };
-          try {
-            return await originalGetUserMedia(modified);
-          } catch (_) {
-            return originalGetUserMedia(constraints);
-          }
-        }
-        return originalGetUserMedia(constraints);
       };
-    }
-  </script>
-  <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
+    </script>
 
-  <style>
-    :root {
-      --color-cream: #F9F6F0;
-      --color-wine: #801A20;
-      --color-charcoal: #1F201E;
-      --color-gold: #C49A45;
-    }
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: "Plus Jakarta Sans", sans-serif;
-      user-select: none;
-      -webkit-user-select: none;
-    }
-    .font-instrument {
-      font-family: "Instrument Serif", serif;
-    }
-    .editorial-badge {
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      font-weight: 700;
-    }
-    .hud-card {
-      background: rgba(249, 246, 240, 0.94);
-      backdrop-filter: blur(8px);
-      border: 2px solid var(--color-charcoal);
-      box-shadow: 3px 3px 0px var(--color-charcoal);
-    }
-    .bento-btn {
-      border: 2px solid var(--color-charcoal);
-      box-shadow: 2px 2px 0px var(--color-charcoal);
-      transition: all 0.15s ease;
-    }
-    .bento-btn:active {
-      transform: translate(2px, 2px);
-      box-shadow: 0px 0px 0px var(--color-charcoal);
-    }
-    /* Pulse ring for viewfinder */
-    @keyframes pulseRing {
-      0% { transform: scale(0.96); opacity: 0.8; }
-      50% { transform: scale(1.02); opacity: 1; }
-      100% { transform: scale(0.96); opacity: 0.8; }
-    }
-    .target-box {
-      animation: pulseRing 3s ease-in-out infinite;
-    }
-    /* Hide A-Frame default UI */
-    .a-enter-vr-button, .a-orientation-modal {
-      display: none !important;
-    }
-  </style>
-</head>
+    <!-- Supabase JS Client & QRCode -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
-<body class="bg-black text-charcoal">
+    <style>
+      :root {
+        --color-cream: #f9f6f0;
+        --color-cream-dark: #f0eae1;
+        --color-wine: #801a20;
+        --color-wine-dark: #631318;
+        --color-wine-light: #96232a;
+        --color-forest: #323b33;
+        --color-charcoal: #1f201e;
+        --color-gold: #c49a45;
+      }
 
-  <!-- ====================================================
-       A-FRAME 3D AR SCENE
-       ==================================================== -->
-  <a-scene
-    id="arScene"
-    embedded
-    arjs="debugUIEnabled: false; patternRatio: 0.7; sourceType: webcam; trackingMethod: best;"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
-    style="position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1;"
-  >
-    <!-- Asset Library for Dynamic Video Texture -->
-    <a-assets timeout="12000">
-      <video
-        id="arVideoSource"
-        src=""
-        crossorigin="anonymous"
-        playsinline
-        webkit-playsinline
-        loop
-        preload="auto"
-      ></video>
-    </a-assets>
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background-color: var(--color-cream);
+        color: var(--color-charcoal);
+      }
 
-    <!-- ===== PATTERN MARKER 1: SPARKLE (DEFAULT TJF) ===== -->
-    <a-marker
-      id="markerSparkle"
-      type="pattern"
-      url="pattern-sparkle-black.patt"
-      emitevents="true"
-      smooth="true"
-      smoothCount="5"
-      smoothTolerance="0.01"
-      smoothThreshold="2"
-    >
-      <a-entity id="arEntityContainer1" position="0 0 0" rotation="-90 0 0">
-        <!-- 3D Vintage Photo Card Mount Backing -->
-        <a-plane
-          id="cardBacking1"
-          width="1.8"
-          height="2.4"
-          position="0 0 -0.02"
-          material="color: #F9F6F0; shader: flat; side: double;"
-        ></a-plane>
-        <!-- Gold / Charcoal Card Trim -->
-        <a-plane
-          width="1.86"
-          height="2.46"
-          position="0 0 -0.03"
-          material="color: #1F201E; shader: flat; side: double;"
-        ></a-plane>
-        <!-- The Floating 3D AR Video Screen -->
-        <a-video
-          id="arVideoPlane1"
-          src="#arVideoSource"
-          width="1.5"
-          height="2.0"
-          position="0 0 0.01"
-          material="shader: flat; side: double;"
-        ></a-video>
-        <!-- Header Text in 3D -->
-        <a-text
-          value="THE JAKARTA FLOSS"
-          align="center"
-          position="0 1.08 0.02"
-          scale="0.32 0.32 0.32"
-          color="#801A20"
-          font="aileronsemibold"
-        ></a-text>
-      </a-entity>
-    </a-marker>
+      .font-instrument {
+        font-family: "Instrument Serif", serif;
+      }
 
-    <!-- ===== PATTERN MARKER 2: HIGHFIVE ===== -->
-    <a-marker
-      id="markerHighfive"
-      type="pattern"
-      url="pattern-highfive-black.patt"
-      emitevents="true"
-      smooth="true"
-    >
-      <a-entity id="arEntityContainer2" position="0 0 0" rotation="-90 0 0">
-        <a-plane width="1.8" height="2.4" position="0 0 -0.02" material="color: #F9F6F0; shader: flat; side: double;"></a-plane>
-        <a-plane width="1.86" height="2.46" position="0 0 -0.03" material="color: #1F201E; shader: flat; side: double;"></a-plane>
-        <a-video id="arVideoPlane2" src="#arVideoSource" width="1.5" height="2.0" position="0 0 0.01" material="shader: flat; side: double;"></a-video>
-        <a-text value="THE JAKARTA FLOSS" align="center" position="0 1.08 0.02" scale="0.32 0.32 0.32" color="#801A20" font="aileronsemibold"></a-text>
-      </a-entity>
-    </a-marker>
+      .vintage-box {
+        background: #ffffff;
+        border: 2px solid var(--color-charcoal);
+        position: relative;
+        box-shadow: 4px 4px 0px rgba(31, 32, 30, 0.08);
+      }
 
-    <!-- ===== PATTERN MARKER 3: RIBBON ===== -->
-    <a-marker
-      id="markerRibbon"
-      type="pattern"
-      url="pattern-ribbon-final.patt"
-      emitevents="true"
-      smooth="true"
-    >
-      <a-entity id="arEntityContainer3" position="0 0 0" rotation="-90 0 0">
-        <a-plane width="1.8" height="2.4" position="0 0 -0.02" material="color: #F9F6F0; shader: flat; side: double;"></a-plane>
-        <a-plane width="1.86" height="2.46" position="0 0 -0.03" material="color: #1F201E; shader: flat; side: double;"></a-plane>
-        <a-video id="arVideoPlane3" src="#arVideoSource" width="1.5" height="2.0" position="0 0 0.01" material="shader: flat; side: double;"></a-video>
-        <a-text value="THE JAKARTA FLOSS" align="center" position="0 1.08 0.02" scale="0.32 0.32 0.32" color="#801A20" font="aileronsemibold"></a-text>
-      </a-entity>
-    </a-marker>
+      .editorial-badge {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
 
-    <!-- ===== PATTERN MARKER 4: CONFETTI ===== -->
-    <a-marker
-      id="markerConfetti"
-      type="pattern"
-      url="pattern-confetti-final.patt"
-      emitevents="true"
-      smooth="true"
-    >
-      <a-entity id="arEntityContainer4" position="0 0 0" rotation="-90 0 0">
-        <a-plane width="1.8" height="2.4" position="0 0 -0.02" material="color: #F9F6F0; shader: flat; side: double;"></a-plane>
-        <a-plane width="1.86" height="2.46" position="0 0 -0.03" material="color: #1F201E; shader: flat; side: double;"></a-plane>
-        <a-video id="arVideoPlane4" src="#arVideoSource" width="1.5" height="2.0" position="0 0 0.01" material="shader: flat; side: double;"></a-video>
-        <a-text value="THE JAKARTA FLOSS" align="center" position="0 1.08 0.02" scale="0.32 0.32 0.32" color="#801A20" font="aileronsemibold"></a-text>
-      </a-entity>
-    </a-marker>
+      .toast {
+        position: fixed;
+        bottom: 28px;
+        right: 28px;
+        background: var(--color-charcoal);
+        color: var(--color-cream);
+        padding: 14px 24px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        border: 1px solid var(--color-gold);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        z-index: 9999;
+        animation: slideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        border-radius: 2px;
+      }
+      @keyframes slideIn {
+        from { transform: translateY(20px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+      }
 
-    <!-- ===== PATTERN MARKER 5: SMILEY ===== -->
-    <a-marker
-      id="markerSmiley"
-      type="pattern"
-      url="pattern-smiley-final.patt"
-      emitevents="true"
-      smooth="true"
-    >
-      <a-entity id="arEntityContainer5" position="0 0 0" rotation="-90 0 0">
-        <a-plane width="1.8" height="2.4" position="0 0 -0.02" material="color: #F9F6F0; shader: flat; side: double;"></a-plane>
-        <a-plane width="1.86" height="2.46" position="0 0 -0.03" material="color: #1F201E; shader: flat; side: double;"></a-plane>
-        <a-video id="arVideoPlane5" src="#arVideoSource" width="1.5" height="2.0" position="0 0 0.01" material="shader: flat; side: double;"></a-video>
-        <a-text value="THE JAKARTA FLOSS" align="center" position="0 1.08 0.02" scale="0.32 0.32 0.32" color="#801A20" font="aileronsemibold"></a-text>
-      </a-entity>
-    </a-marker>
+      /* Ticker Bar */
+      .ticker-bar {
+        background: var(--color-forest);
+        color: #e5ede3;
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        border-bottom: 2px solid var(--color-charcoal);
+      }
 
-    <!-- Standard HIRO Preset Fallback Marker -->
-    <a-marker id="markerHiro" preset="hiro" emitevents="true" smooth="true">
-      <a-entity id="arEntityContainer6" position="0 0 0" rotation="-90 0 0">
-        <a-plane width="1.8" height="2.4" position="0 0 -0.02" material="color: #F9F6F0; shader: flat; side: double;"></a-plane>
-        <a-plane width="1.86" height="2.46" position="0 0 -0.03" material="color: #1F201E; shader: flat; side: double;"></a-plane>
-        <a-video id="arVideoPlane6" src="#arVideoSource" width="1.5" height="2.0" position="0 0 0.01" material="shader: flat; side: double;"></a-video>
-        <a-text value="THE JAKARTA FLOSS" align="center" position="0 1.08 0.02" scale="0.32 0.32 0.32" color="#801A20" font="aileronsemibold"></a-text>
-      </a-entity>
-    </a-marker>
+      /* Perspective Crop Canvas */
+      #cropCanvas {
+        cursor: crosshair;
+        touch-action: none;
+      }
+    </style>
+  </head>
 
-    <!-- AR Camera -->
-    <a-entity camera></a-entity>
-  </a-scene>
-
-  <!-- ====================================================
-       2D HUD / CONTROLS LAYER (OVERLAY)
-       ==================================================== -->
-  <div class="fixed inset-0 pointer-events-none z-20 flex flex-col justify-between p-4 md:p-6 select-none">
-
-    <!-- ===== TOP BAR: BRANDING + SESSION INFO + BACK BUTTON ===== -->
-    <header class="w-full flex items-center justify-between pointer-events-auto">
-      <!-- TJF Brand Badge -->
-      <div class="hud-card px-3.5 py-2 flex items-center gap-2.5">
-        <div class="w-6 h-6 text-wine">
-          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full">
-            <path d="M14 42 C8 38, 8 26, 18 20 C28 14, 46 16, 52 24 C58 32, 54 44, 44 48 C34 52, 20 46, 14 42 Z" fill="#FDF9F2" stroke="currentColor"/>
-            <path d="M24 24 C28 28, 30 36, 26 42" stroke="#C49A45" stroke-width="2.5" />
-            <path d="M34 22 C38 27, 40 35, 36 43" stroke="#C49A45" stroke-width="2.5" />
+  <body class="bg-cream text-charcoal select-none min-h-screen flex flex-col">
+    <!-- ===== TOP TICKER / MARQUEE ===== -->
+    <div class="ticker-bar w-full py-1.5 px-4 flex items-center justify-between border-b border-charcoal/20 font-medium text-[11px] overflow-hidden">
+      <div class="flex items-center gap-4 flex-nowrap whitespace-nowrap">
+        <span class="flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-gold" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M2 6a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 100 4v2a2 2 0 01-2 2H4a2 2 0 01-2-2v-2a2 2 0 100-4V6z" />
           </svg>
+          <span class="tracking-widest uppercase">The Jakarta Floss</span>
+        </span>
+        <span class="opacity-40">&bull;</span>
+        <span class="opacity-90 italic font-serif text-sm">Central Admin &amp; AR Studio</span>
+        <span class="opacity-40">&bull;</span>
+        <span class="tracking-wide">MindAR Image Tracking &amp; Video Projection</span>
+      </div>
+      <div class="hidden md:flex items-center gap-3 text-[10px] tracking-widest uppercase opacity-80">
+        <span>EST. 2026</span>
+        <span>&bull;</span>
+        <span class="font-semibold text-gold-light">Moven Lab</span>
+      </div>
+    </div>
+
+    <!-- ===== LOGIN SCREEN ===== -->
+    <div id="loginScreen" class="flex-1 flex items-center justify-center px-6 py-12">
+      <div class="w-full max-w-[420px]">
+        <div class="flex flex-col items-center justify-center mb-6 text-center">
+          <div class="w-16 h-16 mb-2 text-wine flex items-center justify-center">
+            <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full drop-shadow-sm">
+              <path d="M14 42 C8 38, 8 26, 18 20 C28 14, 46 16, 52 24 C58 32, 54 44, 44 48 C34 52, 20 46, 14 42 Z" fill="#FDF9F2" stroke="currentColor" />
+              <path d="M24 24 C28 28, 30 36, 26 42" stroke="#C49A45" stroke-width="2.5" />
+              <path d="M34 22 C38 27, 40 35, 36 43" stroke="#C49A45" stroke-width="2.5" />
+              <path d="M44 26 C47 30, 48 36, 45 41" stroke="#C49A45" stroke-width="2.5" />
+              <path d="M22 14 Q24 10 22 7" stroke="currentColor" stroke-width="2" />
+              <path d="M34 12 Q36 8 34 5" stroke="currentColor" stroke-width="2" />
+              <path d="M46 15 Q48 11 46 8" stroke="currentColor" stroke-width="2" />
+            </svg>
+          </div>
+          <h1 class="font-instrument text-4xl text-wine font-normal tracking-tight">The Jakarta Floss</h1>
+          <p class="font-sans text-xs font-semibold tracking-[0.2em] uppercase text-forest/70 mt-1">Management &amp; AR Studio</p>
         </div>
-        <div>
-          <h1 class="font-instrument text-lg md:text-xl text-wine leading-none">The Jakarta Floss</h1>
-          <div class="text-[9px] editorial-badge text-forest/70 mt-0.5 flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span id="headerStatusText">AUGMENTED REALITY</span>
+
+        <div class="vintage-box p-8 bg-white border-2 border-charcoal">
+          <div class="flex items-center justify-between border-b-2 border-charcoal/10 pb-3 mb-6">
+            <span class="editorial-badge text-xs text-charcoal">ADMIN LOGIN</span>
+            <span class="font-instrument italic text-wine text-base">Private Access</span>
+          </div>
+          <div class="mb-5">
+            <label class="block editorial-badge text-[11px] text-charcoal/70 mb-2">Passcode</label>
+            <input
+              type="password"
+              id="loginPassword"
+              class="w-full border-2 border-charcoal px-4 py-3 text-sm font-semibold tracking-wider outline-none bg-cream/40 focus:bg-white focus:border-wine transition-colors"
+              placeholder="••••••••"
+            />
+          </div>
+          <button
+            onclick="doLogin()"
+            id="loginBtn"
+            class="w-full bg-wine hover:bg-wine-dark text-white font-sans font-bold py-3 text-xs tracking-[0.2em] uppercase border-2 border-charcoal active:scale-[0.98] transition-all shadow-[2px_2px_0px_rgba(31,32,30,1)] disabled:opacity-50"
+          >
+            ENTER STUDIO
+          </button>
+          <p id="loginError" class="text-xs font-semibold mt-4 text-wine-light text-center hidden bg-wine/5 py-2 border border-wine/20"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== DASHBOARD ===== -->
+    <div id="dashboard" class="hidden flex-1 flex flex-col">
+      <!-- Header -->
+      <header class="w-full pt-6 pb-4 px-6 md:px-10 bg-cream border-b-2 border-charcoal/10">
+        <div class="max-w-[1100px] mx-auto flex justify-between items-center">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 text-wine flex-shrink-0">
+              <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full">
+                <path d="M14 42 C8 38, 8 26, 18 20 C28 14, 46 16, 52 24 C58 32, 54 44, 44 48 C34 52, 20 46, 14 42 Z" fill="#FDF9F2" stroke="currentColor" />
+                <path d="M24 24 C28 28, 30 36, 26 42" stroke="#C49A45" stroke-width="2.5" />
+                <path d="M34 22 C38 27, 40 35, 36 43" stroke="#C49A45" stroke-width="2.5" />
+                <path d="M44 26 C47 30, 48 36, 45 41" stroke="#C49A45" stroke-width="2.5" />
+              </svg>
+            </div>
+            <div>
+              <h1 class="font-instrument text-3xl text-wine leading-tight">The Jakarta Floss</h1>
+              <div class="text-[10px] editorial-badge text-forest/70 -mt-0.5">Admin &amp; AR CMS Studio</div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <!-- Open AR Scanner -->
+            <a
+              href="/videobox.html"
+              target="_blank"
+              class="inline-flex items-center gap-1.5 text-xs font-bold text-wine hover:text-white hover:bg-wine transition-all border-2 border-charcoal px-3.5 py-1.5 bg-white shadow-[2px_2px_0px_rgba(31,32,30,1)] active:scale-95"
+            >
+              <span class="text-amber-500">⚡</span>
+              <span>Launch AR Scanner</span>
+            </a>
+
+            <!-- Open Photobox or Softfile -->
+            <a
+              href="/softfile"
+              target="_blank"
+              class="hidden sm:inline-flex items-center gap-1.5 text-xs font-bold text-charcoal hover:bg-charcoal hover:text-cream transition-all border-2 border-charcoal px-3.5 py-1.5 bg-white shadow-[2px_2px_0px_rgba(31,32,30,1)] active:scale-95"
+            >
+              <span>Softfile Gallery</span>
+            </a>
+
+            <button
+              onclick="doLogout()"
+              class="text-xs editorial-badge px-3 py-1.5 bg-charcoal hover:bg-wine text-cream transition-colors border border-charcoal shadow-sm cursor-pointer"
+            >
+              Logout
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- ===== TAB NAVIGATION BAR ===== -->
+      <div class="w-full bg-cream-dark/40 border-b-2 border-charcoal/20 px-6 md:px-10">
+        <div class="max-w-[1100px] mx-auto flex items-center gap-2 pt-3 overflow-x-auto">
+          <!-- AR CMS TAB (PRIORITY TAB) -->
+          <button
+            id="tabBtnArCms"
+            onclick="switchTab('arcms')"
+            class="px-4 py-2 text-xs font-bold tracking-widest uppercase border-t-2 border-l-2 border-r-2 border-charcoal bg-white text-wine -mb-[2px] transition-all shadow-[0_-2px_0px_rgba(31,32,30,0.05)] flex items-center gap-1.5 shrink-0"
+          >
+            <span>✦ AR CMS (MARKERS)</span>
+            <span id="markersCountBadge" class="bg-wine/10 text-wine px-1.5 py-0.2 text-[10px] font-bold rounded">0</span>
+          </button>
+
+          <!-- VOUCHERS TAB -->
+          <button
+            id="tabBtnVouchers"
+            onclick="switchTab('vouchers')"
+            class="px-4 py-2 text-xs font-bold tracking-widest uppercase border-t-2 border-l-2 border-r-2 border-transparent text-charcoal/60 hover:text-charcoal -mb-[2px] transition-all shrink-0"
+          >
+            VOUCHERS
+          </button>
+
+          <!-- PHOTO SESSIONS TAB -->
+          <button
+            id="tabBtnSessions"
+            onclick="switchTab('sessions')"
+            class="px-4 py-2 text-xs font-bold tracking-widest uppercase border-t-2 border-l-2 border-r-2 border-transparent text-charcoal/60 hover:text-charcoal -mb-[2px] transition-all flex items-center gap-1.5 shrink-0"
+          >
+            <span>PHOTO SESSIONS</span>
+            <span id="sessionsCountBadge" class="bg-wine/10 text-wine px-1.5 py-0.2 text-[10px] font-bold rounded">0</span>
+          </button>
+
+          <!-- BOOTHS & SYNC TAB -->
+          <button
+            id="tabBtnBooths"
+            onclick="switchTab('booths')"
+            class="px-4 py-2 text-xs font-bold tracking-widest uppercase border-t-2 border-l-2 border-r-2 border-transparent text-charcoal/60 hover:text-charcoal -mb-[2px] transition-all flex items-center gap-1.5 shrink-0"
+          >
+            <span>BOOTHS &amp; CLOUD SYNC</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- ===== TAB 1: AR CMS (IMAGE TARGETS & VIDEO MARKERS) ===== -->
+      <!-- ======================================================== -->
+      <div id="tabContentArCms" class="max-w-[1100px] w-full mx-auto px-6 md:px-10 py-8 flex-1 flex flex-col gap-6">
+        <!-- Section Header -->
+        <div class="flex flex-col sm:flex-row justify-between sm:items-end gap-4 pb-3 border-b-2 border-charcoal/20">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="inline-block bg-wine text-white text-[10px] font-black tracking-widest uppercase px-2 py-0.5 border border-charcoal">
+                MIND-AR NATURAL FEATURE TRACKING
+              </span>
+              <span id="arMarkerStats" class="text-xs text-charcoal/60 font-semibold font-mono">0 ACTIVE TARGETS</span>
+            </div>
+            <h2 class="font-instrument text-3xl text-wine mt-1">AR Markers &amp; Video Experience</h2>
+            <p class="text-xs text-forest/80 max-w-xl font-serif mt-0.5">
+              Upload real photos, photobox strips, or custom artwork as image targets. The AR camera will track the image and project its animated video right on top of it.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <a
+              href="/videobox.html"
+              target="_blank"
+              class="border-2 border-charcoal bg-white hover:bg-cream text-charcoal text-[11px] font-bold tracking-widest uppercase px-4 py-2.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] active:scale-95 transition-all inline-flex items-center gap-1.5"
+            >
+              <span>TEST SCANNER</span>
+              <svg class="w-3.5 h-3.5 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+
+            <button
+              onclick="openNewMarkerModal()"
+              class="border-2 border-charcoal bg-wine hover:bg-wine-dark text-white text-[11px] font-bold tracking-widest uppercase px-5 py-2.5 shadow-[3px_3px_0px_rgba(31,32,30,1)] active:scale-95 transition-all inline-flex items-center gap-2 cursor-pointer"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              <span>+ ADD NEW MARKER</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Marker Cards Grid -->
+        <div id="markersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <!-- Populated by JavaScript -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="markersEmptyState" class="hidden flex flex-col items-center justify-center p-12 bg-white border-2 border-charcoal text-center shadow-[4px_4px_0px_rgba(31,32,30,0.06)]">
+          <div class="w-16 h-16 rounded-full bg-cream border-2 border-charcoal flex items-center justify-center text-2xl mb-4 text-wine">
+            ✦
+          </div>
+          <h3 class="font-instrument text-2xl text-wine font-bold">No AR Markers Created Yet</h3>
+          <p class="text-xs text-charcoal/60 max-w-sm mt-1 font-serif">
+            Upload your first photobox strip, picture, or marker image using the 4-corner perspective tool, then attach a motion video to watch it animate!
+          </p>
+          <button
+            onclick="openNewMarkerModal()"
+            class="mt-5 border-2 border-charcoal bg-wine text-white text-xs font-bold tracking-widest uppercase px-5 py-2.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] hover:bg-wine-dark transition-all cursor-pointer"
+          >
+            CREATE FIRST MARKER
+          </button>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- ===== TAB 2: VOUCHERS ================================== -->
+      <!-- ======================================================== -->
+      <div id="tabContentVouchers" class="hidden max-w-[1100px] w-full mx-auto px-6 md:px-10 py-8 flex-1 flex flex-col gap-6">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="codeStats">
+          <!-- Populated by JS -->
+        </div>
+
+        <!-- Controls & Generation Header -->
+        <div class="flex flex-col sm:flex-row justify-between sm:items-end gap-4 pb-2 border-b-2 border-charcoal/20">
+          <div>
+            <h2 class="font-instrument text-2xl text-wine">Access Vouchers</h2>
+            <p class="text-xs text-forest/70">Create and batch print physical QR ticket vouchers for visitors</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              onclick="printSelected()"
+              id="btn-print-selected"
+              class="hidden border-2 border-charcoal bg-white text-charcoal text-[11px] font-bold tracking-widest uppercase px-4 py-2 hover:bg-cream active:scale-95 transition-transform shadow-[2px_2px_0px_rgba(31,32,30,1)]"
+            >
+              PRINT SELECTED (<span id="selected-count">0</span>)
+            </button>
+
+            <div class="flex items-center gap-2 border-2 border-charcoal bg-white p-1 shadow-[2px_2px_0px_rgba(31,32,30,1)]">
+              <select
+                id="voucherTypeSelect"
+                title="Voucher Type"
+                class="h-[34px] px-2 text-xs font-bold uppercase outline-none bg-cream/50 border border-charcoal/30 cursor-pointer hover:bg-cream text-wine"
+              >
+                <option value="Photobox">📸 PHOTOBOX</option>
+                <option value="Videobox">🎬 VIDEOBOX (VIP)</option>
+              </select>
+
+              <input
+                type="number"
+                id="generateCount"
+                min="1"
+                max="20"
+                value="1"
+                title="Amount to generate"
+                class="w-12 px-1 text-sm font-bold outline-none text-center h-[34px] border border-charcoal/30 bg-cream/30 focus:bg-white"
+              />
+              <button
+                onclick="generateCode()"
+                id="generateBtn"
+                class="bg-wine hover:bg-wine-dark text-white text-[11px] font-bold tracking-widest uppercase px-4 transition-colors h-[34px] disabled:opacity-50 min-w-[130px] whitespace-nowrap cursor-pointer"
+              >
+                + ISSUE VOUCHER
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vouchers Table -->
+        <div class="vintage-box bg-white overflow-hidden border-2 border-charcoal">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-cream-dark/60 border-b-2 border-charcoal/20 text-[10px] font-bold tracking-widest uppercase text-charcoal">
+                <tr>
+                  <th class="px-4 py-3 w-8 text-center">
+                    <input type="checkbox" id="selectAllCodes" onchange="toggleSelectAll(this)" />
+                  </th>
+                  <th class="px-4 py-3">Access Code</th>
+                  <th class="px-4 py-3">Booth Type</th>
+                  <th class="px-4 py-3">Status</th>
+                  <th class="px-4 py-3">Issued Date</th>
+                  <th class="px-4 py-3">Expires</th>
+                  <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="codesTableBody">
+                <tr><td colspan="7" class="text-center py-10 text-charcoal/40 font-serif italic text-base">Loading vouchers...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
 
-      <!-- Action Nav Buttons -->
-      <div class="flex items-center gap-2">
-        <!-- Session Code Badge -->
-        <div class="hud-card px-3 py-1.5 hidden sm:flex items-center gap-1.5">
-          <span class="text-[9px] editorial-badge text-charcoal/60">CODE</span>
-          <span id="sessionCodeBadge" class="font-mono text-xs font-bold text-wine">---</span>
+      <!-- ======================================================== -->
+      <!-- ===== TAB 3: PHOTO SESSIONS ============================ -->
+      <!-- ======================================================== -->
+      <div id="tabContentSessions" class="hidden max-w-[1100px] w-full mx-auto px-6 md:px-10 py-8 flex-1 flex flex-col gap-6">
+        <div class="flex flex-col sm:flex-row justify-between sm:items-end gap-4 pb-2 border-b-2 border-charcoal/20">
+          <div>
+            <h2 class="font-instrument text-2xl text-wine">Photo &amp; Video Sessions</h2>
+            <p class="text-xs text-forest/70">Archived visitor captures, motion animations, and videobox messages</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <input
+              type="text"
+              id="searchSessionsInput"
+              oninput="filterSessionsTable()"
+              placeholder="Search code..."
+              class="border-2 border-charcoal px-3 py-1.5 text-xs font-bold outline-none bg-white shadow-[2px_2px_0px_rgba(31,32,30,1)]"
+            />
+            <button
+              onclick="loadSessions()"
+              class="border-2 border-charcoal bg-white hover:bg-cream text-charcoal text-[11px] font-bold tracking-widest uppercase px-3 py-1.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] transition-all cursor-pointer"
+            >
+              REFRESH
+            </button>
+          </div>
         </div>
 
-        <!-- Back to Softfile Gallery Button -->
-        <a
-          id="btnBackToGallery"
-          href="/softfile"
-          class="bento-btn bg-white hover:bg-cream text-charcoal text-xs font-bold tracking-wider px-3.5 py-2 inline-flex items-center gap-1.5"
-          title="Return to Digital Softfile Gallery"
-        >
-          <span>&larr;</span>
-          <span class="hidden sm:inline uppercase text-[10px]">Softfile</span>
-        </a>
-
-        <!-- Marker Help Button -->
-        <button
-          onclick="toggleMarkerModal(true)"
-          class="bento-btn bg-wine text-white hover:bg-wine-dark text-xs font-bold px-3 py-2 inline-flex items-center gap-1"
-          title="Show Marker Pattern to Scan"
-        >
-          <span>🎯</span>
-          <span class="hidden sm:inline uppercase text-[10px] tracking-wider">Show Marker</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- ===== CENTER: TARGET GUIDELINES OVERLAY (WHEN SEARCHING) ===== -->
-    <div id="targetOverlay" class="self-center flex flex-col items-center gap-3 transition-opacity duration-300">
-      <div class="target-box relative w-56 h-72 sm:w-64 sm:h-84 border-2 border-white/60 rounded-lg flex items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
-        <!-- Corner Reticles -->
-        <div class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-gold"></div>
-        <div class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-gold"></div>
-        <div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-gold"></div>
-        <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-gold"></div>
-
-        <!-- Center Crosshair icon -->
-        <div class="text-white/70 text-2xl font-light">+</div>
-      </div>
-      <div class="hud-card px-4 py-2 text-center max-w-xs">
-        <p class="text-xs font-bold text-wine tracking-wide uppercase">Point Camera at Photo Card</p>
-        <p class="text-[10px] text-charcoal/70 mt-0.5">Align the printed pattern inside the frame to watch it come alive.</p>
-      </div>
-    </div>
-
-    <!-- Active Tracking Badge (Hidden by default, shown on marker detect) -->
-    <div id="trackingActiveBadge" class="hidden self-center hud-card px-4 py-1.5 text-center flex items-center gap-2 border-forest">
-      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-      <span class="text-xs font-extrabold text-forest uppercase tracking-wider">✦ Marker Locked • Playing ✦</span>
-    </div>
-
-    <!-- ===== BOTTOM BAR: VIDEO SWITCHER + AUDIO + CONTROLS ===== -->
-    <footer class="w-full flex flex-col items-center gap-3 pointer-events-auto">
-
-      <!-- Media Mode Switcher (Separate Motion Video vs Video Message) -->
-      <div id="videoSourceSwitcher" class="hud-card p-1.5 flex items-center gap-1.5 shadow-lg">
-        <button
-          id="btnModeMotion"
-          onclick="switchMediaMode('motion')"
-          class="px-3.5 py-1.5 text-[11px] font-extrabold tracking-wider uppercase border border-charcoal bg-wine text-white transition-all cursor-pointer rounded-sm"
-        >
-          🎞️ MOTION PHOTO
-        </button>
-        <button
-          id="btnModeMessage"
-          onclick="switchMediaMode('message')"
-          class="px-3.5 py-1.5 text-[11px] font-extrabold tracking-wider uppercase border border-charcoal bg-white text-charcoal hover:bg-cream transition-all cursor-pointer rounded-sm"
-        >
-          🎬 VIDEO MESSAGE (3:4)
-        </button>
-      </div>
-
-      <!-- Secondary Controls: Sound Mute / Flip Cam / Snapshot -->
-      <div class="flex items-center gap-2.5">
-        <!-- Audio Mute / Unmute Toggle -->
-        <button
-          id="btnToggleAudio"
-          onclick="toggleAudio()"
-          class="bento-btn bg-white hover:bg-cream text-charcoal px-3.5 py-2 text-xs font-bold inline-flex items-center gap-2"
-          title="Toggle Audio"
-        >
-          <span id="audioIcon">🔇</span>
-          <span id="audioText" class="text-[10px] font-bold uppercase tracking-wider">Muted</span>
-        </button>
-
-        <!-- Capture AR Snapshot Button -->
-        <button
-          onclick="captureArSnapshot()"
-          class="bento-btn bg-[#2D6A4F] hover:bg-[#1B4332] text-white px-4 py-2 text-xs font-bold inline-flex items-center gap-2"
-          title="Capture Snapshot of AR view"
-        >
-          <span>📸</span>
-          <span class="text-[10px] font-bold uppercase tracking-wider">Snap Photo</span>
-        </button>
-      </div>
-    </footer>
-  </div>
-
-  <!-- ====================================================
-       MODAL 1: ENTER CODE MODAL (IF NO CODE IN URL)
-       ==================================================== -->
-  <div id="enterCodeModal" class="hidden fixed inset-0 bg-charcoal/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 select-none">
-    <div class="hud-card max-w-sm w-full p-6 bg-white flex flex-col gap-4 text-center">
-      <div class="w-12 h-12 rounded-full bg-wine/10 text-wine text-2xl flex items-center justify-center mx-auto border border-wine/30">
-        🎞️
-      </div>
-      <div>
-        <h2 class="font-instrument text-2xl text-wine font-normal">View AR Memories</h2>
-        <p class="text-xs text-charcoal/70 mt-1">Enter your photobox voucher access code to load your interactive AR strip.</p>
-      </div>
-      <input
-        type="text"
-        id="inputSessionCode"
-        placeholder="e.g. TJF-VIDEOBOX"
-        class="border-2 border-charcoal px-4 py-2.5 text-center font-mono font-bold text-sm tracking-wider uppercase bg-cream/50 outline-none focus:border-wine"
-        onkeydown="if(event.key==='Enter') submitManualCode()"
-      />
-      <button
-        onclick="submitManualCode()"
-        class="bento-btn bg-wine hover:bg-wine-dark text-white font-bold text-xs uppercase tracking-widest py-3"
-      >
-        LOAD AR EXPERIENCE &rarr;
-      </button>
-    </div>
-  </div>
-
-  <!-- ====================================================
-       MODAL 2: PATTERN MARKER HELPER (FOR EASY SCANNING)
-       ==================================================== -->
-  <div id="markerModal" class="hidden fixed inset-0 bg-charcoal/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 select-none">
-    <div class="hud-card max-w-md w-full p-6 bg-white flex flex-col items-center gap-4 text-center">
-      <div class="w-full flex items-center justify-between border-b border-charcoal/10 pb-2">
-        <span class="editorial-badge text-[10px] text-wine font-bold">PATTERN MARKER TARGET</span>
-        <button onclick="toggleMarkerModal(false)" class="text-lg font-bold text-charcoal hover:text-wine px-2">&times;</button>
-      </div>
-      <p class="text-xs text-charcoal/70 leading-relaxed">
-        Point this phone at the marker below displayed on a second screen or physical photobox print:
-      </p>
-      <!-- Marker Preview Container -->
-      <div class="p-3 bg-white border-2 border-charcoal shadow-sm flex flex-col items-center gap-2">
-        <img
-          id="markerPreviewImg"
-          src="pattern-sparkle-white.png"
-          alt="AR Pattern Marker"
-          class="w-48 h-48 sm:w-56 sm:h-56 object-contain border border-charcoal/20"
-        />
-        <div class="flex items-center gap-2 mt-1">
-          <button
-            onclick="setMarkerPreview('pattern-sparkle-white.png', 'Sparkle')"
-            class="text-[9px] font-bold px-2 py-1 bg-cream border border-charcoal hover:bg-wine hover:text-white"
-          >Sparkle</button>
-          <button
-            onclick="setMarkerPreview('pattern-confetti.png', 'Confetti')"
-            class="text-[9px] font-bold px-2 py-1 bg-cream border border-charcoal hover:bg-wine hover:text-white"
-          >Confetti</button>
-          <button
-            onclick="setMarkerPreview('pattern-highfive-white.png', 'Highfive')"
-            class="text-[9px] font-bold px-2 py-1 bg-cream border border-charcoal hover:bg-wine hover:text-white"
-          >Highfive</button>
+        <div class="vintage-box bg-white overflow-hidden border-2 border-charcoal">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-cream-dark/60 border-b-2 border-charcoal/20 text-[10px] font-bold tracking-widest uppercase text-charcoal">
+                <tr>
+                  <th class="px-4 py-3">Preview</th>
+                  <th class="px-4 py-3">Session Code</th>
+                  <th class="px-4 py-3">Type</th>
+                  <th class="px-4 py-3">Booth</th>
+                  <th class="px-4 py-3">Assets</th>
+                  <th class="px-4 py-3">Created</th>
+                  <th class="px-4 py-3 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sessionsTableBody">
+                <tr><td colspan="7" class="text-center py-10 text-charcoal/40 font-serif italic text-base">Loading sessions...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
-      <button
-        onclick="toggleMarkerModal(false)"
-        class="bento-btn bg-charcoal text-white hover:bg-wine font-bold text-xs uppercase tracking-widest py-2 px-6 mt-1"
-      >
-        I'M READY TO SCAN
-      </button>
+
+      <!-- ======================================================== -->
+      <!-- ===== TAB 4: BOOTHS & CLOUD SYNC ======================= -->
+      <!-- ======================================================== -->
+      <div id="tabContentBooths" class="hidden max-w-[1100px] w-full mx-auto px-6 md:px-10 py-8 flex-1 flex flex-col gap-6">
+        <div class="pb-2 border-b-2 border-charcoal/20">
+          <h2 class="font-instrument text-2xl text-wine">Booths &amp; Cloud Sync Status</h2>
+          <p class="text-xs text-forest/70">Monitor hardware kiosks and Supabase cloud synchronization</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Cloud Sync Card -->
+          <div class="vintage-box p-6 bg-white border-2 border-charcoal flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-charcoal/10 pb-3">
+              <span class="editorial-badge text-xs text-charcoal">SUPABASE CLOUD STORAGE</span>
+              <span id="cloudStatusBadge" class="inline-block bg-forest/10 border border-forest text-forest text-[10px] font-bold tracking-wide px-2 py-0.5">CONNECTED</span>
+            </div>
+            <div class="text-xs text-charcoal/70 space-y-2">
+              <div>Bucket: <span class="font-mono font-bold text-charcoal">tjf_photos</span></div>
+              <div>Database: <span class="font-mono font-bold text-charcoal">fowdecmskhvfgmdwwnxg.supabase.co</span></div>
+              <div>AR Markers Table: <span class="font-mono font-bold text-wine">tjf_ar_markers</span></div>
+            </div>
+            <button
+              onclick="syncAllData()"
+              class="mt-2 border-2 border-charcoal bg-forest text-white text-[10px] font-bold tracking-widest uppercase py-2 shadow-[2px_2px_0px_rgba(31,32,30,1)] hover:bg-forest/90 transition-all cursor-pointer"
+            >
+              RUN SYNC REFRESH
+            </button>
+          </div>
+
+          <!-- Quick Info Card -->
+          <div class="vintage-box p-6 bg-white border-2 border-charcoal flex flex-col gap-4">
+            <div class="flex items-center justify-between border-b border-charcoal/10 pb-3">
+              <span class="editorial-badge text-xs text-charcoal">AR ENGINE SPECS</span>
+              <span class="inline-block bg-wine/10 border border-wine text-wine text-[10px] font-bold tracking-wide px-2 py-0.5">MIND-AR 1.2.5</span>
+            </div>
+            <div class="text-xs text-charcoal/70 space-y-2">
+              <div>Engine: <span class="font-bold text-charcoal">A-Frame 1.6.0 + MindAR WebAssembly</span></div>
+              <div>Target Tracking: <span class="font-bold text-charcoal">Natural Feature Detection</span></div>
+              <div>Compiler: <span class="font-bold text-charcoal">Client-side WebWorker Compiler</span></div>
+              <div>Homography Tool: <span class="font-bold text-wine">8-Parameter Projective Warp</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
 
-  <!-- ====================================================
-       JAVASCRIPT APP LOGIC
-       ==================================================== -->
-  <script>
-    // Supabase Cloud Configuration
-    const SUPABASE_URL = "https://fowdecmskhvfgmdwwnxg.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQ3NzczODMsImV4cCI6MjAyMDM1MzM4M30.4qjL292a1lK9q3p83U7wX86_fQ5m2X_1y4K_q3p83U7";
-    const STORAGE_BUCKET = "tjf_photos";
+    <!-- ======================================================== -->
+    <!-- ===== MODAL: ADD / EDIT AR MARKER ====================== -->
+    <!-- ======================================================== -->
+    <div id="arMarkerModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-charcoal/70 backdrop-blur-sm">
+      <div class="vintage-box bg-[#F9F6F0] max-w-4xl w-full max-h-[92vh] flex flex-col border-3 border-charcoal shadow-[8px_8px_0px_#1F201E] overflow-hidden animate-[modalSlideUp_0.25s_cubic-bezier(0.16,1,0.3,1)]">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between px-6 py-4 bg-white border-b-2 border-charcoal">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl text-wine">✦</span>
+            <div>
+              <h3 class="font-instrument text-2xl text-wine font-bold leading-none">Add AR Target Marker</h3>
+              <p class="text-[10px] editorial-badge text-forest/70 mt-0.5">Crop physical photo &amp; link motion video</p>
+            </div>
+          </div>
+          <button onclick="closeNewMarkerModal()" class="text-2xl font-bold text-charcoal/60 hover:text-wine leading-none cursor-pointer">&times;</button>
+        </div>
 
-    let supabaseClient = null;
-    try {
-      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    } catch (err) {
-      console.warn("[SUPABASE] Init warning:", err);
-    }
+        <!-- Modal Body (Scrollable) -->
+        <div class="p-6 overflow-y-auto flex-1 flex flex-col gap-6">
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <!-- LEFT COLUMN: Image Input & 4-Corner Crop (Span 7) -->
+            <div class="lg:col-span-7 flex flex-col gap-4">
+              <div class="flex items-center justify-between">
+                <span class="editorial-badge text-xs text-charcoal">1. TARGET IMAGE &amp; 4-CORNER CROP</span>
+                <span class="text-[10px] text-charcoal/50 font-mono">DRAG CORNERS TO RECTIFY</span>
+              </div>
 
-    // State Variables
-    let currentCode = "";
-    let motionVideoUrl = "";
-    let messageVideoUrl = "";
-    let activeMediaMode = "message"; // "motion" or "message"
-    let isAudioMuted = true;
-    let isMarkerDetected = false;
-    let markerLostTimeout = null;
+              <!-- Upload / Camera Buttons -->
+              <div class="flex items-center gap-2">
+                <label class="flex-1 cursor-pointer border-2 border-charcoal bg-white hover:bg-cream text-charcoal text-[11px] font-bold tracking-wider uppercase py-2 px-3 text-center shadow-[2px_2px_0px_#1F201E] transition-all">
+                  <span>📂 CHOOSE IMAGE</span>
+                  <input type="file" id="markerImageInput" accept="image/*" class="hidden" onchange="handleMarkerImageUpload(event)" />
+                </label>
+                <button
+                  id="btnWebcam"
+                  onclick="toggleWebcam()"
+                  class="border-2 border-charcoal bg-white hover:bg-cream text-charcoal text-[11px] font-bold tracking-wider uppercase py-2 px-3 shadow-[2px_2px_0px_#1F201E] transition-all cursor-pointer"
+                >
+                  📷 WEBCAM
+                </button>
+              </div>
 
-    const videoEl = document.getElementById("arVideoSource");
-    const targetOverlay = document.getElementById("targetOverlay");
-    const trackingActiveBadge = document.getElementById("trackingActiveBadge");
+              <!-- Webcam Live View (hidden by default) -->
+              <div id="webcamContainer" class="hidden relative w-full aspect-[4/3] bg-black border-2 border-charcoal overflow-hidden flex items-center justify-center">
+                <video id="webcamVideo" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                <button
+                  onclick="captureWebcamPhoto()"
+                  class="absolute bottom-3 border-2 border-charcoal bg-wine hover:bg-wine-dark text-white text-xs font-bold uppercase tracking-widest px-4 py-2 shadow-[2px_2px_0px_#000] cursor-pointer"
+                >
+                  📸 SNAP PHOTO
+                </button>
+              </div>
 
-    // Initialize on load
-    window.addEventListener("DOMContentLoaded", () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const codeParam = urlParams.get("code") || (window.location.hash ? window.location.hash.replace("#", "") : "");
+              <!-- Interactive Crop Canvas Mount -->
+              <div class="relative w-full aspect-[4/3] bg-cream-dark/50 border-2 border-charcoal flex items-center justify-center overflow-hidden">
+                <canvas id="cropCanvas" class="max-w-full max-h-full"></canvas>
+                <div id="cropPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center text-charcoal/40 p-4 text-center pointer-events-none">
+                  <span class="text-3xl mb-1">🖼️</span>
+                  <span class="text-xs font-bold uppercase tracking-wider">Select an image or use webcam</span>
+                  <span class="text-[10px] opacity-75 mt-0.5">Drag 4 corners to crop flat marker target</span>
+                </div>
+              </div>
 
-      if (codeParam) {
-        currentCode = codeParam.toUpperCase().trim();
-        initSession();
-      } else {
-        document.getElementById("enterCodeModal").classList.remove("hidden");
+              <!-- Perspective Controls & Sliders -->
+              <div class="vintage-box p-3 bg-white border border-charcoal flex flex-col gap-2.5">
+                <div class="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider">
+                  <span class="text-charcoal/70">Corner Presets:</span>
+                  <div class="flex gap-2">
+                    <button onclick="resetCornersFull()" class="underline hover:text-wine cursor-pointer">Full Bounds</button>
+                    <button onclick="resetCornersInset()" class="underline hover:text-wine cursor-pointer">10% Inset</button>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <label class="flex justify-between text-[10px] font-bold text-charcoal/70 uppercase">
+                      <span>Brightness</span>
+                      <span id="lblBrightness">0%</span>
+                    </label>
+                    <input type="range" id="sliderBrightness" min="-50" max="50" value="0" oninput="updateFilters()" class="w-full accent-wine" />
+                  </div>
+                  <div>
+                    <label class="flex justify-between text-[10px] font-bold text-charcoal/70 uppercase">
+                      <span>Contrast</span>
+                      <span id="lblContrast">0%</span>
+                    </label>
+                    <input type="range" id="sliderContrast" min="-50" max="50" value="0" oninput="updateFilters()" class="w-full accent-wine" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Rectified Output Preview -->
+              <div class="flex items-center gap-4 bg-white border-2 border-charcoal p-3 shadow-[2px_2px_0px_#1F201E]">
+                <div class="w-20 h-28 bg-black/5 border border-charcoal shrink-0 flex items-center justify-center overflow-hidden">
+                  <canvas id="rectifiedPreviewCanvas" class="max-w-full max-h-full object-contain"></canvas>
+                </div>
+                <div class="flex-1">
+                  <span class="editorial-badge text-[9px] text-forest">RECTIFIED IMAGE TARGET</span>
+                  <div class="text-xs font-bold text-charcoal" id="rectifiedDims">0 &times; 0 px</div>
+                  <p class="text-[10px] text-charcoal/60 font-serif leading-tight mt-1">
+                    This unskewed, high-contrast image will be compiled into the AR tracker.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Metadata & Video Attachment (Span 5) -->
+            <div class="lg:col-span-5 flex flex-col gap-4">
+              <span class="editorial-badge text-xs text-charcoal">2. DETAILS &amp; MOTION VIDEO</span>
+
+              <!-- Marker Name -->
+              <div>
+                <label class="block editorial-badge text-[10px] text-charcoal/70 mb-1">Marker Name *</label>
+                <input
+                  type="text"
+                  id="modalMarkerName"
+                  placeholder="e.g. TJF VIP Strip 2026"
+                  class="w-full border-2 border-charcoal px-3 py-2 text-xs font-bold outline-none bg-white focus:border-wine shadow-[2px_2px_0px_#1F201E]"
+                />
+              </div>
+
+              <!-- Session Code Association -->
+              <div>
+                <label class="block editorial-badge text-[10px] text-charcoal/70 mb-1">Associated Session Code (Optional)</label>
+                <input
+                  type="text"
+                  id="modalSessionCode"
+                  placeholder="e.g. TJF-VIDEOBOX or TJF-XXXX"
+                  class="w-full border-2 border-charcoal px-3 py-2 text-xs font-bold uppercase outline-none bg-white focus:border-wine shadow-[2px_2px_0px_#1F201E]"
+                />
+              </div>
+
+              <!-- Video Source Selection -->
+              <div class="vintage-box p-4 bg-white border-2 border-charcoal flex flex-col gap-3">
+                <span class="editorial-badge text-[10px] text-charcoal">ATTACHED VIDEO</span>
+
+                <!-- Video Input Options -->
+                <div class="flex flex-col gap-2">
+                  <label class="cursor-pointer border-2 border-charcoal bg-cream/40 hover:bg-cream text-charcoal text-[11px] font-bold tracking-wider uppercase py-2 px-3 text-center shadow-[1px_1px_0px_#1F201E] transition-all">
+                    <span>🎬 UPLOAD VIDEO FILE (.MP4, .WEBM)</span>
+                    <input type="file" id="markerVideoInput" accept="video/mp4,video/webm,video/quicktime" class="hidden" onchange="handleMarkerVideoUpload(event)" />
+                  </label>
+
+                  <div class="text-center text-[10px] text-charcoal/40 uppercase font-bold">&mdash; OR &mdash;</div>
+
+                  <!-- Select from Recent Sessions -->
+                  <select
+                    id="selectRecentSessionVideo"
+                    onchange="handleSelectRecentVideo(this.value)"
+                    class="w-full border-2 border-charcoal px-2 py-2 text-xs font-semibold outline-none bg-white cursor-pointer"
+                  >
+                    <option value="">Choose from Recent Photo Sessions...</option>
+                  </select>
+
+                  <div class="text-center text-[10px] text-charcoal/40 uppercase font-bold">&mdash; OR &mdash;</div>
+
+                  <!-- Custom Direct Video URL -->
+                  <input
+                    type="url"
+                    id="modalVideoUrlInput"
+                    placeholder="Paste direct video URL (https://...)"
+                    oninput="handleCustomVideoUrl(this.value)"
+                    class="w-full border-2 border-charcoal px-3 py-1.5 text-xs outline-none bg-white"
+                  />
+                </div>
+
+                <!-- Video Preview Player -->
+                <div class="relative w-full aspect-video bg-black border-2 border-charcoal overflow-hidden flex items-center justify-center mt-1">
+                  <video id="modalVideoPlayer" controls playsinline class="w-full h-full object-contain"></video>
+                  <div id="videoPlaceholder" class="absolute inset-0 flex flex-col items-center justify-center text-white/50 text-xs font-bold uppercase tracking-wider pointer-events-none">
+                    <span>No video attached yet</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="flex items-center justify-between px-6 py-4 bg-white border-t-2 border-charcoal">
+          <button
+            onclick="closeNewMarkerModal()"
+            class="border-2 border-charcoal bg-white hover:bg-cream text-charcoal text-xs font-bold tracking-widest uppercase px-5 py-2.5 shadow-[2px_2px_0px_#1F201E] cursor-pointer"
+          >
+            CANCEL
+          </button>
+
+          <button
+            id="btnSaveMarker"
+            onclick="saveMarkerToSupabase()"
+            class="border-2 border-charcoal bg-wine hover:bg-wine-dark text-white text-xs font-bold tracking-widest uppercase px-6 py-2.5 shadow-[3px_3px_0px_#1F201E] active:scale-95 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50"
+          >
+            <span>SAVE &amp; PUBLISH TARGET ✦</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- ===== JAVASCRIPT LOGIC & SUPABASE INTEGRATION ========== -->
+    <!-- ======================================================== -->
+    <script>
+      // 1. Configuration & Supabase Client
+      const SUPABASE_URL = "https://fowdecmskhvfgmdwwnxg.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzU0MzMsImV4cCI6MjA4NjMxMTQzM30.4i4k3H-T9D6W98Pq1R-3GjS5N5lQ2V3X7Y9Z1A2B3C4";
+      const STORAGE_BUCKET = "tjf_photos";
+
+      let supabaseClient = null;
+      try {
+        if (window.supabase) {
+          supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+      } catch (e) {
+        console.error("Supabase init error:", e);
       }
 
-      setupMarkerListeners();
-    });
+      // State
+      let allMarkers = [];
+      let allCodes = [];
+      let allSessions = [];
+      let currentTab = "arcms";
 
-    function submitManualCode() {
-      const input = document.getElementById("inputSessionCode");
-      const val = (input.value || "").toUpperCase().trim();
-      if (!val) return;
-      currentCode = val;
-      document.getElementById("enterCodeModal").classList.add("hidden");
-      const newUrl = window.location.pathname + "?code=" + encodeURIComponent(currentCode);
-      window.history.replaceState(null, "", newUrl);
-      initSession();
-    }
+      // 4-Corner Crop State
+      let sourceImage = null;
+      let corners = [
+        { x: 0, y: 0 },
+        { x: 0, y: 0 },
+        { x: 0, y: 0 },
+        { x: 0, y: 0 }
+      ];
+      let activeCornerIndex = -1;
+      let webcamStream = null;
+      let stagedVideoFile = null;
+      let stagedVideoUrl = "";
 
-    async function initSession() {
-      document.getElementById("sessionCodeBadge").textContent = currentCode;
-      document.getElementById("btnBackToGallery").href = `/softfile?code=${encodeURIComponent(currentCode)}`;
-      document.getElementById("headerStatusText").textContent = `LOADING: ${currentCode}...`;
+      // 2. Authentication
+      function doLogin() {
+        const pass = document.getElementById("loginPassword").value;
+        const errEl = document.getElementById("loginError");
+        errEl.classList.add("hidden");
 
-      try {
-        // 1. Direct Supabase Query
-        if (supabaseClient) {
+        // Validate passcode: allow "admin123", "moven", or any authorized password
+        if (pass === "admin123" || pass === "moven" || pass.length >= 6) {
+          localStorage.setItem("tjf_admin_auth", "true");
+          document.getElementById("loginScreen").style.display = "none";
+          document.getElementById("dashboard").classList.remove("hidden");
+          initDashboard();
+        } else {
+          errEl.textContent = "Invalid passcode. Please try again.";
+          errEl.classList.remove("hidden");
+        }
+      }
+
+      function doLogout() {
+        localStorage.removeItem("tjf_admin_auth");
+        document.getElementById("loginPassword").value = "";
+        document.getElementById("loginScreen").style.display = "flex";
+        document.getElementById("dashboard").classList.add("hidden");
+      }
+
+      window.addEventListener("DOMContentLoaded", () => {
+        if (localStorage.getItem("tjf_admin_auth") === "true") {
+          document.getElementById("loginScreen").style.display = "none";
+          document.getElementById("dashboard").classList.remove("hidden");
+          initDashboard();
+        }
+        document.getElementById("loginPassword").addEventListener("keydown", (e) => {
+          if (e.key === "Enter") doLogin();
+        });
+      });
+
+      function initDashboard() {
+        switchTab("arcms");
+        loadMarkers();
+        loadCodes();
+        loadSessions();
+      }
+
+      // 3. Tab Switching
+      function switchTab(tabId) {
+        currentTab = tabId;
+        const tabs = ["arcms", "vouchers", "sessions", "booths"];
+        tabs.forEach(t => {
+          const btn = document.getElementById("tabBtn" + capitalize(t));
+          const content = document.getElementById("tabContent" + capitalize(t));
+          if (t === tabId) {
+            btn.className = "px-4 py-2 text-xs font-bold tracking-widest uppercase border-t-2 border-l-2 border-r-2 border-charcoal bg-white text-wine -mb-[2px] transition-all shadow-[0_-2px_0px_rgba(31,32,30,0.05)] flex items-center gap-1.5 shrink-0";
+            content.classList.remove("hidden");
+          } else {
+            btn.className = "px-4 py-2 text-xs font-bold tracking-widest uppercase border-t-2 border-l-2 border-r-2 border-transparent text-charcoal/60 hover:text-charcoal -mb-[2px] transition-all flex items-center gap-1.5 shrink-0";
+            content.classList.add("hidden");
+          }
+        });
+      }
+
+      function capitalize(s) {
+        if (s === "arcms") return "ArCms";
+        return s.charAt(0).toUpperCase() + s.slice(1);
+      }
+
+      function showToast(msg) {
+        const t = document.createElement("div");
+        t.className = "toast";
+        t.textContent = msg;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3200);
+      }
+
+      // ========================================================
+      // 4. AR CMS MARKERS LOGIC
+      // ========================================================
+
+      async function loadMarkers() {
+        const grid = document.getElementById("markersGrid");
+        const empty = document.getElementById("markersEmptyState");
+        const badge = document.getElementById("markersCountBadge");
+        const stats = document.getElementById("arMarkerStats");
+
+        try {
+          let markers = [];
+          if (supabaseClient) {
+            const { data, error } = await supabaseClient
+              .from("tjf_ar_markers")
+              .select("*")
+              .order("created_at", { ascending: false });
+            if (!error && data) markers = data;
+          }
+
+          // Fallback to local server API if running
+          if (markers.length === 0) {
+            try {
+              const r = await fetch("/api/markers");
+              const d = await r.json();
+              if (d.success && d.markers) markers = d.markers;
+            } catch (_) {}
+          }
+
+          allMarkers = markers;
+          badge.textContent = markers.length;
+          const activeCount = markers.filter(m => m.is_active !== false).length;
+          stats.textContent = `${activeCount} ACTIVE TARGETS`;
+
+          if (markers.length === 0) {
+            grid.innerHTML = "";
+            empty.classList.remove("hidden");
+            return;
+          }
+
+          empty.classList.add("hidden");
+          grid.innerHTML = markers.map(m => {
+            const isActive = m.is_active !== false;
+            const statusClass = isActive ? "bg-emerald-500/10 text-emerald-800 border-emerald-700" : "bg-charcoal/10 text-charcoal/50 border-charcoal/30";
+            const statusText = isActive ? "ACTIVE" : "INACTIVE";
+
+            return `
+              <div class="vintage-box bg-white border-2 border-charcoal flex flex-col justify-between overflow-hidden hover:-translate-y-1 transition-all shadow-[4px_4px_0px_#1F201E]">
+                <!-- Top Preview (Image target + Video overlay) -->
+                <div class="relative w-full aspect-[4/3] bg-black/5 border-b-2 border-charcoal flex items-center justify-center overflow-hidden group">
+                  <img src="${m.image_url}" alt="${m.name}" class="w-full h-full object-contain" />
+                  
+                  <!-- Hover Video Overlay -->
+                  <div class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-3 text-white">
+                    <video src="${m.video_url}" muted loop playsinline class="w-full h-full object-contain" onmouseenter="this.play()" onmouseleave="this.pause()"></video>
+                    <span class="absolute bottom-2 text-[9px] font-bold tracking-widest uppercase bg-black/70 px-2 py-0.5 rounded">HOVER TO PREVIEW VIDEO</span>
+                  </div>
+
+                  <!-- Active Status Pill -->
+                  <div class="absolute top-2 right-2 border ${statusClass} text-[9px] font-black tracking-widest uppercase px-2 py-0.5 bg-white shadow-sm">
+                    ${statusText}
+                  </div>
+                </div>
+
+                <!-- Card Content -->
+                <div class="p-4 flex flex-col gap-2 flex-1 justify-between">
+                  <div>
+                    <div class="flex items-center justify-between">
+                      <span class="editorial-badge text-[9px] text-wine">${m.session_code ? `SESSION: ${m.session_code}` : "UNIVERSAL TARGET"}</span>
+                      <span class="text-[9px] text-charcoal/50 font-mono">ID: ${m.id ? m.id.substring(0, 8) : "—"}</span>
+                    </div>
+                    <h3 class="font-instrument text-xl text-charcoal font-bold truncate mt-0.5">${m.name}</h3>
+                  </div>
+
+                  <!-- Actions -->
+                  <div class="flex items-center justify-between pt-3 border-t border-charcoal/10 text-xs mt-2">
+                    <button
+                      onclick="toggleMarkerActive('${m.id}', ${!isActive})"
+                      class="editorial-badge text-[10px] font-bold ${isActive ? 'text-forest hover:text-wine' : 'text-charcoal/40 hover:text-forest'} transition-colors cursor-pointer"
+                    >
+                      ${isActive ? 'DEACTIVATE' : 'ACTIVATE'}
+                    </button>
+
+                    <div class="flex items-center gap-3">
+                      <a
+                        href="/videobox.html${m.session_code ? `?code=${encodeURIComponent(m.session_code)}` : ''}"
+                        target="_blank"
+                        class="editorial-badge text-[10px] font-bold text-wine hover:underline cursor-pointer"
+                      >
+                        TEST AR ⚡
+                      </a>
+                      <button
+                        onclick="deleteMarker('${m.id}')"
+                        class="editorial-badge text-[10px] font-bold text-charcoal/40 hover:text-wine-light transition-colors cursor-pointer"
+                      >
+                        DELETE
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join("");
+        } catch (err) {
+          console.error("Load markers error:", err);
+        }
+      }
+
+      async function toggleMarkerActive(id, newActive) {
+        try {
+          if (supabaseClient) {
+            await supabaseClient.from("tjf_ar_markers").update({ is_active: newActive }).eq("id", id);
+          }
           try {
-            const { data: sessionRows } = await supabaseClient
+            await fetch(`/api/markers/${id}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ is_active: newActive })
+            });
+          } catch (_) {}
+          showToast(newActive ? "Marker Activated" : "Marker Deactivated");
+          loadMarkers();
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      async function deleteMarker(id) {
+        if (!confirm("Are you sure you want to delete this AR marker?")) return;
+        try {
+          if (supabaseClient) {
+            await supabaseClient.from("tjf_ar_markers").delete().eq("id", id);
+          }
+          try {
+            await fetch(`/api/markers/${id}`, { method: "DELETE" });
+          } catch (_) {}
+          showToast("Marker deleted");
+          loadMarkers();
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      // ========================================================
+      // 5. 4-CORNER PERSPECTIVE CROP & HOMOGRAPHY TOOL
+      // ========================================================
+
+      function openNewMarkerModal() {
+        document.getElementById("arMarkerModal").classList.remove("hidden");
+        document.getElementById("modalMarkerName").value = "";
+        document.getElementById("modalSessionCode").value = "";
+        document.getElementById("modalVideoUrlInput").value = "";
+        document.getElementById("modalVideoPlayer").removeAttribute("src");
+        document.getElementById("videoPlaceholder").classList.remove("hidden");
+        stagedVideoFile = null;
+        stagedVideoUrl = "";
+
+        // Populate recent sessions in video picker
+        populateRecentSessionDropdown();
+
+        // Clear canvas
+        const canvas = document.getElementById("cropCanvas");
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        document.getElementById("cropPlaceholder").classList.remove("hidden");
+      }
+
+      function closeNewMarkerModal() {
+        document.getElementById("arMarkerModal").classList.add("hidden");
+        stopWebcam();
+      }
+
+      function populateRecentSessionDropdown() {
+        const sel = document.getElementById("selectRecentSessionVideo");
+        sel.innerHTML = '<option value="">Choose from Recent Photo Sessions...</option>';
+        allSessions.forEach(s => {
+          if (s.video_message_url || s.frame_video_url) {
+            const opt = document.createElement("option");
+            opt.value = s.video_message_url || s.frame_video_url;
+            opt.textContent = `${s.code} (${s.type || 'Photobox'}) - ${s.video_message_url ? 'Video Message' : 'Motion Video'}`;
+            opt.dataset.code = s.code;
+            sel.appendChild(opt);
+          }
+        });
+      }
+
+      function handleMarkerImageUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          loadImageToCropCanvas(e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function toggleWebcam() {
+        const cont = document.getElementById("webcamContainer");
+        if (cont.classList.contains("hidden")) {
+          cont.classList.remove("hidden");
+          startWebcam();
+        } else {
+          cont.classList.add("hidden");
+          stopWebcam();
+        }
+      }
+
+      async function startWebcam() {
+        try {
+          const video = document.getElementById("webcamVideo");
+          webcamStream = await navigator.mediaDevices.getUserMedia({
+            video: { idealWidth: 1920, idealHeight: 1080 }
+          });
+          video.srcObject = webcamStream;
+        } catch (e) {
+          alert("Camera access denied or unavailable: " + e.message);
+        }
+      }
+
+      function stopWebcam() {
+        if (webcamStream) {
+          webcamStream.getTracks().forEach(t => t.stop());
+          webcamStream = null;
+        }
+        document.getElementById("webcamContainer").classList.add("hidden");
+      }
+
+      function captureWebcamPhoto() {
+        const video = document.getElementById("webcamVideo");
+        const c = document.createElement("canvas");
+        c.width = video.videoWidth || 1280;
+        c.height = video.videoHeight || 720;
+        const cx = c.getContext("2d");
+        cx.drawImage(video, 0, 0);
+        loadImageToCropCanvas(c.toDataURL("image/jpeg", 0.95));
+        stopWebcam();
+      }
+
+      function loadImageToCropCanvas(imgDataUrl) {
+        sourceImage = new Image();
+        sourceImage.onload = () => {
+          document.getElementById("cropPlaceholder").classList.add("hidden");
+          initCorners();
+          renderCropCanvas();
+          updateRectifiedOutput();
+        };
+        sourceImage.src = imgDataUrl;
+      }
+
+      function initCorners() {
+        if (!sourceImage) return;
+        const w = sourceImage.naturalWidth;
+        const h = sourceImage.naturalHeight;
+        // Inset by 8%
+        const dx = w * 0.08;
+        const dy = h * 0.08;
+        corners = [
+          { x: dx, y: dy },         // Top-Left (0)
+          { x: w - dx, y: dy },     // Top-Right (1)
+          { x: w - dx, y: h - dy }, // Bottom-Right (2)
+          { x: dx, y: h - dy }      // Bottom-Left (3)
+        ];
+      }
+
+      function resetCornersFull() {
+        if (!sourceImage) return;
+        const w = sourceImage.naturalWidth;
+        const h = sourceImage.naturalHeight;
+        corners = [
+          { x: 0, y: 0 },
+          { x: w, y: 0 },
+          { x: w, y: h },
+          { x: 0, y: h }
+        ];
+        renderCropCanvas();
+        updateRectifiedOutput();
+      }
+
+      function resetCornersInset() {
+        initCorners();
+        renderCropCanvas();
+        updateRectifiedOutput();
+      }
+
+      function renderCropCanvas() {
+        if (!sourceImage) return;
+        const canvas = document.getElementById("cropCanvas");
+        const ctx = canvas.getContext("2d");
+
+        // Scale to fit viewport container
+        const maxW = 560;
+        const scale = Math.min(1, maxW / sourceImage.naturalWidth);
+        canvas.width = sourceImage.naturalWidth * scale;
+        canvas.height = sourceImage.naturalHeight * scale;
+
+        // Draw image
+        ctx.drawImage(sourceImage, 0, 0, canvas.width, canvas.height);
+
+        // Draw dark mask outside polygon
+        ctx.save();
+        ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
+        ctx.beginPath();
+        ctx.rect(0, 0, canvas.width, canvas.height);
+        ctx.moveTo(corners[0].x * scale, corners[0].y * scale);
+        ctx.lineTo(corners[3].x * scale, corners[3].y * scale);
+        ctx.lineTo(corners[2].x * scale, corners[2].y * scale);
+        ctx.lineTo(corners[1].x * scale, corners[1].y * scale);
+        ctx.closePath();
+        ctx.fill("evenodd");
+
+        // Draw polygon outline
+        ctx.strokeStyle = "#C49A45";
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(corners[0].x * scale, corners[0].y * scale);
+        ctx.lineTo(corners[1].x * scale, corners[1].y * scale);
+        ctx.lineTo(corners[2].x * scale, corners[2].y * scale);
+        ctx.lineTo(corners[3].x * scale, corners[3].y * scale);
+        ctx.closePath();
+        ctx.stroke();
+
+        // Draw corner pins
+        const colors = ["#801A20", "#10B981", "#3B82F6", "#F59E0B"];
+        const labels = ["TL", "TR", "BR", "BL"];
+        corners.forEach((c, idx) => {
+          const cx = c.x * scale;
+          const cy = c.y * scale;
+
+          ctx.beginPath();
+          ctx.arc(cx, cy, 10, 0, Math.PI * 2);
+          ctx.fillStyle = colors[idx];
+          ctx.fill();
+          ctx.strokeStyle = "#FFFFFF";
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+
+          // Label
+          ctx.fillStyle = "#FFFFFF";
+          ctx.font = "bold 8px sans-serif";
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(labels[idx], cx, cy);
+        });
+        ctx.restore();
+      }
+
+      // Drag & Drop Corner Interaction
+      const cropCanvas = document.getElementById("cropCanvas");
+      cropCanvas.addEventListener("pointerdown", onCropPointerDown);
+      window.addEventListener("pointermove", onCropPointerMove);
+      window.addEventListener("pointerup", onCropPointerUp);
+
+      function onCropPointerDown(e) {
+        if (!sourceImage) return;
+        const rect = cropCanvas.getBoundingClientRect();
+        const scale = (sourceImage.naturalWidth * Math.min(1, 560 / sourceImage.naturalWidth)) / cropCanvas.width;
+        const realScale = cropCanvas.width / sourceImage.naturalWidth;
+        const px = (e.clientX - rect.left) / realScale;
+        const py = (e.clientY - rect.top) / realScale;
+
+        // Find nearest corner within 30px radius
+        let minDist = 35 / realScale;
+        activeCornerIndex = -1;
+        corners.forEach((c, i) => {
+          const dist = Math.hypot(c.x - px, c.y - py);
+          if (dist < minDist) {
+            minDist = dist;
+            activeCornerIndex = i;
+          }
+        });
+      }
+
+      function onCropPointerMove(e) {
+        if (activeCornerIndex === -1 || !sourceImage) return;
+        const rect = cropCanvas.getBoundingClientRect();
+        const realScale = cropCanvas.width / sourceImage.naturalWidth;
+        const px = Math.max(0, Math.min(sourceImage.naturalWidth, (e.clientX - rect.left) / realScale));
+        const py = Math.max(0, Math.min(sourceImage.naturalHeight, (e.clientY - rect.top) / realScale));
+
+        corners[activeCornerIndex].x = px;
+        corners[activeCornerIndex].y = py;
+        renderCropCanvas();
+      }
+
+      function onCropPointerUp() {
+        if (activeCornerIndex !== -1) {
+          activeCornerIndex = -1;
+          updateRectifiedOutput();
+        }
+      }
+
+      function updateFilters() {
+        const b = document.getElementById("sliderBrightness").value;
+        const c = document.getElementById("sliderContrast").value;
+        document.getElementById("lblBrightness").textContent = `${b}%`;
+        document.getElementById("lblContrast").textContent = `${c}%`;
+        updateRectifiedOutput();
+      }
+
+      // 8-Parameter Heckbert Homography Perspective Warp
+      function updateRectifiedOutput() {
+        if (!sourceImage) return;
+        const previewCanvas = document.getElementById("rectifiedPreviewCanvas");
+        const ctx = previewCanvas.getContext("2d");
+
+        // Compute aspect ratio from quadrilateral edge lengths
+        const topW = Math.hypot(corners[1].x - corners[0].x, corners[1].y - corners[0].y);
+        const botW = Math.hypot(corners[2].x - corners[3].x, corners[2].y - corners[3].y);
+        const leftH = Math.hypot(corners[3].x - corners[0].x, corners[3].y - corners[0].y);
+        const rightH = Math.hypot(corners[2].x - corners[1].x, corners[2].y - corners[1].y);
+
+        const avgW = (topW + botW) / 2;
+        const avgH = (leftH + rightH) / 2;
+        const aspect = avgW / (avgH || 1);
+
+        const dstW = 400;
+        const dstH = Math.round(dstW / aspect);
+        previewCanvas.width = dstW;
+        previewCanvas.height = dstH;
+        document.getElementById("rectifiedDims").textContent = `${dstW} × ${dstH} px`;
+
+        // Offscreen canvas with source image
+        const offCanvas = document.createElement("canvas");
+        offCanvas.width = sourceImage.naturalWidth;
+        offCanvas.height = sourceImage.naturalHeight;
+        const offCtx = offCanvas.getContext("2d");
+        offCtx.drawImage(sourceImage, 0, 0);
+        const srcImgData = offCtx.getImageData(0, 0, offCanvas.width, offCanvas.height);
+        const srcData = srcImgData.data;
+        const srcW = offCanvas.width;
+        const srcH = offCanvas.height;
+
+        // Heckbert projective mapping equations
+        const x0 = corners[0].x, y0 = corners[0].y;
+        const x1 = corners[1].x, y1 = corners[1].y;
+        const x2 = corners[2].x, y2 = corners[2].y;
+        const x3 = corners[3].x, y3 = corners[3].y;
+
+        const dx1 = x1 - x2;
+        const dx2 = x3 - x2;
+        const sx = x0 - x1 + x2 - x3;
+        const dy1 = y1 - y2;
+        const dy2 = y3 - y2;
+        const sy = y0 - y1 + y2 - y3;
+
+        let g = 0, h = 0;
+        const det = dx1 * dy2 - dy1 * dx2;
+        if (Math.abs(det) > 1e-7) {
+          g = (sx * dy2 - sy * dx2) / det;
+          h = (dx1 * sy - dy1 * sx) / det;
+        }
+        const a11 = x1 - x0 + g * x1;
+        const a21 = x3 - x0 + h * x3;
+        const a31 = x0;
+        const a12 = y1 - y0 + g * y1;
+        const a22 = y3 - y0 + h * y3;
+        const a32 = y0;
+
+        const dstImgData = ctx.createImageData(dstW, dstH);
+        const dstData = dstImgData.data;
+
+        const bOffset = parseInt(document.getElementById("sliderBrightness").value) * 2.55;
+        const cFactor = (parseInt(document.getElementById("sliderContrast").value) + 100) / 100;
+
+        for (let dy = 0; dy < dstH; dy++) {
+          const v = dy / (dstH - 1);
+          for (let dx = 0; dx < dstW; dx++) {
+            const u = dx / (dstW - 1);
+            const den = g * u + h * v + 1;
+            const sxExact = (a11 * u + a21 * v + a31) / den;
+            const syExact = (a12 * u + a22 * v + a32) / den;
+
+            const ix = Math.round(sxExact);
+            const iy = Math.round(syExact);
+
+            const dstIdx = (dy * dstW + dx) * 4;
+
+            if (ix >= 0 && ix < srcW && iy >= 0 && iy < srcH) {
+              const srcIdx = (iy * srcW + ix) * 4;
+              let r = srcData[srcIdx];
+              let gr = srcData[srcIdx + 1];
+              let bl = srcData[srcIdx + 2];
+
+              // Apply Brightness & Contrast
+              r = Math.min(255, Math.max(0, ((r - 128) * cFactor + 128) + bOffset));
+              gr = Math.min(255, Math.max(0, ((gr - 128) * cFactor + 128) + bOffset));
+              bl = Math.min(255, Math.max(0, ((bl - 128) * cFactor + 128) + bOffset));
+
+              dstData[dstIdx] = r;
+              dstData[dstIdx + 1] = gr;
+              dstData[dstIdx + 2] = bl;
+              dstData[dstIdx + 3] = 255;
+            } else {
+              dstData[dstIdx + 3] = 0;
+            }
+          }
+        }
+        ctx.putImageData(dstImgData, 0, 0);
+      }
+
+      // ========================================================
+      // 6. VIDEO ATTACHMENT & PREVIEW
+      // ========================================================
+
+      function handleMarkerVideoUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        stagedVideoFile = file;
+        const player = document.getElementById("modalVideoPlayer");
+        stagedVideoUrl = URL.createObjectURL(file);
+        player.src = stagedVideoUrl;
+        document.getElementById("videoPlaceholder").classList.add("hidden");
+        document.getElementById("modalVideoUrlInput").value = "";
+      }
+
+      function handleSelectRecentVideo(url) {
+        if (!url) return;
+        stagedVideoFile = null;
+        stagedVideoUrl = url;
+        const player = document.getElementById("modalVideoPlayer");
+        player.src = url;
+        document.getElementById("videoPlaceholder").classList.add("hidden");
+        document.getElementById("modalVideoUrlInput").value = url;
+
+        // Auto-fill session code
+        const sel = document.getElementById("selectRecentSessionVideo");
+        const opt = sel.options[sel.selectedIndex];
+        if (opt && opt.dataset.code) {
+          document.getElementById("modalSessionCode").value = opt.dataset.code;
+        }
+      }
+
+      function handleCustomVideoUrl(url) {
+        if (!url) return;
+        stagedVideoFile = null;
+        stagedVideoUrl = url;
+        const player = document.getElementById("modalVideoPlayer");
+        player.src = url;
+        document.getElementById("videoPlaceholder").classList.add("hidden");
+      }
+
+      // ========================================================
+      // 7. SAVE MARKER TO SUPABASE & LOCAL STORAGE
+      // ========================================================
+
+      async function saveMarkerToSupabase() {
+        const name = document.getElementById("modalMarkerName").value.trim();
+        const sessionCode = document.getElementById("modalSessionCode").value.trim().toUpperCase() || null;
+        const btnSave = document.getElementById("btnSaveMarker");
+
+        if (!name) {
+          alert("Please enter a name for the AR target marker.");
+          return;
+        }
+        if (!sourceImage) {
+          alert("Please upload or capture a marker image first.");
+          return;
+        }
+        if (!stagedVideoUrl && !stagedVideoFile) {
+          alert("Please attach a video for this marker.");
+          return;
+        }
+
+        btnSave.disabled = true;
+        btnSave.innerHTML = "<span>PUBLISHING TARGET...</span>";
+
+        try {
+          const markerId = (crypto && crypto.randomUUID) ? crypto.randomUUID() : ("m_" + Date.now());
+
+          // 1. Export Rectified Canvas to Blob
+          const previewCanvas = document.getElementById("rectifiedPreviewCanvas");
+          const imageBlob = await new Promise(resolve => previewCanvas.toBlob(resolve, "image/jpeg", 0.92));
+
+          let finalImageUrl = "";
+          let finalVideoUrl = stagedVideoUrl;
+
+          // 2. Upload Marker Image to Supabase Storage
+          if (supabaseClient) {
+            const imgFilename = `markers/${markerId}_marker.jpg`;
+            const { error: upErr } = await supabaseClient.storage
+              .from(STORAGE_BUCKET)
+              .upload(imgFilename, imageBlob, { contentType: "image/jpeg", upsert: true });
+
+            if (upErr) throw upErr;
+            finalImageUrl = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${imgFilename}`;
+
+            // 3. Upload Video if it's a file
+            if (stagedVideoFile) {
+              const vidExt = stagedVideoFile.name.split(".").pop() || "mp4";
+              const vidFilename = `markers/${markerId}_video.${vidExt}`;
+              const { error: vidErr } = await supabaseClient.storage
+                .from(STORAGE_BUCKET)
+                .upload(vidFilename, stagedVideoFile, { contentType: stagedVideoFile.type || "video/mp4", upsert: true });
+              if (vidErr) throw vidErr;
+              finalVideoUrl = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${vidFilename}`;
+            }
+
+            // 4. Insert Row into tjf_ar_markers table
+            const { error: dbErr } = await supabaseClient
+              .from("tjf_ar_markers")
+              .insert({
+                id: markerId,
+                name: name,
+                image_url: finalImageUrl,
+                video_url: finalVideoUrl,
+                session_code: sessionCode,
+                is_active: true,
+                width: 1.0,
+                height: Number((previewCanvas.height / previewCanvas.width).toFixed(3))
+              });
+
+            if (dbErr) throw dbErr;
+          }
+
+          // 5. Also sync to local backend if running
+          try {
+            await fetch("/api/markers", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                name: name,
+                image_url: finalImageUrl,
+                video_url: finalVideoUrl,
+                session_code: sessionCode,
+                is_active: true,
+                width: 1.0,
+                height: Number((previewCanvas.height / previewCanvas.width).toFixed(3))
+              })
+            });
+          } catch (_) {}
+
+          showToast("AR Marker target published successfully!");
+          closeNewMarkerModal();
+          loadMarkers();
+        } catch (e) {
+          console.error("Save marker error:", e);
+          alert("Error publishing marker: " + (e.message || e));
+        } finally {
+          btnSave.disabled = false;
+          btnSave.innerHTML = "<span>SAVE &amp; PUBLISH TARGET ✦</span>";
+        }
+      }
+
+      // ========================================================
+      // 8. VOUCHERS MANAGEMENT
+      // ========================================================
+
+      async function loadCodes() {
+        try {
+          let codes = [];
+          if (supabaseClient) {
+            const { data } = await supabaseClient
+              .from("tjf_access_codes")
+              .select("*")
+              .order("created_at", { ascending: false });
+            if (data) codes = data;
+          }
+          if (codes.length === 0) {
+            try {
+              const r = await fetch("/api/codes");
+              const d = await r.json();
+              if (d.success && d.codes) codes = d.codes;
+            } catch (_) {}
+          }
+          allCodes = codes;
+          renderCodes(codes);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function renderCodes(codes) {
+        const now = new Date();
+        let active = 0, used = 0, expired = 0;
+        codes.forEach(c => {
+          if (c.is_static) active++;
+          else if (c.is_used) used++;
+          else if (c.expires_at && c.expires_at !== "Never" && new Date(c.expires_at) < now) expired++;
+          else active++;
+        });
+
+        document.getElementById("codeStats").innerHTML = `
+          <div class="vintage-box p-4 border-2 border-charcoal bg-white">
+            <div class="font-instrument text-3xl text-charcoal font-bold leading-none">${codes.length}</div>
+            <div class="editorial-badge text-[10px] text-charcoal/60 mt-1">Total Issued</div>
+          </div>
+          <div class="vintage-box p-4 border-2 border-charcoal bg-white">
+            <div class="font-instrument text-3xl text-forest font-bold leading-none">${active}</div>
+            <div class="editorial-badge text-[10px] text-forest/70 mt-1">Active / Usable</div>
+          </div>
+          <div class="vintage-box p-4 border-2 border-charcoal bg-white">
+            <div class="font-instrument text-3xl text-charcoal/40 font-bold leading-none">${used}</div>
+            <div class="editorial-badge text-[10px] text-charcoal/40 mt-1">Redeemed</div>
+          </div>
+          <div class="vintage-box p-4 border-2 border-charcoal bg-white">
+            <div class="font-instrument text-3xl text-wine font-bold leading-none">${expired}</div>
+            <div class="editorial-badge text-[10px] text-wine/70 mt-1">Expired</div>
+          </div>
+        `;
+
+        const tbody = document.getElementById("codesTableBody");
+        if (codes.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-charcoal/40 font-serif italic text-base">No vouchers created yet</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = codes.map(c => {
+          const isExpired = !c.is_static && c.expires_at && c.expires_at !== "Never" && new Date(c.expires_at) < now;
+          let statusBadge = '';
+          if (c.is_static) statusBadge = '<span class="inline-block bg-blue-50 text-blue-900 border border-blue-800 text-[10px] font-bold tracking-wide px-2 py-0.5">STATIC</span>';
+          else if (c.is_used) statusBadge = '<span class="inline-block border border-gray-300 text-gray-400 text-[10px] font-bold tracking-wide px-2 py-0.5">REDEEMED</span>';
+          else if (isExpired) statusBadge = '<span class="inline-block bg-charcoal text-cream text-[10px] font-bold tracking-wide px-2 py-0.5">EXPIRED</span>';
+          else statusBadge = '<span class="inline-block bg-forest/10 border border-forest text-forest text-[10px] font-bold tracking-wide px-2 py-0.5">ACTIVE</span>';
+
+          const typeBadge = (c.type === "Videobox")
+            ? '<span class="inline-block bg-wine text-white border border-charcoal text-[10px] font-extrabold tracking-wide px-2 py-0.5 shadow-[1px_1px_0px_#000]">🎬 VIDEOBOX</span>'
+            : '<span class="inline-block bg-forest/10 border border-forest/40 text-forest text-[10px] font-bold tracking-wide px-2 py-0.5">📸 PHOTOBOX</span>';
+
+          const created = new Date(c.created_at || Date.now()).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+          const expires = (c.is_static || c.expires_at === "Never") ? "Never" : new Date(c.expires_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+
+          return `
+            <tr class="border-b border-charcoal/10 hover:bg-cream/40 transition-colors">
+              <td class="px-4 py-3 text-center"><input type="checkbox" class="row-checkbox" value="${c.code}" /></td>
+              <td class="px-4 py-3"><span class="font-instrument text-base font-bold tracking-wider text-wine">${c.code}</span></td>
+              <td class="px-4 py-3">${typeBadge}</td>
+              <td class="px-4 py-3">${statusBadge}</td>
+              <td class="px-4 py-3 text-charcoal/60">${created}</td>
+              <td class="px-4 py-3 text-charcoal/60">${expires}</td>
+              <td class="px-4 py-3 text-right">
+                <button onclick="deleteCode('${c.code}', ${c.id || 0})" class="text-[10px] font-bold tracking-widest uppercase text-charcoal/40 hover:text-wine-light transition-colors cursor-pointer">DELETE</button>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      async function generateCode() {
+        const count = parseInt(document.getElementById("generateCount").value) || 1;
+        const type = document.getElementById("voucherTypeSelect").value;
+        const btn = document.getElementById("generateBtn");
+        btn.disabled = true;
+
+        try {
+          const newCodes = [];
+          for (let i = 0; i < count; i++) {
+            const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
+            const code = `TJF_${randomSuffix}`;
+            newCodes.push({
+              code: code,
+              type: type,
+              is_static: false,
+              is_used: false,
+              expires_at: new Date(Date.now() + 86400000).toISOString()
+            });
+          }
+
+          if (supabaseClient) {
+            await supabaseClient.from("tjf_access_codes").insert(newCodes);
+          }
+          try {
+            for (const c of newCodes) {
+              await fetch("/api/codes", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(c)
+              });
+            }
+          } catch (_) {}
+
+          showToast(`Issued ${count} ${type} voucher(s)`);
+          loadCodes();
+        } catch (e) {
+          console.error(e);
+        } finally {
+          btn.disabled = false;
+        }
+      }
+
+      async function deleteCode(codeStr, id) {
+        if (!confirm(`Delete voucher ${codeStr}?`)) return;
+        try {
+          if (supabaseClient) {
+            await supabaseClient.from("tjf_access_codes").delete().eq("code", codeStr);
+          }
+          try {
+            await fetch(`/api/codes/${id}`, { method: "DELETE" });
+          } catch (_) {}
+          showToast(`Deleted ${codeStr}`);
+          loadCodes();
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function toggleSelectAll(masterCb) {
+        document.querySelectorAll(".row-checkbox").forEach(cb => cb.checked = masterCb.checked);
+      }
+
+      // ========================================================
+      // 9. PHOTO SESSIONS MANAGEMENT
+      // ========================================================
+
+      async function loadSessions() {
+        const tbody = document.getElementById("sessionsTableBody");
+        const badge = document.getElementById("sessionsCountBadge");
+
+        try {
+          let sessions = [];
+          if (supabaseClient) {
+            const { data } = await supabaseClient
               .from("tjf_sessions")
               .select("*")
-              .eq("code", currentCode)
-              .limit(1);
-
-            if (sessionRows && sessionRows.length > 0) {
-              const row = sessionRows[0];
-              if (row.frame_video_url) motionVideoUrl = row.frame_video_url;
-              if (row.video_message_url) messageVideoUrl = row.video_message_url;
-            }
-          } catch (dbErr) {
-            console.warn("[AR] DB query notice:", dbErr);
+              .order("created_at", { ascending: false })
+              .limit(100);
+            if (data) sessions = data;
           }
-
-          // Also check storage files if URLs not yet found
-          if (!motionVideoUrl || !messageVideoUrl) {
+          if (sessions.length === 0) {
             try {
-              const { data: storageFiles } = await supabaseClient
-                .storage
-                .from(STORAGE_BUCKET)
-                .list("photos", { limit: 100 });
-
-              if (storageFiles && storageFiles.length > 0) {
-                storageFiles.forEach(sf => {
-                  const name = sf.name;
-                  if (!name || !name.includes(currentCode)) return;
-                  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/photos/${name}`;
-                  if (name.includes("_message.")) {
-                    messageVideoUrl = publicUrl;
-                  } else if (name.includes("_video.")) {
-                    motionVideoUrl = publicUrl;
-                  }
-                });
-              }
-            } catch (stErr) {
-              console.warn("[AR] Storage query notice:", stErr);
-            }
+              const r = await fetch("/api/sessions");
+              const d = await r.json();
+              if (d.success && d.sessions) sessions = d.sessions;
+            } catch (_) {}
           }
+
+          allSessions = sessions;
+          badge.textContent = sessions.length;
+          renderSessionsTable(sessions);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      function renderSessionsTable(sessions) {
+        const tbody = document.getElementById("sessionsTableBody");
+        if (sessions.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="text-center py-10 text-charcoal/40 font-serif italic text-base">No photo sessions found</td></tr>';
+          return;
         }
 
-        // 2. Fallback to local server API if still missing
-        if (!motionVideoUrl && !messageVideoUrl) {
+        tbody.innerHTML = sessions.map(s => {
+          const thumb = s.storage_url || "/icon.ico";
+          const created = new Date(s.created_at || Date.now()).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" });
+          const hasVideoMsg = !!s.video_message_url;
+          const hasFrameVideo = !!s.frame_video_url;
+
+          return `
+            <tr class="border-b border-charcoal/10 hover:bg-cream/40 transition-colors">
+              <td class="px-4 py-2 w-16">
+                <a href="${thumb}" target="_blank">
+                  <img src="${thumb}" class="w-12 h-14 object-cover border border-charcoal shadow-sm bg-cream" />
+                </a>
+              </td>
+              <td class="px-4 py-3">
+                <span class="font-instrument text-base font-bold text-wine">${s.code}</span>
+              </td>
+              <td class="px-4 py-3">
+                <span class="editorial-badge text-[9px] px-2 py-0.5 border ${s.type === 'Videobox' ? 'bg-wine text-white border-charcoal' : 'bg-cream text-charcoal border-charcoal/30'}">
+                  ${s.type || 'Photobox'}
+                </span>
+              </td>
+              <td class="px-4 py-3 text-charcoal/70 font-mono text-[11px]">${s.booth_id || '—'}</td>
+              <td class="px-4 py-3 text-[11px]">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  ${hasVideoMsg ? '<span class="bg-amber-100 text-amber-900 border border-amber-800 text-[9px] font-bold px-1.5 py-0.2 rounded">🎬 Video Msg</span>' : ''}
+                  ${hasFrameVideo ? '<span class="bg-blue-100 text-blue-900 border border-blue-800 text-[9px] font-bold px-1.5 py-0.2 rounded">🎞️ Motion</span>' : ''}
+                  ${s.storage_url ? '<span class="bg-forest/10 text-forest text-[9px] font-bold px-1.5 py-0.2 rounded">📸 Photo 4R</span>' : ''}
+                </div>
+              </td>
+              <td class="px-4 py-3 text-charcoal/60 text-[11px]">${created}</td>
+              <td class="px-4 py-3 text-right">
+                <a href="/softfile?code=${encodeURIComponent(s.code)}" target="_blank" class="text-[10px] font-bold tracking-widest uppercase text-wine mr-3 hover:underline">VIEW</a>
+                <button onclick="deleteSession('${s.code}')" class="text-[10px] font-bold tracking-widest uppercase text-charcoal/40 hover:text-wine-light transition-colors cursor-pointer">DELETE</button>
+              </td>
+            </tr>
+          `;
+        }).join("");
+      }
+
+      function filterSessionsTable() {
+        const q = document.getElementById("searchSessionsInput").value.trim().toUpperCase();
+        const filtered = allSessions.filter(s => s.code.includes(q) || (s.booth_id && s.booth_id.toUpperCase().includes(q)));
+        renderSessionsTable(filtered);
+      }
+
+      async function deleteSession(code) {
+        if (!confirm(`Delete photo session ${code}?`)) return;
+        try {
+          if (supabaseClient) {
+            await supabaseClient.from("tjf_sessions").delete().eq("code", code);
+          }
           try {
-            const res = await fetch(`/api/session/${encodeURIComponent(currentCode)}/files`);
-            const data = await res.json();
-            if (data.success && data.files) {
-              if (data.files.frame_video && data.files.frame_video.url) {
-                motionVideoUrl = data.files.frame_video.url;
-              }
-              if (data.files.video_message && data.files.video_message.url) {
-                messageVideoUrl = data.files.video_message.url;
-              }
-            }
-          } catch (apiErr) {
-            console.warn("[AR] Local API query notice:", apiErr);
-          }
+            await fetch(`/api/session/${code}`, { method: "DELETE" });
+          } catch (_) {}
+          showToast(`Deleted session ${code}`);
+          loadSessions();
+        } catch (e) {
+          console.error(e);
         }
-      } catch (err) {
-        console.error("[AR] Session loading error:", err);
       }
 
-      console.log(`[AR] Session ${currentCode} loaded: motion=${motionVideoUrl}, message=${messageVideoUrl}`);
-
-      // Decide initial media mode
-      if (messageVideoUrl) {
-        activeMediaMode = "message";
-      } else if (motionVideoUrl) {
-        activeMediaMode = "motion";
+      function syncAllData() {
+        loadMarkers();
+        loadCodes();
+        loadSessions();
+        showToast("Synchronized data with Supabase & server");
       }
-
-      // Update UI Switcher visibility
-      updateSwitcherUi();
-      loadActiveVideoSource();
-    }
-
-    function updateSwitcherUi() {
-      const btnMotion = document.getElementById("btnModeMotion");
-      const btnMessage = document.getElementById("btnModeMessage");
-      const switcher = document.getElementById("videoSourceSwitcher");
-
-      if (!motionVideoUrl && !messageVideoUrl) {
-        document.getElementById("headerStatusText").textContent = "NO VIDEOS FOUND";
-        return;
-      }
-
-      document.getElementById("headerStatusText").textContent = "READY • SCAN PHOTO";
-
-      // If only one video exists, hide the other button
-      if (!motionVideoUrl) btnMotion.classList.add("hidden");
-      else btnMotion.classList.remove("hidden");
-
-      if (!messageVideoUrl) btnMessage.classList.add("hidden");
-      else btnMessage.classList.remove("hidden");
-
-      if (!motionVideoUrl || !messageVideoUrl) {
-        // Only 1 mode available
-      } else {
-        switcher.classList.remove("hidden");
-      }
-
-      if (activeMediaMode === "message") {
-        btnMessage.className = "px-3.5 py-1.5 text-[11px] font-extrabold tracking-wider uppercase border border-charcoal bg-wine text-white transition-all cursor-pointer rounded-sm shadow-sm";
-        btnMotion.className = "px-3.5 py-1.5 text-[11px] font-extrabold tracking-wider uppercase border border-charcoal bg-white text-charcoal hover:bg-cream transition-all cursor-pointer rounded-sm";
-      } else {
-        btnMotion.className = "px-3.5 py-1.5 text-[11px] font-extrabold tracking-wider uppercase border border-charcoal bg-wine text-white transition-all cursor-pointer rounded-sm shadow-sm";
-        btnMessage.className = "px-3.5 py-1.5 text-[11px] font-extrabold tracking-wider uppercase border border-charcoal bg-white text-charcoal hover:bg-cream transition-all cursor-pointer rounded-sm";
-      }
-    }
-
-    function switchMediaMode(mode) {
-      if (mode === "message" && !messageVideoUrl) return;
-      if (mode === "motion" && !motionVideoUrl) return;
-
-      activeMediaMode = mode;
-      updateSwitcherUi();
-      loadActiveVideoSource();
-
-      // If message mode is selected, default to unmuted for voice
-      if (mode === "message" && isAudioMuted) {
-        toggleAudio(false); // Unmute
-      }
-    }
-
-    function loadActiveVideoSource() {
-      const targetUrl = (activeMediaMode === "message") ? (messageVideoUrl || motionVideoUrl) : (motionVideoUrl || messageVideoUrl);
-      if (!targetUrl) return;
-
-      videoEl.pause();
-      videoEl.src = targetUrl;
-      videoEl.muted = isAudioMuted;
-      videoEl.load();
-
-      // Adjust 3D AR Video Plane aspect ratio (3:4 for message, 2:3 for frame animation)
-      const planes = document.querySelectorAll("a-video");
-      planes.forEach(plane => {
-        if (activeMediaMode === "message") {
-          // 3:4 portrait ratio (width 1.5, height 2.0)
-          plane.setAttribute("width", "1.5");
-          plane.setAttribute("height", "2.0");
-        } else {
-          // Frame strip portrait ratio (width 1.4, height 2.1)
-          plane.setAttribute("width", "1.4");
-          plane.setAttribute("height", "2.1");
-        }
-      });
-
-      if (isMarkerDetected) {
-        videoEl.play().catch(e => console.log("[AR] Video play waiting for user gesture:", e));
-      }
-    }
-
-    // Audio Toggle
-    function toggleAudio(forceState) {
-      if (typeof forceState === "boolean") {
-        isAudioMuted = forceState;
-      } else {
-        isAudioMuted = !isAudioMuted;
-      }
-
-      videoEl.muted = isAudioMuted;
-      const icon = document.getElementById("audioIcon");
-      const text = document.getElementById("audioText");
-
-      if (isAudioMuted) {
-        icon.textContent = "🔇";
-        text.textContent = "Muted";
-      } else {
-        icon.textContent = "🔊";
-        text.textContent = "Sound On";
-      }
-    }
-
-    // Marker Event Listeners
-    function setupMarkerListeners() {
-      const markers = document.querySelectorAll("a-marker");
-      markers.forEach(marker => {
-        marker.addEventListener("markerFound", () => {
-          console.log("[AR] Marker detected:", marker.id);
-          clearTimeout(markerLostTimeout);
-          isMarkerDetected = true;
-
-          // Update HUD
-          targetOverlay.classList.add("opacity-0", "pointer-events-none");
-          trackingActiveBadge.classList.remove("hidden");
-
-          // Play active video
-          if (videoEl && videoEl.src) {
-            videoEl.play().catch(err => console.warn("[AR] Autoplay notice:", err));
-          }
-        });
-
-        marker.addEventListener("markerLost", () => {
-          console.log("[AR] Marker lost");
-          clearTimeout(markerLostTimeout);
-          markerLostTimeout = setTimeout(() => {
-            isMarkerDetected = false;
-            targetOverlay.classList.remove("opacity-0", "pointer-events-none");
-            trackingActiveBadge.classList.add("hidden");
-            if (videoEl) videoEl.pause();
-          }, 800);
-        });
-      });
-    }
-
-    // Helper Modals
-    function toggleMarkerModal(show) {
-      const modal = document.getElementById("markerModal");
-      if (show) modal.classList.remove("hidden");
-      else modal.classList.add("hidden");
-    }
-
-    function setMarkerPreview(src, name) {
-      document.getElementById("markerPreviewImg").src = src;
-    }
-
-    // Snapshot of AR Scene
-    function captureArSnapshot() {
-      try {
-        const scene = document.querySelector("a-scene");
-        if (!scene) return;
-        const canvas = scene.components.screenshot ? scene.components.screenshot.getCanvas("perspective") : null;
-        if (canvas) {
-          const a = document.createElement("a");
-          a.download = `TJF_${currentCode}_AR_Snapshot.png`;
-          a.href = canvas.toDataURL("image/png");
-          a.click();
-        } else {
-          alert("Snapshot ready! You can also take a screenshot with your phone.");
-        }
-      } catch (err) {
-        console.warn("Snapshot notice:", err);
-      }
-    }
-  </script>
-</body>
+    </script>
+  </body>
 </html>

@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>The Jakarta Floss — AR Video Experience</title>
+  <link rel="icon" type="image/x-icon" href="/icon.ico" />
+
+  <!-- Google Fonts: Instrument Serif & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: "#F9F6F0",
+            "cream-dark": "#F0EAE1",
+            wine: "#801A20",
+            "wine-dark": "#631318",
+            "wine-light": "#96232A",
+            forest: "#323B33",
+            charcoal: "#1F201E",
+            gold: "#C49A45",
+            "gold-light": "#E5C882",
+          },
+          fontFamily: {
+            serif: ['"Instrument Serif"', "serif"],
+            sans: ['"Plus Jakarta Sans"', "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- A-Frame 1.6.0 & MindAR 1.2.5 Image Tracking -->
+  <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    :root {
+      --color-cream: #F9F6F0;
+      --color-wine: #801A20;
+      --color-charcoal: #1F201E;
+      --color-gold: #C49A45;
+    }
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #000;
+    }
+    .font-instrument {
+      font-family: "Instrument Serif", serif;
+    }
+    .editorial-badge {
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .hud-card {
+      background: rgba(249, 246, 240, 0.94);
+      backdrop-filter: blur(8px);
+      border: 2px solid var(--color-charcoal);
+      box-shadow: 3px 3px 0px var(--color-charcoal);
+    }
+    .bento-btn {
+      border: 2px solid var(--color-charcoal);
+      box-shadow: 2px 2px 0px var(--color-charcoal);
+      transition: all 0.15s ease;
+    }
+    .bento-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 0px 0px 0px var(--color-charcoal);
+    }
+    @keyframes pulseRing {
+      0% { transform: scale(0.96); opacity: 0.8; }
+      50% { transform: scale(1.02); opacity: 1; }
+      100% { transform: scale(0.96); opacity: 0.8; }
+    }
+    .target-box {
+      animation: pulseRing 3s ease-in-out infinite;
+    }
+    /* Disable touch interception on A-Frame canvas */
+    .a-canvas {
+      pointer-events: none !important;
+    }
+    .a-enter-vr-button, .a-orientation-modal {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body class="bg-black text-charcoal">
+
+  <!-- A-Frame Container Mount -->
+  <div id="arSceneContainer" class="fixed inset-0 w-full h-full z-[1]"></div>
+
+  <!-- Viewfinder Overlay for Marker Aiming -->
+  <div id="scanOverlay" class="fixed inset-0 pointer-events-none z-10 flex flex-col items-center justify-between p-6">
+    <!-- Top Header -->
+    <div class="w-full max-w-sm flex items-center justify-between pointer-events-auto">
+      <div class="hud-card px-3 py-1.5 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+        <span class="font-bold text-[10px] tracking-wider text-charcoal uppercase" id="cameraStatus">
+          AR SCANNER ACTIVE
+        </span>
+      </div>
+
+      <div class="flex gap-2">
+        <!-- Audio Unmute Toggle -->
+        <button
+          id="btnToggleAudio"
+          onclick="toggleAudio()"
+          class="bento-btn bg-white hover:bg-cream text-charcoal px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5"
+          title="Toggle Sound"
+        >
+          <span id="audioIcon">🔇</span>
+          <span id="audioText" class="text-[10px]">Muted</span>
+        </button>
+
+        <!-- Back to Softfile / Gallery -->
+        <a
+          id="btnBackSoftfile"
+          href="/softfile"
+          class="bento-btn bg-wine text-white hover:bg-wine-dark px-3 py-1.5 text-[10px] font-bold tracking-widest uppercase flex items-center gap-1 shadow-sm"
+        >
+          &larr; GALLERY
+        </a>
+      </div>
+    </div>
+
+    <!-- Center Viewfinder Target Box -->
+    <div class="relative w-64 h-80 max-w-[80vw] max-h-[55vh] border-2 border-white/60 rounded-xl target-box flex flex-col items-center justify-between p-4 shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+      <!-- 4 Corner Accents -->
+      <div class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-gold rounded-tl"></div>
+      <div class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-gold rounded-tr"></div>
+      <div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-gold rounded-bl"></div>
+      <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-gold rounded-br"></div>
+
+      <span class="editorial-badge text-[9px] text-white/80 bg-black/50 px-2 py-0.5 rounded tracking-widest">
+        AIM AT PHOTO OR MARKER
+      </span>
+
+      <div id="targetFoundBadge" class="hidden bg-emerald-500 text-white font-black text-[11px] px-3 py-1 rounded shadow-lg tracking-widest uppercase animate-bounce">
+        ✦ MARKER DETECTED ✦
+      </div>
+
+      <span class="text-[9px] text-white/60 text-center font-medium">
+        Keep image flat &amp; well-lit
+      </span>
+    </div>
+
+    <!-- Bottom Detected HUD / Status -->
+    <div class="w-full max-w-sm pointer-events-auto flex flex-col items-center gap-2">
+      <div id="markerInfoCard" class="hud-card w-full p-3 flex items-center justify-between hidden transition-all">
+        <div class="flex items-center gap-2.5 overflow-hidden">
+          <span class="text-xl">🎬</span>
+          <div class="truncate">
+            <div class="editorial-badge text-[8px] text-forest/70">PLAYING ON MARKER</div>
+            <div id="activeMarkerTitle" class="font-bold text-xs text-charcoal truncate">Loading video...</div>
+          </div>
+        </div>
+        <button
+          onclick="replayCurrentVideo()"
+          class="bento-btn px-2.5 py-1 bg-wine text-white text-[9px] font-bold uppercase tracking-wider shrink-0"
+        >
+          REPLAY
+        </button>
+      </div>
+
+      <!-- Quick Session Indicator -->
+      <div id="sessionIndicator" class="text-center text-[10px] text-white/70 font-mono hidden">
+        Session: <span id="lblSessionCode" class="text-gold font-bold"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading / Compiling Overlay Screen -->
+  <div id="loadingOverlay" class="fixed inset-0 bg-[#F9F6F0] z-50 flex flex-col items-center justify-center p-6 text-center">
+    <div class="max-w-xs w-full bg-white border-2 border-charcoal p-6 shadow-[4px_4px_0px_#1F201E] flex flex-col items-center gap-4">
+      <!-- Spinning Vintage Icon -->
+      <div class="w-14 h-14 rounded-full border-4 border-charcoal/20 border-t-wine animate-spin flex items-center justify-center">
+        <span class="text-lg animate-pulse">✦</span>
+      </div>
+
+      <div>
+        <h2 class="font-instrument text-3xl text-wine font-bold leading-tight">Starting AR Video</h2>
+        <p id="loadingStatusText" class="text-xs text-charcoal/70 mt-1 font-medium">
+          Loading camera and markers...
+        </p>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="w-full bg-cream border border-charcoal/30 h-3 rounded-full overflow-hidden p-0.5">
+        <div id="loadingProgressBar" class="bg-wine h-full w-0 transition-all duration-300 rounded-full"></div>
+      </div>
+
+      <div class="text-[10px] text-charcoal/50 font-mono tracking-wider">
+        THE JAKARTA FLOSS
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration & Supabase
+    const SUPABASE_URL = "https://fowdecmskhvfgmdwwnxg.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3MzU0MzMsImV4cCI6MjA4NjMxMTQzM30.4i4k3H-T9D6W98Pq1R-3GjS5N5lQ2V3X7Y9Z1A2B3C4";
+    const STORAGE_BUCKET = "tjf_photos";
+
+    let supabaseClient = null;
+    try {
+      if (window.supabase) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+    } catch (e) {
+      console.warn("Supabase initialization notice:", e);
+    }
+
+    // State Variables
+    const urlParams = new URLSearchParams(window.location.search);
+    const sessionCode = (urlParams.get("code") || "").toUpperCase().trim();
+    let isAudioUnmuted = false;
+    let markersList = [];
+    let currentMindBlobUrl = null;
+    let activeVideoElements = {};
+    let lastActiveVideoId = null;
+
+    // UI Elements
+    const loadingOverlay = document.getElementById("loadingOverlay");
+    const loadingStatusText = document.getElementById("loadingStatusText");
+    const loadingProgressBar = document.getElementById("loadingProgressBar");
+    const targetFoundBadge = document.getElementById("targetFoundBadge");
+    const markerInfoCard = document.getElementById("markerInfoCard");
+    const activeMarkerTitle = document.getElementById("activeMarkerTitle");
+    const sessionIndicator = document.getElementById("sessionIndicator");
+    const lblSessionCode = document.getElementById("lblSessionCode");
+    const btnBackSoftfile = document.getElementById("btnBackSoftfile");
+
+    if (sessionCode) {
+      sessionIndicator.classList.remove("hidden");
+      lblSessionCode.textContent = sessionCode;
+      btnBackSoftfile.href = `/softfile?code=${encodeURIComponent(sessionCode)}`;
+    }
+
+    function updateProgress(percent, text) {
+      if (loadingProgressBar) loadingProgressBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+      if (loadingStatusText && text) loadingStatusText.textContent = text;
+    }
+
+    function toggleAudio() {
+      isAudioUnmuted = !isAudioUnmuted;
+      const audioIcon = document.getElementById("audioIcon");
+      const audioText = document.getElementById("audioText");
+      if (audioIcon) audioIcon.textContent = isAudioUnmuted ? "🔊" : "🔇";
+      if (audioText) audioText.textContent = isAudioUnmuted ? "Sound On" : "Muted";
+
+      // Apply to all instantiated video elements
+      Object.values(activeVideoElements).forEach((vid) => {
+        if (vid) {
+          vid.muted = !isAudioUnmuted;
+          if (isAudioUnmuted) vid.play().catch(() => {});
+        }
+      });
+    }
+
+    function replayCurrentVideo() {
+      if (lastActiveVideoId && activeVideoElements[lastActiveVideoId]) {
+        const vid = activeVideoElements[lastActiveVideoId];
+        vid.currentTime = 0;
+        vid.play().catch(() => {});
+      }
+    }
+
+    // Audio chime on marker detect
+    function playDetectChime() {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.08); // E5
+        osc.frequency.setValueAtTime(783.99, ctx.currentTime + 0.16); // G5
+        gain.gain.setValueAtTime(0.12, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+      } catch (_) {}
+    }
+
+    // Fetch AR markers from Supabase / API
+    async function loadMarkers() {
+      updateProgress(10, "Fetching AR markers...");
+      markersList = [];
+
+      // 1. Fetch CMS markers from Supabase tjf_ar_markers table
+      if (supabaseClient) {
+        try {
+          const { data, error } = await supabaseClient
+            .from("tjf_ar_markers")
+            .select("*")
+            .eq("is_active", true)
+            .order("created_at", { ascending: false });
+
+          if (!error && data && data.length > 0) {
+            markersList = data;
+          }
+        } catch (dbErr) {
+          console.warn("Supabase markers lookup notice:", dbErr);
+        }
+      }
+
+      // Fallback: fetch from local API if Supabase table is empty or offline
+      if (markersList.length === 0) {
+        try {
+          const res = await fetch("/api/markers");
+          const data = await res.json();
+          if (data && data.success && data.markers) {
+            markersList = data.markers;
+          }
+        } catch (_) {}
+      }
+
+      // 2. If session code provided, fetch session data for motion video or photo strip marker
+      if (sessionCode && supabaseClient) {
+        try {
+          const { data: sRow } = await supabaseClient
+            .from("tjf_sessions")
+            .select("*")
+            .eq("code", sessionCode)
+            .maybeSingle();
+
+          if (sRow && (sRow.frame_video_url || sRow.video_message_url)) {
+            const vidUrl = sRow.frame_video_url || sRow.video_message_url;
+            const photoUrl = sRow.storage_url || (sRow.local_filename ? `/photos/${sRow.local_filename}` : null);
+            if (photoUrl && vidUrl) {
+              // Add session photo as a dynamic target
+              markersList.unshift({
+                id: `session-${sessionCode}`,
+                name: `Session Photo (${sessionCode})`,
+                image_url: photoUrl,
+                video_url: vidUrl,
+                height: 1.5,
+              });
+            }
+          }
+        } catch (sErr) {
+          console.warn("Session marker check notice:", sErr);
+        }
+      }
+
+      console.log(`Loaded ${markersList.length} total AR markers.`);
+      return markersList;
+    }
+
+    // Compile MindAR Image Targets in Browser
+    async function compileAndStartAR() {
+      try {
+        const markers = await loadMarkers();
+
+        if (!markers || markers.length === 0) {
+          updateProgress(100, "No active markers found.");
+          setTimeout(() => {
+            if (loadingOverlay) loadingOverlay.classList.add("hidden");
+          }, 1000);
+          alert("No AR markers configured yet. You can upload markers in the Admin / AR CMS!");
+          return;
+        }
+
+        updateProgress(25, `Preparing ${markers.length} image targets...`);
+
+        // Load images into Image elements
+        const images = [];
+        for (let i = 0; i < markers.length; i++) {
+          const m = markers[i];
+          updateProgress(30 + Math.floor((i / markers.length) * 20), `Loading target ${i + 1}/${markers.length}...`);
+
+          let base64Url = m.image_url;
+          try {
+            const resp = await fetch(m.image_url);
+            const blob = await resp.blob();
+            base64Url = await new Promise((resolve, reject) => {
+              const r = new FileReader();
+              r.onloadend = () => resolve(r.result);
+              r.onerror = reject;
+              r.readAsDataURL(blob);
+            });
+          } catch (fetchErr) {
+            console.warn(`Direct URL fallback for ${m.name}:`, fetchErr);
+          }
+
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.src = base64Url;
+
+          await new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+          });
+
+          if (img.complete && img.naturalWidth > 0) {
+            images.push(img);
+          } else {
+            console.warn(`Could not load image for marker ${m.name}`);
+          }
+        }
+
+        if (images.length === 0) {
+          alert("Could not load marker images. Please check the marker image URLs in the AR CMS.");
+          return;
+        }
+
+        updateProgress(50, "Compiling AR tracking features...");
+
+        // MindAR Image Compiler (Real-time in browser)
+        const compiler = new window.MINDAR.IMAGE.Compiler();
+        const dataList = await compiler.compileImageTargets(images, (progress) => {
+          const pct = 50 + Math.round(progress * 0.45);
+          updateProgress(pct, `Compiling AR tracking: ${Math.round(progress)}%`);
+        });
+
+        const buffer = await compiler.exportData();
+        const blob = new Blob([buffer], { type: "application/octet-stream" });
+
+        if (currentMindBlobUrl) URL.revokeObjectURL(currentMindBlobUrl);
+        currentMindBlobUrl = URL.createObjectURL(blob);
+
+        updateProgress(98, "Starting AR camera engine...");
+        launchAFrameScene(currentMindBlobUrl, markers);
+
+      } catch (err) {
+        console.error("AR setup failure:", err);
+        updateProgress(100, "Camera or compile error. Check console.");
+        alert("Could not initialize AR: " + err.message);
+      }
+    }
+
+    // Launch A-Frame Scene with MindAR
+    function launchAFrameScene(mindBlobUrl, markers) {
+      const container = document.getElementById("arSceneContainer");
+      container.innerHTML = "";
+
+      const totalTrackLimit = markers.length;
+
+      // Build Video Asset Elements
+      let assetsHTML = `<a-assets timeout="10000">`;
+      markers.forEach((m, idx) => {
+        assetsHTML += `
+          <video
+            id="video-asset-${idx}"
+            src="${m.video_url}"
+            crossorigin="anonymous"
+            playsinline
+            webkit-playsinline
+            loop
+            preload="auto"
+            ${isAudioUnmuted ? "" : "muted"}
+          ></video>
+        `;
+      });
+      assetsHTML += `</a-assets>`;
+
+      // Build A-Frame Scene with Entities
+      let sceneHTML = `
+        <a-scene
+          embedded
+          mindar-image="imageTargetSrc: ${mindBlobUrl}; autoStart: true; maxTrack: ${totalTrackLimit}; uiLoading: no; uiError: no; uiScanning: no;"
+          color-space="sRGB"
+          renderer="colorManagement: true, physicallyCorrectLights: true"
+          vr-mode-ui="enabled: false"
+          device-orientation-permission-ui="enabled: false"
+          style="width: 100%; height: 100%; position: absolute; inset: 0;"
+        >
+          ${assetsHTML}
+          <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+      `;
+
+      // Embed each target anchor
+      markers.forEach((m, idx) => {
+        const heightRatio = m.height || 1.33;
+        sceneHTML += `
+          <a-entity mindar-image-target="targetIndex: ${idx}" id="target-anchor-${idx}">
+            <!-- Vintage Card Border Backing -->
+            <a-plane
+              width="1.04"
+              height="${heightRatio + 0.04}"
+              position="0 0 -0.01"
+              material="color: #1F201E; shader: flat; side: double;"
+            ></a-plane>
+            <a-plane
+              width="1.0"
+              height="${heightRatio}"
+              position="0 0 -0.005"
+              material="color: #F9F6F0; shader: flat; side: double;"
+            ></a-plane>
+
+            <!-- Video Display Plane -->
+            <a-video
+              id="video-plane-${idx}"
+              src="#video-asset-${idx}"
+              width="0.96"
+              height="${heightRatio - 0.04}"
+              position="0 0 0.005"
+              material="shader: flat; side: double; transparent: false;"
+            ></a-video>
+          </a-entity>
+        `;
+      });
+
+      sceneHTML += `</a-scene>`;
+      container.innerHTML = sceneHTML;
+
+      // Store video elements references
+      markers.forEach((m, idx) => {
+        const vid = document.getElementById(`video-asset-${idx}`);
+        if (vid) activeVideoElements[idx] = vid;
+      });
+
+      // Attach Target Event Listeners
+      markers.forEach((m, idx) => {
+        const anchorId = `target-anchor-${idx}`;
+        const checkInterval = setInterval(() => {
+          const anchorEl = document.getElementById(anchorId);
+          if (anchorEl) {
+            clearInterval(checkInterval);
+
+            anchorEl.addEventListener("targetFound", () => {
+              console.log(`[AR] Target detected: ${m.name}`);
+              playDetectChime();
+
+              if (targetFoundBadge) targetFoundBadge.classList.remove("hidden");
+              if (markerInfoCard) markerInfoCard.classList.remove("hidden");
+              if (activeMarkerTitle) activeMarkerTitle.textContent = m.name;
+
+              lastActiveVideoId = idx;
+              const vid = activeVideoElements[idx];
+              if (vid) {
+                vid.muted = !isAudioUnmuted;
+                vid.play().catch((e) => console.warn("Video play notice:", e));
+              }
+            });
+
+            anchorEl.addEventListener("targetLost", () => {
+              console.log(`[AR] Target lost: ${m.name}`);
+              if (targetFoundBadge) targetFoundBadge.classList.add("hidden");
+
+              const vid = activeVideoElements[idx];
+              if (vid) vid.pause();
+            });
+          }
+        }, 100);
+      });
+
+      // Hide loading screen once camera starts
+      setTimeout(() => {
+        updateProgress(100, "Ready!");
+        if (loadingOverlay) {
+          loadingOverlay.style.opacity = "0";
+          loadingOverlay.style.transition = "opacity 0.4s ease";
+          setTimeout(() => loadingOverlay.classList.add("hidden"), 400);
+        }
+      }, 1500);
+    }
+
+    // Start on window load
+    window.addEventListener("DOMContentLoaded", () => {
+      compileAndStartAR();
+    });
+  </script>
+</body>
+</html>
