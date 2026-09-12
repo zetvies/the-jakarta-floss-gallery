@@ -1,2032 +1,775 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-  <title>AR App | Moon Muffin</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>The Jakarta Floss — AR Video Experience</title>
   <link rel="icon" type="image/x-icon" href="/icon.ico" />
-  <link rel="stylesheet" href="/styles.css" />
-  <!-- reCAPTCHA v3 -->
-  <script src="https://www.google.com/recaptcha/api.js?render=6Lcvk2AsAAAAAGcS4NE0cPn3bOM9TJf39w6-9m0F"></script>
-  <style>
-    .grecaptcha-badge {
-      visibility: hidden !important;
-    }
-    @keyframes slowRotate {
 
-      0%,
-      100% {
-        transform: rotate(15deg);
-      }
+  <!-- Google Fonts: Instrument Serif & Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
 
-      50% {
-        transform: rotate(25deg);
-      }
-    }
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            cream: "#F9F6F0",
+            "cream-dark": "#F0EAE1",
+            wine: "#801A20",
+            "wine-dark": "#631318",
+            "wine-light": "#96232A",
+            forest: "#323B33",
+            charcoal: "#1F201E",
+            gold: "#C49A45",
+            "gold-light": "#E5C882",
+          },
+          fontFamily: {
+            serif: ['"Instrument Serif"', "serif"],
+            sans: ['"Plus Jakarta Sans"', "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
 
-    #top-right-image {
-      animation-name: slowRotateReverse;
-    }
+  <!-- Supabase JS Client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    @keyframes slowRotateReverse {
-
-      0%,
-      100% {
-        transform: rotate(-15deg);
-      }
-
-      50% {
-        transform: rotate(-25deg);
-      }
-    }
-  </style>
+  <!-- A-Frame 1.2.0 & AR.js 1.7.7 -->
   <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
   <script>
-    // Intercept getUserMedia BEFORE AR.js initializes to request maximum resolution
+    // Maximize camera resolution before AR.js initializes
     if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
       const originalGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
       navigator.mediaDevices.getUserMedia = async function (constraints) {
-        console.log('📹 getUserMedia called with constraints:', JSON.stringify(constraints, null, 2));
-
-        if (constraints && constraints.video) {
-          const modifiedConstraints = JSON.parse(JSON.stringify(constraints));
-
-          if (typeof modifiedConstraints.video === 'object' && modifiedConstraints.video !== null) {
-            // Remove any width/height limits to allow maximum resolution
-            delete modifiedConstraints.video.width;
-            delete modifiedConstraints.video.height;
-
-            // Request maximum resolution by using ideal with very high values
-            modifiedConstraints.video.width = { ideal: 4096 };
-            modifiedConstraints.video.height = { ideal: 2160 };
-
-            console.log('🔷 Modified constraints for max resolution:', JSON.stringify(modifiedConstraints, null, 2));
-
-            try {
-              const stream = await originalGetUserMedia(modifiedConstraints);
-              const track = stream.getVideoTracks()[0];
-              if (track) {
-                const settings = track.getSettings();
-                const capabilities = track.getCapabilities();
-                console.log('✅ Stream obtained - Resolution:', settings.width + 'x' + settings.height);
-                console.log('📊 Max Available Resolution:',
-                  (capabilities.width?.max || 'unknown') + 'x' + (capabilities.height?.max || 'unknown'));
-
-                // Try to upgrade to maximum if we got less than max
-                if (capabilities.width?.max && capabilities.height?.max) {
-                  const maxWidth = capabilities.width.max;
-                  const maxHeight = capabilities.height.max;
-
-                  if (settings.width < maxWidth || settings.height < maxHeight) {
-                    console.log(`🔄 Attempting to upgrade to max resolution: ${maxWidth}x${maxHeight}`);
-                    try {
-                      await track.applyConstraints({
-                        width: { ideal: maxWidth },
-                        height: { ideal: maxHeight }
-                      });
-                      const newSettings = track.getSettings();
-                      console.log(`✅ Upgraded to: ${newSettings.width}x${newSettings.height}`);
-                    } catch (upgradeErr) {
-                      console.warn('⚠️ Could not upgrade to max resolution:', upgradeErr);
-                    }
-                  }
-                }
-              }
-              return stream;
-            } catch (error) {
-              console.warn('⚠️ Error with max resolution constraints, falling back to original:', error);
-              // Fall back to original constraints if max resolution fails
-              return originalGetUserMedia(constraints);
-            }
+        if (constraints && constraints.video && typeof constraints.video === "object") {
+          const modified = JSON.parse(JSON.stringify(constraints));
+          delete modified.video.width;
+          delete modified.video.height;
+          modified.video.width = { ideal: 1920 };
+          modified.video.height = { ideal: 1080 };
+          try {
+            return await originalGetUserMedia(modified);
+          } catch (_) {
+            return originalGetUserMedia(constraints);
           }
         }
-
-        // No video constraints or video is just true - use original
         return originalGetUserMedia(constraints);
       };
-      console.log('✅ getUserMedia interception set up for max resolution');
     }
   </script>
   <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.7.7/aframe/build/aframe-ar.js"></script>
-  <script>
-    // Custom component to resize image based on aspect ratio while fitting within max dimensions
-    AFRAME.registerComponent('resize-on-load', {
-      init: function () {
-        const handleResize = (evt) => {
-          const texture = evt.detail ? evt.detail.texture : null;
-          const image = texture ? texture.image : null;
-          
-          // Safari fallback: try to get image from material
-          if (!image && this.el.components && this.el.components.material) {
-            const material = this.el.components.material.material;
-            if (material && material.map && material.map.image) {
-              const img = material.map.image;
-              const width = img.width || img.naturalWidth;
-              const height = img.height || img.naturalHeight;
-              if (width && height) {
-                const ratio = width / height;
-                const maxWidth = 1.5;
-                const maxHeight = 3;
 
-                let newWidth = maxWidth;
-                let newHeight = newWidth / ratio;
-
-                if (newHeight > maxHeight) {
-                  newHeight = maxHeight;
-                  newWidth = newHeight * ratio;
-                }
-
-                this.el.setAttribute('width', newWidth);
-                this.el.setAttribute('height', newHeight);
-                return;
-              }
-            }
-          }
-          
-          if (!image) return;
-
-          const width = image.width || image.naturalWidth;
-          const height = image.height || image.naturalHeight;
-          if (!width || !height) return;
-
-          const ratio = width / height;
-          const maxWidth = 1.5;
-          const maxHeight = 3;
-
-          let newWidth = maxWidth;
-          let newHeight = newWidth / ratio;
-
-          // If calculated height exceeds max height, scale down by height instead
-          if (newHeight > maxHeight) {
-            newHeight = maxHeight;
-            newWidth = newHeight * ratio;
-          }
-
-          this.el.setAttribute('width', newWidth);
-          this.el.setAttribute('height', newHeight);
-        };
-        
-        // Safari compatibility: Listen to multiple events
-        this.el.addEventListener('materialtextureloaded', handleResize);
-        this.el.addEventListener('loaded', handleResize);
-        this.el.addEventListener('materialchanged', handleResize);
-        
-        // Safari fallback: Check after multiple delays (Safari loads textures asynchronously)
-        setTimeout(() => {
-          if (this.el.components && this.el.components.material) {
-            const material = this.el.components.material.material;
-            if (material && material.map && material.map.image) {
-              handleResize({ detail: { texture: { image: material.map.image } } });
-            }
-          }
-        }, 500);
-        
-        // Additional Safari check after longer delay
-        setTimeout(() => {
-          if (this.el.components && this.el.components.material) {
-            const material = this.el.components.material.material;
-            if (material && material.map && material.map.image) {
-              handleResize({ detail: { texture: { image: material.map.image } } });
-            }
-          }
-        }, 1500);
-      }
-    });
-
-    // Custom component for smooth, slow, irregular character animation
-    AFRAME.registerComponent('character-animation', {
-      schema: {
-        rotationSpeed: { type: 'number', default: 1 },
-        translationSpeed: { type: 'number', default: 1 },
-        zAmplitude: { type: 'number', default: 0.2 },
-        yAmplitude: { type: 'number', default: 0.2 }
-      },
-      init: function () {
-        // Store initial position
-        const initialPos = this.el.getAttribute('position');
-        this.initialZ = initialPos.z || 0;
-        this.initialY = initialPos.y || 0;
-
-        // Store initial rotation
-        const initialRot = this.el.getAttribute('rotation');
-        this.initialRotationY = initialRot.y || 0;
-
-        // Random offsets for irregular movement (different for each character)
-        this.timeOffset = Math.random() * Math.PI * 2; // Random phase
-        this.zPhase = Math.random() * Math.PI * 2;
-        this.yPhase = Math.random() * Math.PI * 2;
-        this.rotationPhase = Math.random() * Math.PI * 2;
-
-        // Different frequencies for irregular movement
-        this.zFreq = 0.3 + Math.random() * 0.2; // 0.3 to 0.5
-        this.yFreq = 0.25 + Math.random() * 0.15; // 0.25 to 0.4
-        this.rotationFreq = 0.2 + Math.random() * 0.1; // 0.2 to 0.3
-
-        // Random rotation range (different for each character)
-        this.rotationRange = 10 + Math.random() * 20; // 10 to 30 degrees
-
-        this.startTime = Date.now();
-      },
-      tick: function (time, timeDelta) {
-        const elapsed = (time - this.startTime) / 1000; // Convert to seconds
-
-        // Smooth, slow rotation on Y-axis with irregular pattern
-        const rotationTime = elapsed * this.data.rotationSpeed * this.rotationFreq + this.rotationPhase;
-        // Use sine wave with slight variation for irregularity
-        const rotationOffset = Math.sin(rotationTime) * this.rotationRange +
-          Math.sin(rotationTime * 1.7) * (this.rotationRange * 0.3);
-        const newRotationY = this.initialRotationY + rotationOffset;
-
-        // Smooth, slow translation in Z and Y with irregular pattern
-        const zTime = elapsed * this.data.translationSpeed * this.zFreq + this.zPhase;
-        const yTime = elapsed * this.data.translationSpeed * this.yFreq + this.yPhase;
-
-        // Use sine waves with multiple frequencies for irregular, smooth movement
-        const zOffset = Math.sin(zTime) * this.data.zAmplitude +
-          Math.sin(zTime * 1.5) * (this.data.zAmplitude * 0.4) +
-          Math.sin(zTime * 2.3) * (this.data.zAmplitude * 0.2);
-
-        const yOffset = Math.sin(yTime) * this.data.yAmplitude +
-          Math.sin(yTime * 1.3) * (this.data.yAmplitude * 0.5) +
-          Math.sin(yTime * 2.1) * (this.data.yAmplitude * 0.3);
-
-        // Apply rotation
-        const currentRotation = this.el.getAttribute('rotation');
-        this.el.setAttribute('rotation', {
-          x: currentRotation.x,
-          y: newRotationY,
-          z: currentRotation.z
-        });
-
-        // Apply translation
-        const currentPosition = this.el.getAttribute('position');
-        this.el.setAttribute('position', {
-          x: currentPosition.x,
-          y: this.initialY + yOffset,
-          z: this.initialZ + zOffset
-        });
-      }
-    });
-  </script>
+  <style>
+    :root {
+      --color-cream: #F9F6F0;
+      --color-wine: #801A20;
+      --color-charcoal: #1F201E;
+      --color-gold: #C49A45;
+    }
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: "Plus Jakarta Sans", sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .font-instrument {
+      font-family: "Instrument Serif", serif;
+    }
+    .editorial-badge {
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+    .hud-card {
+      background: rgba(249, 246, 240, 0.94);
+      backdrop-filter: blur(8px);
+      border: 2px solid var(--color-charcoal);
+      box-shadow: 3px 3px 0px var(--color-charcoal);
+    }
+    .bento-btn {
+      border: 2px solid var(--color-charcoal);
+      box-shadow: 2px 2px 0px var(--color-charcoal);
+      transition: all 0.15s ease;
+    }
+    .bento-btn:active {
+      transform: translate(2px, 2px);
+      box-shadow: 0px 0px 0px var(--color-charcoal);
+    }
+    /* Pulse ring for viewfinder */
+    @keyframes pulseRing {
+      0% { transform: scale(0.96); opacity: 0.8; }
+      50% { transform: scale(1.02); opacity: 1; }
+      100% { transform: scale(0.96); opacity: 0.8; }
+    }
+    .target-box {
+      animation: pulseRing 3s ease-in-out infinite;
+    }
+    /* Hide A-Frame default UI */
+    .a-enter-vr-button, .a-orientation-modal {
+      display: none !important;
+    }
+  </style>
 </head>
 
-<body style="margin: 0; overflow: hidden; z-index: 0">
-  <a-scene style="z-index: 1" embedded arjs="debugUIEnabled: false; patternRatio: 0.7; sourceType: webcam;"
-    device-orientation-permission-ui="enabled: false" vr-mode-ui="enabled: false">
-    <!-- Define markers - images will be generated dynamically -->
-    <a-marker type="pattern" url="pattern-confetti-final.patt"></a-marker>
-    <a-marker type="pattern" url="pattern-smiley-final.patt"></a-marker>
-    <a-marker type="pattern" url="pattern-ribbon-final.patt"></a-marker>
-    <!-- Add a camera -->
+<body class="bg-black text-charcoal">
+
+  <!-- ====================================================
+       A-FRAME 3D AR SCENE
+       ==================================================== -->
+  <a-scene
+    id="arScene"
+    embedded
+    arjs="debugUIEnabled: false; patternRatio: 0.7; sourceType: webcam; trackingMethod: best;"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    style="position: fixed; inset: 0; width: 100%; height: 100%; z-index: 1;"
+  >
+    <!-- Asset Library for Dynamic Video Texture -->
+    <a-assets timeout="12000">
+      <video
+        id="arVideoSource"
+        src=""
+        crossorigin="anonymous"
+        playsinline
+        webkit-playsinline
+        loop
+        preload="auto"
+      ></video>
+    </a-assets>
+
+    <!-- ===== PATTERN MARKER 1: SPARKLE (DEFAULT TJF) ===== -->
+    <a-marker
+      id="markerSparkle"
+      type="pattern"
+      url="pattern-sparkle-black.patt"
+      emitevents="true"
+      smooth="true"
+      smoothCount="5"
+      smoothTolerance="0.01"
+      smoothThreshold="2"
+    >
+      <a-entity id="arEntityContainer1" position="0 0 0" rotation="-90 0 0">
+        <!-- 3D Vintage Photo Card Mount Backing -->
+        <a-plane
+          id="cardBacking1"
+          width="1.8"
+          height="2.4"
+          position="0 0 -0.02"
+          material="color: #F9F6F0; shader: flat; side: double;"
+        ></a-plane>
+        <!-- Gold / Charcoal Card Trim -->
+        <a-plane
+          width="1.86"
+          height="2.46"
+          position="0 0 -0.03"
+          material="color: #1F201E; shader: flat; side: double;"
+        ></a-plane>
+        <!-- The Floating 3D AR Video Screen -->
+        <a-video
+          id="arVideoPlane1"
+          src="#arVideoSource"
+          width="1.5"
+          height="2.0"
+          position="0 0 0.01"
+          material="shader: flat; side: double;"
+        ></a-video>
+        <!-- Header Text in 3D -->
+        <a-text
+          value="THE JAKARTA FLOSS"
+          align="center"
+          position="0 1.08 0.02"
+          scale="0.32 0.32 0.32"
+          color="#801A20"
+          font="aileronsemibold"
+        ></a-text>
+      </a-entity>
+    </a-marker>
+
+    <!-- ===== PATTERN MARKER 2: HIGHFIVE ===== -->
+    <a-marker
+      id="markerHighfive"
+      type="pattern"
+      url="pattern-highfive-black.patt"
+      emitevents="true"
+      smooth="true"
+    >
+      <a-entity id="arEntityContainer2" position="0 0 0" rotation="-90 0 0">
+        <a-plane width="1.8" height="2.4" position="0 0 -0.02" material="color: #F9F6F0; shader: flat; side: double;"></a-plane>
+        <a-plane width="1.86" height="2.46" position="0 0 -0.03" material="color: #1F201E; shader: flat; side: double;"></a-plane>
+        <a-video id="arVideoPlane2" src="#arVideoSource" width="1.5" height="2.0" position="0 0 0.01" material="shader: flat; side: double;"></a-video>
+        <a-text value="THE JAKARTA FLOSS" align="center" position="0 1.08 0.02" scale="0.32 0.32 0.32" color="#801A20" font="aileronsemibold"></a-text>
+      </a-entity>
+    </a-marker>
+
+    <!-- ===== PATTERN MARKER 3: RIBBON ===== -->
+    <a-marker
+      id="markerRibbon"
+      type="pattern"
+      url="pattern-ribbon-final.patt"
+      emitevents="true"
+      smooth="true"
+    >
+      <a-entity id="arEntityContainer3" position="0 0 0" rotation="-90 0 0">
+        <a-plane width="1.8" height="2.4" position="0 0 -0.02" material="color: #F9F6F0; shader: flat; side: double;"></a-plane>
+        <a-plane width="1.86" height="2.46" position="0 0 -0.03" material="color: #1F201E; shader: flat; side: double;"></a-plane>
+        <a-video id="arVideoPlane3" src="#arVideoSource" width="1.5" height="2.0" position="0 0 0.01" material="shader: flat; side: double;"></a-video>
+        <a-text value="THE JAKARTA FLOSS" align="center" position="0 1.08 0.02" scale="0.32 0.32 0.32" color="#801A20" font="aileronsemibold"></a-text>
+      </a-entity>
+    </a-marker>
+
+    <!-- ===== PATTERN MARKER 4: CONFETTI ===== -->
+    <a-marker
+      id="markerConfetti"
+      type="pattern"
+      url="pattern-confetti-final.patt"
+      emitevents="true"
+      smooth="true"
+    >
+      <a-entity id="arEntityContainer4" position="0 0 0" rotation="-90 0 0">
+        <a-plane width="1.8" height="2.4" position="0 0 -0.02" material="color: #F9F6F0; shader: flat; side: double;"></a-plane>
+        <a-plane width="1.86" height="2.46" position="0 0 -0.03" material="color: #1F201E; shader: flat; side: double;"></a-plane>
+        <a-video id="arVideoPlane4" src="#arVideoSource" width="1.5" height="2.0" position="0 0 0.01" material="shader: flat; side: double;"></a-video>
+        <a-text value="THE JAKARTA FLOSS" align="center" position="0 1.08 0.02" scale="0.32 0.32 0.32" color="#801A20" font="aileronsemibold"></a-text>
+      </a-entity>
+    </a-marker>
+
+    <!-- ===== PATTERN MARKER 5: SMILEY ===== -->
+    <a-marker
+      id="markerSmiley"
+      type="pattern"
+      url="pattern-smiley-final.patt"
+      emitevents="true"
+      smooth="true"
+    >
+      <a-entity id="arEntityContainer5" position="0 0 0" rotation="-90 0 0">
+        <a-plane width="1.8" height="2.4" position="0 0 -0.02" material="color: #F9F6F0; shader: flat; side: double;"></a-plane>
+        <a-plane width="1.86" height="2.46" position="0 0 -0.03" material="color: #1F201E; shader: flat; side: double;"></a-plane>
+        <a-video id="arVideoPlane5" src="#arVideoSource" width="1.5" height="2.0" position="0 0 0.01" material="shader: flat; side: double;"></a-video>
+        <a-text value="THE JAKARTA FLOSS" align="center" position="0 1.08 0.02" scale="0.32 0.32 0.32" color="#801A20" font="aileronsemibold"></a-text>
+      </a-entity>
+    </a-marker>
+
+    <!-- Standard HIRO Preset Fallback Marker -->
+    <a-marker id="markerHiro" preset="hiro" emitevents="true" smooth="true">
+      <a-entity id="arEntityContainer6" position="0 0 0" rotation="-90 0 0">
+        <a-plane width="1.8" height="2.4" position="0 0 -0.02" material="color: #F9F6F0; shader: flat; side: double;"></a-plane>
+        <a-plane width="1.86" height="2.46" position="0 0 -0.03" material="color: #1F201E; shader: flat; side: double;"></a-plane>
+        <a-video id="arVideoPlane6" src="#arVideoSource" width="1.5" height="2.0" position="0 0 0.01" material="shader: flat; side: double;"></a-video>
+        <a-text value="THE JAKARTA FLOSS" align="center" position="0 1.08 0.02" scale="0.32 0.32 0.32" color="#801A20" font="aileronsemibold"></a-text>
+      </a-entity>
+    </a-marker>
+
+    <!-- AR Camera -->
     <a-entity camera></a-entity>
   </a-scene>
 
-  <script>
-    // Function to generate trapezium grid of images for a marker
-    // Fills from center outward: middle, left, right, outer left, outer right, etc.
-    function generateImageGrid(marker, dataArray, xOffset = 0) {
-      // Grid configuration
-      const width = 1.5; // 1.5x bigger (was 1)
-      const height = 3; // 1.5x bigger (was 2)
-      const xSpacing = width; // 1x the size (spacing equals width)
-      // Alternative: const xSpacing = width * 0.5; // 0.5x the size
-      const zIncrement = 0.3; // Z increments by 0.3
-      const yIncrement = 1.0; // Y increments by 1
+  <!-- ====================================================
+       2D HUD / CONTROLS LAYER (OVERLAY)
+       ==================================================== -->
+  <div class="fixed inset-0 pointer-events-none z-20 flex flex-col justify-between p-4 md:p-6 select-none">
 
-      // Calculate trapezium structure
-      // Row 1: 4 images, Row 2: 5 images, Row 3: 6 images, etc.
-      function getRowSize(rowIndex) {
-        return 4 + rowIndex; // Row 0 = 4, Row 1 = 5, Row 2 = 6, etc.
-      }
+    <!-- ===== TOP BAR: BRANDING + SESSION INFO + BACK BUTTON ===== -->
+    <header class="w-full flex items-center justify-between pointer-events-auto">
+      <!-- TJF Brand Badge -->
+      <div class="hud-card px-3.5 py-2 flex items-center gap-2.5">
+        <div class="w-6 h-6 text-wine">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="w-full h-full">
+            <path d="M14 42 C8 38, 8 26, 18 20 C28 14, 46 16, 52 24 C58 32, 54 44, 44 48 C34 52, 20 46, 14 42 Z" fill="#FDF9F2" stroke="currentColor"/>
+            <path d="M24 24 C28 28, 30 36, 26 42" stroke="#C49A45" stroke-width="2.5" />
+            <path d="M34 22 C38 27, 40 35, 36 43" stroke="#C49A45" stroke-width="2.5" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="font-instrument text-lg md:text-xl text-wine leading-none">The Jakarta Floss</h1>
+          <div class="text-[9px] editorial-badge text-forest/70 mt-0.5 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="headerStatusText">AUGMENTED REALITY</span>
+          </div>
+        </div>
+      </div>
 
-      // Generate fill order: center, left, right, outer left, outer right, etc.
-      // Fills each row completely before moving to next row
-      function getFillOrder(rowIndex, rowSize) {
-        const order = [];
+      <!-- Action Nav Buttons -->
+      <div class="flex items-center gap-2">
+        <!-- Session Code Badge -->
+        <div class="hud-card px-3 py-1.5 hidden sm:flex items-center gap-1.5">
+          <span class="text-[9px] editorial-badge text-charcoal/60">CODE</span>
+          <span id="sessionCodeBadge" class="font-mono text-xs font-bold text-wine">---</span>
+        </div>
 
-        if (rowSize % 2 === 1) {
-          // Odd number of items: single center
-          const centerIndex = Math.floor(rowSize / 2);
-          order.push(centerIndex); // Start with center
+        <!-- Back to Softfile Gallery Button -->
+        <a
+          id="btnBackToGallery"
+          href="/softfile"
+          class="bento-btn bg-white hover:bg-cream text-charcoal text-xs font-bold tracking-wider px-3.5 py-2 inline-flex items-center gap-1.5"
+          title="Return to Digital Softfile Gallery"
+        >
+          <span>&larr;</span>
+          <span class="hidden sm:inline uppercase text-[10px]">Softfile</span>
+        </a>
 
-          // Then fill outward: left, right, outer left, outer right, etc.
-          for (let offset = 1; offset <= centerIndex; offset++) {
-            // Left side (closer to center first)
-            if (centerIndex - offset >= 0) {
-              order.push(centerIndex - offset);
-            }
-            // Right side (closer to center first)
-            if (centerIndex + offset < rowSize) {
-              order.push(centerIndex + offset);
-            }
-          }
-        } else {
-          // Even number of items: two center positions
-          const leftCenter = Math.floor(rowSize / 2) - 1;
-          const rightCenter = Math.floor(rowSize / 2);
+        <!-- Marker Help Button -->
+        <button
+          onclick="toggleMarkerModal(true)"
+          class="bento-btn bg-wine text-white hover:bg-wine-dark text-xs font-bold px-3 py-2 inline-flex items-center gap-1"
+          title="Show Marker Pattern to Scan"
+        >
+          <span>🎯</span>
+          <span class="hidden sm:inline uppercase text-[10px] tracking-wider">Show Marker</span>
+        </button>
+      </div>
+    </header>
 
-          // Start with left center, then right center
-          order.push(leftCenter);
-          order.push(rightCenter);
+    <!-- ===== CENTER: TARGET GUIDELINES OVERLAY (WHEN SEARCHING) ===== -->
+    <div id="targetOverlay" class="self-center flex flex-col items-center gap-3 transition-opacity duration-300">
+      <div class="target-box relative w-56 h-72 sm:w-64 sm:h-84 border-2 border-white/60 rounded-lg flex items-center justify-center shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+        <!-- Corner Reticles -->
+        <div class="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 border-gold"></div>
+        <div class="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 border-gold"></div>
+        <div class="absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 border-gold"></div>
+        <div class="absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 border-gold"></div>
 
-          // Then fill outward: left, right, outer left, outer right, etc.
-          for (let offset = 1; offset < rowSize / 2; offset++) {
-            // Left side
-            if (leftCenter - offset >= 0) {
-              order.push(leftCenter - offset);
-            }
-            // Right side
-            if (rightCenter + offset < rowSize) {
-              order.push(rightCenter + offset);
-            }
-          }
-        }
+        <!-- Center Crosshair icon -->
+        <div class="text-white/70 text-2xl font-light">+</div>
+      </div>
+      <div class="hud-card px-4 py-2 text-center max-w-xs">
+        <p class="text-xs font-bold text-wine tracking-wide uppercase">Point Camera at Photo Card</p>
+        <p class="text-[10px] text-charcoal/70 mt-0.5">Align the printed pattern inside the frame to watch it come alive.</p>
+      </div>
+    </div>
 
-        return order;
-      }
+    <!-- Active Tracking Badge (Hidden by default, shown on marker detect) -->
+    <div id="trackingActiveBadge" class="hidden self-center hud-card px-4 py-1.5 text-center flex items-center gap-2 border-forest">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+      <span class="text-xs font-extrabold text-forest uppercase tracking-wider">✦ Marker Locked • Playing ✦</span>
+    </div>
 
-      // Calculate which row and position for each item
-      let itemIndex = 0;
-      let currentRow = 0;
-      let currentRowPosition = 0;
-      let currentRowSize = getRowSize(currentRow);
-      let currentRowFillOrder = getFillOrder(currentRow, currentRowSize);
+    <!-- ===== BOTTOM BAR: VIDEO SWITCHER + AUDIO + CONTROLS ===== -->
+    <footer class="w-full flex flex-col items-center gap-3 pointer-events-auto">
 
-      // Y variations for slight randomness (reuse pattern)
-      const yVariationPattern = [0.05, -0.08, 0.12, -0.05, 0.08, 0.12, -0.05, 0.08, -0.08, 0.15];
+      <!-- Media Mode Switcher (Separate Motion Video vs Video Message) -->
+      <div id="videoSourceSwitcher" class="hud-card p-1.5 flex items-center gap-1.5 shadow-lg">
+        <button
+          id="btnModeMotion"
+          onclick="switchMediaMode('motion')"
+          class="px-3.5 py-1.5 text-[11px] font-extrabold tracking-wider uppercase border border-charcoal bg-wine text-white transition-all cursor-pointer rounded-sm"
+        >
+          🎞️ MOTION PHOTO
+        </button>
+        <button
+          id="btnModeMessage"
+          onclick="switchMediaMode('message')"
+          class="px-3.5 py-1.5 text-[11px] font-extrabold tracking-wider uppercase border border-charcoal bg-white text-charcoal hover:bg-cream transition-all cursor-pointer rounded-sm"
+        >
+          🎬 VIDEO MESSAGE (3:4)
+        </button>
+      </div>
 
-      for (let i = 0; i < dataArray.length; i++) {
-        const data = dataArray[i];
+      <!-- Secondary Controls: Sound Mute / Flip Cam / Snapshot -->
+      <div class="flex items-center gap-2.5">
+        <!-- Audio Mute / Unmute Toggle -->
+        <button
+          id="btnToggleAudio"
+          onclick="toggleAudio()"
+          class="bento-btn bg-white hover:bg-cream text-charcoal px-3.5 py-2 text-xs font-bold inline-flex items-center gap-2"
+          title="Toggle Audio"
+        >
+          <span id="audioIcon">🔇</span>
+          <span id="audioText" class="text-[10px] font-bold uppercase tracking-wider">Muted</span>
+        </button>
 
-        // Get position in current row's fill order
-        const colInFillOrder = currentRowFillOrder[currentRowPosition];
+        <!-- Capture AR Snapshot Button -->
+        <button
+          onclick="captureArSnapshot()"
+          class="bento-btn bg-[#2D6A4F] hover:bg-[#1B4332] text-white px-4 py-2 text-xs font-bold inline-flex items-center gap-2"
+          title="Capture Snapshot of AR view"
+        >
+          <span>📸</span>
+          <span class="text-[10px] font-bold uppercase tracking-wider">Snap Photo</span>
+        </button>
+      </div>
+    </footer>
+  </div>
 
-        // Calculate X position (center is 0, left is negative, right is positive)
-        // Apply xOffset to shift the entire grid, plus one character width to the right
-        const x = ((colInFillOrder - Math.floor(currentRowSize / 2)) * xSpacing) + xOffset + width;
-
-        // Calculate Z and Y positions
-        const baseZ = currentRow * zIncrement;
-        const baseY = currentRow * yIncrement;
-        const yVariation = yVariationPattern[itemIndex % yVariationPattern.length];
-        const y = baseY + yVariation;
-        const z = baseZ;
-
-        // Get image source from data or default
-        const faceSrc = data.src || data.image || `/assets/face-${((itemIndex % 4) + 1)}.png`;
-
-        // Create image element
-        const imageEl = document.createElement('a-image');
-        
-        // Set attributes first
-        imageEl.setAttribute('width', width);
-        imageEl.setAttribute('height', height);
-        imageEl.setAttribute('position', `${x} ${y} ${z}`);
-        imageEl.setAttribute('rotation', '-90 0 0');
-        imageEl.setAttribute('character-animation', '');
-        imageEl.setAttribute('resize-on-load', '');
-
-        // Add material properties to prevent overlap glitches
-        // Safari compatibility: Use explicit material settings
-        imageEl.setAttribute('material', {
-          transparent: true,
-          alphaTest: 0.1, // Discard pixels with alpha < 0.1 to prevent transparent part glitches
-          depthTest: true,
-          depthWrite: true,
-          side: 'double', // Render both sides to prevent flickering
-          shader: 'flat' // Use flat shader for better Safari compatibility
-        });
-
-        // Store any additional data attributes
-        if (data.id) imageEl.setAttribute('data-id', data.id);
-        if (data.class) imageEl.setAttribute('class', data.class);
-
-        // Safari compatibility: Preload image and ensure it loads before setting src
-        const img = new Image();
-        
-        // Try with CORS first, fallback to no CORS if it fails
-        img.crossOrigin = 'anonymous';
-        
-        // Safari fix: Wait for image to load before setting src on a-image
-        const loadImage = () => {
-          return new Promise((resolve, reject) => {
-            img.onload = () => {
-              // Set src after image is loaded (Safari needs this)
-              imageEl.setAttribute('src', faceSrc);
-              
-              // Safari fix: Force material and texture update after image loads
-              setTimeout(() => {
-                if (imageEl.components && imageEl.components.material) {
-                  // Force material update
-                  imageEl.components.material.updateProperties();
-                  
-                  // Force texture refresh for Safari
-                  const material = imageEl.components.material.material;
-                  if (material && material.map) {
-                    material.map.needsUpdate = true;
-                  }
-                }
-                
-                // Force scene render update for Safari
-                const scene = document.querySelector('a-scene');
-                if (scene && scene.renderer && scene.object3D && scene.camera) {
-                  scene.renderer.render(scene.object3D, scene.camera);
-                }
-              }, 50);
-              
-              resolve();
-            };
-            
-            img.onerror = () => {
-              // If CORS fails, try without CORS
-              if (img.crossOrigin === 'anonymous') {
-                console.warn(`CORS failed for ${faceSrc}, retrying without CORS`);
-                const imgRetry = new Image();
-                imgRetry.onload = () => {
-                  imageEl.setAttribute('src', faceSrc);
-                  setTimeout(() => {
-                    if (imageEl.components && imageEl.components.material) {
-                      imageEl.components.material.updateProperties();
-                      const material = imageEl.components.material.material;
-                      if (material && material.map) {
-                        material.map.needsUpdate = true;
-                      }
-                    }
-                    const scene = document.querySelector('a-scene');
-                    if (scene && scene.renderer && scene.object3D && scene.camera) {
-                      scene.renderer.render(scene.object3D, scene.camera);
-                    }
-                  }, 50);
-                  resolve();
-                };
-                imgRetry.onerror = () => {
-                  console.error(`Failed to load image: ${faceSrc}`);
-                  // Still add the element, it might work
-                  imageEl.setAttribute('src', faceSrc);
-                  resolve();
-                };
-                imgRetry.src = faceSrc;
-              } else {
-                console.error(`Failed to load image: ${faceSrc}`);
-                // Still add the element, it might work
-                imageEl.setAttribute('src', faceSrc);
-                resolve();
-              }
-            };
-            
-            img.src = faceSrc;
-          });
-        };
-
-        // Add element to marker first (Safari needs DOM element before texture loads)
-        marker.appendChild(imageEl);
-        
-        // Load image asynchronously
-        loadImage().catch(err => {
-          console.error(`Error loading image ${faceSrc}:`, err);
-          // Still try to set src
-          imageEl.setAttribute('src', faceSrc);
-        });
-
-        // Move to next position
-        itemIndex++;
-        currentRowPosition++;
-
-        // Check if we need to move to next row
-        if (currentRowPosition >= currentRowSize) {
-          currentRow++;
-          currentRowPosition = 0;
-          currentRowSize = getRowSize(currentRow);
-          currentRowFillOrder = getFillOrder(currentRow, currentRowSize);
-        }
-      }
-    }
-
-    // Generate images for all markers when scene is ready
-    // dataArray: Array of objects with photo_url or src property from Supabase/API
-    function initializeImageGrids(dataArray = null) {
-      const markers = document.querySelectorAll('a-marker');
-
-      if (markers.length > 0) {
-        markers.forEach(function (marker) {
-          // Clear any existing children first
-          while (marker.firstChild) {
-            marker.removeChild(marker.firstChild);
-          }
-
-          // Determine X offset based on marker pattern
-          let xOffset = 0;
-          const markerUrl = marker.getAttribute('url');
-          let targetContainer = marker;
-
-          if (markerUrl === 'pattern-ribbon-final.patt') {
-            xOffset = -2; // Shift ribbon marker left by 2 units
-          } else if (markerUrl === 'pattern-smiley-final.patt') {
-            xOffset = -1; // Shift smiley marker left by 1 unit
-          } else if (markerUrl === 'pattern-confetti-final.patt') {
-            // Create wrapper for confetti transformations
-            const wrapper = document.createElement('a-entity');
-            // Move left 3, bottom 3.5. Rotate 60deg right (yaw -60)
-            wrapper.setAttribute('position', '-5, 0, 4.5');
-            wrapper.setAttribute('rotation', '0 0 -60');
-
-            marker.appendChild(wrapper);
-            targetContainer = wrapper;
-          }
-
-          // Use API data if available, otherwise fall back to static images
-          let imageData = [];
-
-          if (dataArray && dataArray.length > 0) {
-            // Filter items that have photo_url
-            const validItems = dataArray.filter(item => item.photo_url && item.photo_url.trim() !== '');
-
-            if (validItems.length > 0) {
-              // Use actual data from API/Supabase - use exact number of items
-              imageData = validItems.map((item, index) => ({
-                id: item.id || index + 1,
-                src: item.photo_url,
-                name: item.name || '',
-                message: item.message || ''
-              }));
-              console.log(`✅ Using ${validItems.length} images from API/Supabase for AR content (exact count)`);
-            } else {
-              // No valid images in API data, do nothing or log
-              console.log('⚠️ No valid photo_url in API data, showing clear scene');
-            }
-          } else {
-            // No data provided, do nothing or log
-            console.log('⚠️ No API data provided, showing clear scene');
-          }
-
-          generateImageGrid(targetContainer, imageData, xOffset);
-          
-          // Safari fix: Force scene render update after adding images
-          const scene = document.querySelector('a-scene');
-          if (scene) {
-            // Multiple timeouts to ensure Safari renders properly
-            setTimeout(() => {
-              if (scene.renderer && scene.object3D && scene.camera) {
-                scene.renderer.render(scene.object3D, scene.camera);
-              }
-              // Force material updates for all images
-              const images = targetContainer.querySelectorAll('a-image');
-              images.forEach(img => {
-                if (img.components && img.components.material) {
-                  img.components.material.updateProperties();
-                  // Force texture update for Safari
-                  const material = img.components.material.material;
-                  if (material && material.map) {
-                    material.map.needsUpdate = true;
-                  }
-                }
-              });
-            }, 500);
-            
-            // Additional Safari fix: Force another render after a longer delay
-            setTimeout(() => {
-              if (scene.renderer && scene.object3D && scene.camera) {
-                scene.renderer.render(scene.object3D, scene.camera);
-              }
-              const images = targetContainer.querySelectorAll('a-image');
-              images.forEach(img => {
-                if (img.components && img.components.material) {
-                  const material = img.components.material.material;
-                  if (material && material.map) {
-                    material.map.needsUpdate = true;
-                  }
-                  // Force component update
-                  img.components.material.updateProperties();
-                }
-              });
-            }, 1500);
-          }
-        });
-        console.log('✅ Generated trapezium image grids for', markers.length, 'markers');
-      } else {
-        console.warn('⚠️ No markers found, retrying...');
-        setTimeout(() => initializeImageGrids(dataArray), 100);
-      }
-    }
-
-    // Try multiple initialization methods
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', function () {
-        const scene = document.querySelector('a-scene');
-        if (scene && scene.hasLoaded) {
-          initializeImageGrids();
-        } else {
-          scene.addEventListener('loaded', initializeImageGrids);
-          // Fallback timeout
-          setTimeout(initializeImageGrids, 1000);
-        }
-      });
-    } else {
-      // DOM already loaded
-      const scene = document.querySelector('a-scene');
-      if (scene && scene.hasLoaded) {
-        initializeImageGrids();
-      } else {
-        if (scene) {
-          scene.addEventListener('loaded', initializeImageGrids);
-        }
-        // Fallback timeout
-        setTimeout(initializeImageGrids, 1000);
-      }
-    }
-  </script>
-
-  <video id="arsa-video" src="" loop autoplay muted playsinline webkit-playsinline x5-playsinline preload="auto"
-    style="display: none; aspect-ratio: 1/1"></video>
-  <div id="messageModal" style="
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background-color: rgba(0, 0, 0, 0.5);
-        z-index: 30;
-        justify-content: center;
-        align-items: center;
-      ">
-    <div style="
-          position: relative;
-          background-color: white;
-          color: #046511;
-          font-size: 1.4em;
-          padding: 16px;
-          max-width: 80%;
-          max-height: 90svh;
-          overflow-y: auto;
-          text-align: left;
-        ">
-      <button id="closeModalButton" style="
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background-color: #92ed00;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-          ">
-        <svg width="18" height="18" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M11.25 1.8075L10.1925 0.75L6 4.9425L1.8075 0.75L0.75 1.8075L4.9425 6L0.75 10.1925L1.8075 11.25L6 7.0575L10.1925 11.25L11.25 10.1925L7.0575 6L11.25 1.8075Z"
-            fill="#046511" />
-        </svg>
+  <!-- ====================================================
+       MODAL 1: ENTER CODE MODAL (IF NO CODE IN URL)
+       ==================================================== -->
+  <div id="enterCodeModal" class="hidden fixed inset-0 bg-charcoal/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 select-none">
+    <div class="hud-card max-w-sm w-full p-6 bg-white flex flex-col gap-4 text-center">
+      <div class="w-12 h-12 rounded-full bg-wine/10 text-wine text-2xl flex items-center justify-center mx-auto border border-wine/30">
+        🎞️
+      </div>
+      <div>
+        <h2 class="font-instrument text-2xl text-wine font-normal">View AR Memories</h2>
+        <p class="text-xs text-charcoal/70 mt-1">Enter your photobox voucher access code to load your interactive AR strip.</p>
+      </div>
+      <input
+        type="text"
+        id="inputSessionCode"
+        placeholder="e.g. TJF-VIDEOBOX"
+        class="border-2 border-charcoal px-4 py-2.5 text-center font-mono font-bold text-sm tracking-wider uppercase bg-cream/50 outline-none focus:border-wine"
+        onkeydown="if(event.key==='Enter') submitManualCode()"
+      />
+      <button
+        onclick="submitManualCode()"
+        class="bento-btn bg-wine hover:bg-wine-dark text-white font-bold text-xs uppercase tracking-widest py-3"
+      >
+        LOAD AR EXPERIENCE &rarr;
       </button>
-      <p id="modalMessage"></p>
-      <div style="
-            display: flex;
-            gap: 16px;
-            align-items: end;
-            justify-content: space-between;
-          ">
-        <!-- <img
-            id="signatureImg"
-            alt="Signature"
-            style="height: 8svh; display: none"
-          /> -->
-        <img src="./assets/images/highfive.png" alt="High Five" style="height: 6svh" />
+    </div>
+  </div>
+
+  <!-- ====================================================
+       MODAL 2: PATTERN MARKER HELPER (FOR EASY SCANNING)
+       ==================================================== -->
+  <div id="markerModal" class="hidden fixed inset-0 bg-charcoal/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 select-none">
+    <div class="hud-card max-w-md w-full p-6 bg-white flex flex-col items-center gap-4 text-center">
+      <div class="w-full flex items-center justify-between border-b border-charcoal/10 pb-2">
+        <span class="editorial-badge text-[10px] text-wine font-bold">PATTERN MARKER TARGET</span>
+        <button onclick="toggleMarkerModal(false)" class="text-lg font-bold text-charcoal hover:text-wine px-2">&times;</button>
       </div>
-    </div>
-  </div>
-  <div style="
-        position: fixed;
-        bottom: 4.5svh;
-        padding: 1svh;
-        left: calc(50% - 9svh);
-
-        bottom: 3.5svh;
-        width: 14svh;
-        height: 6svh;
-        background-color: #FF5627;
-        border-radius: 4svh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        z-index: 20;
-        overflow: hidden;
-      ">
-    <img src="./assets/images/slamatslimit-logo.png" alt="Gallery"
-      style="width: 100%; height: 90%; object-fit: contain" />
-  </div>
-  <div id="recordButton" style="
-        z-index: -1;
-        opacity: 0;
-        position: fixed;
-        bottom: 4svh;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 7svh;
-        height: 7svh;
-        background-color: white;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        z-index: 20;
-      ">
-    <div id="recordInner" style="
-          width: 5.2svh;
-          height: 5.2svh;
-          background-color: #92ed00;
-          border-radius: 50%;
-          transition: all 0.3s ease;
-        "></div>
-  </div>
-  <div id="galleryButton" style="
-        position: fixed;
-        bottom: 4.5svh;
-        left: calc(50% - 15svh);
-        transform: translateX(-50%);
-        width: 5svh;
-        height: 5svh;
-        background-color: #49B400;
-        border-radius: 50%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        cursor: pointer;
-        z-index: 20;
-        border: none;
-        padding: 0;
-      ">
-    <svg style="width: 45%; height: 45%;" width="14" height="14" viewBox="0 0 14 14" fill="none"
-      xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M1.5 6H4.5C5.325 6 6 5.325 6 4.5V1.5C6 0.675 5.325 0 4.5 0H1.5C0.675 0 0 0.675 0 1.5V4.5C0 5.325 0.675 6 1.5 6Z"
-        fill="#F4F2E4" />
-      <path
-        d="M1.5 13.5H4.5C5.325 13.5 6 12.825 6 12V9C6 8.175 5.325 7.5 4.5 7.5H1.5C0.675 7.5 0 8.175 0 9V12C0 12.825 0.675 13.5 1.5 13.5Z"
-        fill="#F4F2E4" />
-      <path
-        d="M7.5 1.5V4.5C7.5 5.325 8.175 6 9 6H12C12.825 6 13.5 5.325 13.5 4.5V1.5C13.5 0.675 12.825 0 12 0H9C8.175 0 7.5 0.675 7.5 1.5Z"
-        fill="#F4F2E4" />
-      <path
-        d="M9 13.5H12C12.825 13.5 13.5 12.825 13.5 12V9C13.5 8.175 12.825 7.5 12 7.5H9C8.175 7.5 7.5 8.175 7.5 9V12C7.5 12.825 8.175 13.5 9 13.5Z"
-        fill="#F4F2E4" />
-    </svg>
-  </div>
-
-  <div id="markerNotFoundOverlay" style="
-        font-family: 'Inter', sans-serif;
-        position: fixed;
-        height: 100svh;
-        width: 100svw;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background-color: rgba(0, 0, 0, 0.4);
-        color: white;
-        display: flex;
-        font-size: 1.3em;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        z-index: 2;
-        padding-bottom: 10svh;
-      ">
-    <p>Arahkan kameramu ke<br />marker Slamat Slimit:</p>
-    <div style="
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 16px;
-        ">
-      <img src="./assets/images/line-decoration-left.png" style="width: 10svh; max-width: 15vw; height: auto" />
-      <span style="
-            position: relative;
-            width: 24svh;
-            height: 40svh;
-            display: flex;
-            justify-content: center;
-          ">
-        <img src="./assets/images/ribbon-marker-final.png" style="
-              padding-top: 6svh;
-              width: 15svh;
-              max-width: 40vw;
-              height: 15svh;
-              transform: rotate(7deg);
-              margin-left: 11svh;
-            " /><img src="./assets/images/confetti-marker-final.png" style="
-              width: 16svh;
-              max-width: 30vw;
-              height: auto;
-              position: absolute;
-              top: 17svh;
-              left: 1svh;
-              transform: rotate(-8deg);
-            " /> <img src="./assets/images/smiley-marker-final.png" style="
-              width: 12svh;
-              max-width: 30vw;
-              height: auto;
-              position: absolute;
-              top: 28svh;
-              left: 12svh;
-              transform: rotate(10deg);
-            " /> </span><img src="./assets/images/line-decoration-right.png"
-        style="width: 10svh; max-width: 15vw; height: auto" />
-    </div>
-  </div>
-
-  <!-- Decorative Images Top Corners -->
-  <img id="top-left-image" src="./assets/face-1.png" style="
-        position: fixed;
-        top: 5svh;
-        left: -50svh;
-        height: 35svh;
-        width: auto;
-        z-index: 5;
-        pointer-events: none;
-        transition: left 2s ease-in-out;
-        transform: rotate(15deg);
-      " />
-  <img id="top-right-image" src="./assets/face-1.png" style="
-        position: fixed;
-        top: 5svh;
-        right: -50svh;
-        height: 35svh;
-        width: auto;
-        z-index: 5;
-        pointer-events: none;
-        transition: right 2s ease-in-out;
-        transform: rotate(-15deg);
-      " />
-  <audio id="content-audio" style="display: none;"></audio>
-
-  <!-- Letters List (Stories Style) -->
-  <div id="letters-list-bottom"
-    style="display: none; align-items: center; justify-content: flex-start; position: fixed; bottom: 13.3svh; left: 50%; transform: translateX(-50%); z-index: 10; width: 95vw; height: 70px; padding: 0; overflow-x: auto; overflow-y: visible; gap: 16px; -webkit-overflow-scrolling: touch;">
-  </div>
-
-  <!-- Background Music -->
-  <audio id="background-music" src="./assets/happy-birthday-orchestra.mp3" loop style="display: none;"></audio>
-
-  <!-- Letter Detail Modal -->
-  <div id="letters-detail"
-    style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 80; display: none;">
-    <div id="letters-detail-overlay"
-      style="width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); cursor: pointer;"></div>
-    <svg id="pin-svg" style="position: absolute; top: 43svh; left: 35svw; width: 8svh; height: 8svh; z-index: 100;"
-      width="47" height="64" viewBox="0 0 47 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path
-        d="M14.9882 30.5399C14.7575 30.798 14.4157 31.6758 13.811 32.4282C12.9256 33.5298 12.3032 34.3378 10.4444 36.6623C9.73858 37.545 8.61764 39.2652 7.07598 41.3014C6.04406 42.6644 5.22841 43.8583 4.5577 44.652C3.69027 45.6785 3.00772 46.9243 2.39982 47.978C1.98266 48.7011 1.54059 49.9758 1.45755 50.9851C1.39714 51.7194 2.3761 53.0561 3.07071 54.0032C3.58089 54.6988 4.31263 55.0905 5.0388 55.5007C5.72033 55.8858 6.5896 56.2402 7.46128 56.6079C8.09018 56.8731 9.36689 57.3075 10.8189 57.8307C13.3935 58.7583 14.2233 58.5021 15.045 58.4533C16.37 58.3746 17.2403 57.6981 18.4211 56.5079C18.6701 56.257 18.7457 56.1078 19.8318 54.7436C20.9179 53.3794 22.9977 50.791 24.1206 49.3647C26.0222 46.9496 27.2421 45.2976 28.1661 43.9595C28.6777 43.2186 29.2421 42.6572 29.9777 41.6183C31.8322 38.9993 32.8066 37.796 33.4229 36.8043C33.9325 35.9844 35.1348 34.1238 36.3971 31.8245C37.2155 30.3338 38.0476 28.2818 38.7255 26.5658C39.4023 24.8526 40.0234 23.5248 40.529 22.1472C40.8727 21.2111 41.3068 20.1462 41.6984 19.39C42.1792 18.4617 42.718 17.0863 43.1505 15.9815C43.4153 15.3053 43.8773 14.3756 44.312 13.2537C44.8712 11.8107 44.9395 10.6163 44.7699 10.2485C44.3814 9.4064 43.7203 8.94379 42.9568 8.28115C41.7375 7.22308 40.3804 6.75635 38.6826 6.3515C37.8641 6.15634 37.2155 7.08772 36.2078 8.4487C34.0471 11.3668 32.9506 13.755 32.4165 14.5481C30.5383 17.3378 29.9945 18.7695 28.4663 21.0541C27.1396 23.0374 24.9752 25.2734 23.7285 26.7667C23.198 27.4021 22.8443 27.9563 22.4497 28.5244C21.9775 29.2042 21.5388 29.8135 21.1554 30.4394C20.4575 31.5789 19.4896 33.0354 18.742 34.1251C17.8798 35.382 17.3123 36.5428 16.7805 37.4238C15.7038 39.2079 15.1499 39.7892 14.7802 40.3639C14.348 41.0356 13.8444 41.6464 13.2937 42.4957C12.8502 43.1796 12.708 43.8736 12.6346 44.446C12.5509 45.0984 14.6356 45.4709 16.2793 45.4024C17.3666 45.3571 17.8931 44.4083 18.6299 43.772C19.9264 42.6523 20.2726 41.7628 21.0296 41.048C22.1019 40.0354 23.8899 37.0903 25.0691 35.6169C26.7858 33.4719 27.227 32.6916 27.7377 31.9947C28.746 30.6187 29.0309 29.7821 29.3004 29.1805C29.654 28.391 30.1994 27.8333 30.5873 27.2901C31.0939 26.5808 31.7097 25.8145 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.8288 23.8508 32.9185 23.7149 33.1617 23.6153"
-        stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round" />
-      <path
-        d="M42.9478 16.6166C43.2126 15.9405 43.6746 15.0108 44.1093 13.8888C44.6684 12.4458 44.7368 11.2514 44.5672 10.8836C44.1787 10.0415 43.5176 9.5789 42.7541 8.91627C41.5348 7.8582 40.1777 7.39146 38.4799 6.98662C37.6614 6.79145 37.0127 7.72283 36.005 9.08381C33.8444 12.002 32.7479 14.3901 32.2138 15.1833C30.3355 17.9729 29.7918 19.4046 28.2636 21.6892C26.9369 23.6726 24.7725 25.9085 23.5258 27.4018C22.9953 28.0372 22.6416 28.5915 22.247 29.1595C21.7748 29.8393 21.3361 30.4486 20.9527 31.0746C20.2548 32.214 19.2869 33.6705 18.5393 34.7602C17.677 36.0171 17.1095 37.1779 16.5778 38.0589C15.501 39.843 14.9471 40.4243 14.5775 40.999C14.1453 41.6708 13.6417 42.2815 13.091 43.1308C12.6475 43.8147 12.5053 44.5087 12.4319 45.0812C12.3482 45.7335 14.4329 46.1061 16.0766 46.0376C17.1639 45.9922 17.6904 45.0434 18.4272 44.4071C19.7237 43.2875 20.0698 42.3979 20.8269 41.6831C21.8992 40.6705 23.6872 37.7254 24.8664 36.252C26.5831 34.107 27.0243 33.3267 27.535 32.6298C28.5433 31.2539 28.8282 30.4172 29.0977 29.8157C29.4513 29.0261 29.9967 28.4684 30.3845 27.9252C30.8912 27.2159 31.507 26.4496 31.87 25.8998C32.233 25.35 32.4552 24.9248 32.5606 24.6308C32.6261 24.4859 32.7158 24.35 32.959 24.2504"
-        stroke="#28B7FF" stroke-width="2.91137" stroke-linecap="round" />
-    </svg>
-
-    <div id="video-component" class="component"
-      style="cursor: pointer; width: 27svh; height: 45svh; background-color: white; position: absolute; top: 10svh; left: 50%; transform: translateX(-50%); z-index: 81; display: flex; align-items: center; justify-content: center;">
-      <video id="rury-video" src="" style="width: 90%; height: 80%; object-fit: cover; margin-top: 5%; display: none;"
-        loop autoplay playsinline webkit-playsinline x5-playsinline></video>
-      <audio id="rury-audio" src="" loop style="display: none;"></audio>
-      <div id="audio-icon"
-        style="display: none; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;">
-        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path
-            d="M3 9V15H7L12 20V4L7 9H3ZM16.5 12C16.5 10.23 15.48 8.71 14 7.97V16.02C15.48 15.29 16.5 13.77 16.5 12ZM14 3.23V5.29C16.89 6.15 19 8.83 19 12C19 15.17 16.89 17.85 14 18.71V20.77C18.01 19.86 21 16.28 21 12C21 7.72 18.01 4.14 14 3.23Z"
-            fill="#FF5627" />
-        </svg>
+      <p class="text-xs text-charcoal/70 leading-relaxed">
+        Point this phone at the marker below displayed on a second screen or physical photobox print:
+      </p>
+      <!-- Marker Preview Container -->
+      <div class="p-3 bg-white border-2 border-charcoal shadow-sm flex flex-col items-center gap-2">
+        <img
+          id="markerPreviewImg"
+          src="pattern-sparkle-white.png"
+          alt="AR Pattern Marker"
+          class="w-48 h-48 sm:w-56 sm:h-56 object-contain border border-charcoal/20"
+        />
+        <div class="flex items-center gap-2 mt-1">
+          <button
+            onclick="setMarkerPreview('pattern-sparkle-white.png', 'Sparkle')"
+            class="text-[9px] font-bold px-2 py-1 bg-cream border border-charcoal hover:bg-wine hover:text-white"
+          >Sparkle</button>
+          <button
+            onclick="setMarkerPreview('pattern-confetti.png', 'Confetti')"
+            class="text-[9px] font-bold px-2 py-1 bg-cream border border-charcoal hover:bg-wine hover:text-white"
+          >Confetti</button>
+          <button
+            onclick="setMarkerPreview('pattern-highfive-white.png', 'Highfive')"
+            class="text-[9px] font-bold px-2 py-1 bg-cream border border-charcoal hover:bg-wine hover:text-white"
+          >Highfive</button>
+        </div>
       </div>
-    </div>
-    <div id="letter-component" class="component"
-      style="cursor: pointer; transform: rotate(1deg); background-color: #F4F2E4; width: 75svw; height: 40svh; padding: 3svh; overflow-y: auto; position: absolute; bottom: 5svh; left: 0; right: 0; margin: 0 auto; z-index: 83; font-family: 'Playpen Sans', sans-serif;">
-      <div id="letter-component-text"
-        style="font-size: 2svh; word-wrap: break-word; overflow-wrap: break-word; white-space: normal;"></div>
-      <div id="letter-component-footer"
-        style="position: absolute; bottom: 2svh; right: 2svh; display: flex; flex-direction: column; align-items: flex-end; gap: 1svh;">
-        <img id="photo-component-img" src="" alt="photo" class="animate-rotate-slow"
-          style="width: auto; height: 13svh; object-fit: cover; display: none;">
-        <div id="letter-component-sender"
-          style="font-size: 2.4svh; font-weight: bold; font-family: 'Playpen Sans', sans-serif; display: none;"></div>
-      </div>
+      <button
+        onclick="toggleMarkerModal(false)"
+        class="bento-btn bg-charcoal text-white hover:bg-wine font-bold text-xs uppercase tracking-widest py-2 px-6 mt-1"
+      >
+        I'M READY TO SCAN
+      </button>
     </div>
   </div>
 
+  <!-- ====================================================
+       JAVASCRIPT APP LOGIC
+       ==================================================== -->
   <script>
-    let videoElement = document.getElementById("arsa-video");
-    let pauseTimeout;
-    let markerDetectedOnce = false;
-    let currentDeviceIndex = 0;
-    let videoDevices = [];
-    const muteButton = document.getElementById("muteButton");
-    let currentStream;
+    // Supabase Cloud Configuration
+    const SUPABASE_URL = "https://fowdecmskhvfgmdwwnxg.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDQ3NzczODMsImV4cCI6MjAyMDM1MzM4M30.4qjL292a1lK9q3p83U7wX86_fQ5m2X_1y4K_q3p83U7";
+    const STORAGE_BUCKET = "tjf_photos";
 
-    // Function to update video height based on aspect ratio
-    function updateVideoHeight() {
-      const videoPlane = document.querySelector("a-video");
-      if (videoPlane && videoElement.videoWidth && videoElement.videoHeight) {
-        const aspectRatio =
-          videoElement.videoHeight / videoElement.videoWidth;
-        const width = 1.8; // Keep width fixed
-        const height = width * aspectRatio;
-        videoPlane.setAttribute("height", height);
-      }
+    let supabaseClient = null;
+    try {
+      supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    } catch (err) {
+      console.warn("[SUPABASE] Init warning:", err);
     }
 
-    // Function to update video width based on aspect ratio for sparkle marker
-    function updateVideoWidth() {
-      const videoPlanes = document.querySelectorAll("a-video");
-      if (videoElement.videoWidth && videoElement.videoHeight) {
-        const aspectRatio =
-          videoElement.videoHeight / videoElement.videoWidth;
-        const height = 5.3; // Keep height fixed for sparkle marker
-        const width = height / aspectRatio;
+    // State Variables
+    let currentCode = "";
+    let motionVideoUrl = "";
+    let messageVideoUrl = "";
+    let activeMediaMode = "message"; // "motion" or "message"
+    let isAudioMuted = true;
+    let isMarkerDetected = false;
+    let markerLostTimeout = null;
 
-        videoPlanes.forEach((plane) => {
-          if (plane.getAttribute("width") === "6.3") {
-            // Only update sparkle marker video
-            plane.setAttribute("width", width);
-          }
-        });
-      }
-    }
+    const videoEl = document.getElementById("arVideoSource");
+    const targetOverlay = document.getElementById("targetOverlay");
+    const trackingActiveBadge = document.getElementById("trackingActiveBadge");
 
-    // Function to get URL parameters
-    function getUrlParameter(name) {
-      name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
-      var regex = new RegExp("[\\?&]" + name + "=([^&#]*)");
-      var results = regex.exec(location.search);
-      return results === null
-        ? ""
-        : decodeURIComponent(results[1].replace(/\+/g, " ")).toUpperCase();
-    }
+    // Initialize on load
+    window.addEventListener("DOMContentLoaded", () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const codeParam = urlParams.get("code") || (window.location.hash ? window.location.hash.replace("#", "") : "");
 
-    // Cache for preloaded assets
-    const assetCache = {
-      images: new Map(),
-      audio: new Map()
-    };
-
-    // Function to preload image
-    function preloadImage(src) {
-      return new Promise((resolve, reject) => {
-        if (assetCache.images.has(src)) {
-          resolve(assetCache.images.get(src));
-          return;
-        }
-
-        const img = new Image();
-        img.onload = () => {
-          assetCache.images.set(src, img);
-          resolve(img);
-        };
-        img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
-        img.src = src;
-      });
-    }
-
-    // Function to preload audio/video
-    function preloadAudio(src) {
-      return new Promise((resolve, reject) => {
-        if (assetCache.audio.has(src)) {
-          resolve(assetCache.audio.get(src));
-          return;
-        }
-
-        const audio = new Audio();
-        audio.preload = 'auto';
-        audio.oncanplaythrough = () => {
-          assetCache.audio.set(src, audio);
-          resolve(audio);
-        };
-        audio.onerror = () => reject(new Error(`Failed to load audio: ${src}`));
-        audio.src = src;
-        audio.load();
-      });
-    }
-
-    // Preload all content assets on page load
-    function preloadContentAssets(contentData) {
-      const validItems = contentData.filter(item =>
-        item.photo_url && item.photo_url.trim() !== ''
-      );
-
-      if (validItems.length === 0) {
-        console.log('No valid items to preload');
-        return;
-      }
-
-      console.log(`📥 Preloading ${validItems.length} assets...`);
-
-      // Preload all images and audio
-      const preloadPromises = [];
-
-      for (let i = 0; i < validItems.length; i++) {
-        const item = validItems[i];
-
-        // Preload image
-        if (item.photo_url && item.photo_url.trim() !== '') {
-          preloadPromises.push(
-            preloadImage(item.photo_url)
-              .then(() => console.log(`✅ Image ${i + 1}/${validItems.length} preloaded`))
-              .catch((error) => console.warn(`⚠️ Image ${i + 1} failed to preload:`, error))
-          );
-        }
-
-        // Preload audio (prefer audio_url, fallback to video_url)
-        const audioUrl = item.audio_url || item.video_url || '';
-        if (audioUrl && audioUrl.trim() !== '') {
-          preloadPromises.push(
-            preloadAudio(audioUrl)
-              .then(() => console.log(`✅ Audio ${i + 1}/${validItems.length} preloaded`))
-              .catch((error) => console.warn(`⚠️ Audio ${i + 1} failed to preload:`, error))
-          );
-        }
-      }
-
-      // Wait for all assets to load (don't block, just log progress)
-      Promise.allSettled(preloadPromises).then(() => {
-        console.log('✅ All assets preloaded and cached');
-      });
-    }
-
-    // Global state for slideshow
-    const slideshowState = {
-      currentIndex: 0,
-      isRightSide: true,
-      validItems: [],
-      isRunning: false,
-      timeout: null,
-      runId: 0,
-      isMuted: false
-    };
-
-    // Helper functions exposed globally
-    window.pauseSlideshow = function () {
-      console.log('Pausing slideshow...');
-      slideshowState.isRunning = false;
-
-      if (slideshowState.timeout) {
-        clearTimeout(slideshowState.timeout);
-        slideshowState.timeout = null;
-      }
-
-      const contentAudio = document.getElementById('content-audio');
-      if (contentAudio) {
-        contentAudio.pause();
-        contentAudio.currentTime = 0;
-      }
-
-      const leftImage = document.getElementById('top-left-image');
-      const rightImage = document.getElementById('top-right-image');
-
-      if (leftImage) leftImage.style.left = '-50svh';
-      if (rightImage) rightImage.style.right = '-50svh';
-    };
-
-    window.resumeSlideshowNext = function () {
-      console.log('Resuming slideshow from next item...');
-      if (!window.sequentialContentData) return;
-
-      slideshowState.isRunning = true;
-      slideshowState.runId++; // Invalidates any previous pending async calls
-
-      // Move to next item immediately
-      slideshowState.currentIndex++;
-      slideshowState.isRightSide = !slideshowState.isRightSide;
-
-      showNextImage();
-    };
-
-    // Core slideshow logic
-    async function showNextImage() {
-      // Capture current runId
-      const thisRunId = slideshowState.runId;
-
-      if (!slideshowState.isRunning || slideshowState.validItems.length === 0) return;
-
-      // Reset index if out of bounds
-      if (slideshowState.currentIndex >= slideshowState.validItems.length) {
-        console.log('All images displayed, looping after 15s...');
-        slideshowState.timeout = setTimeout(() => {
-          if (slideshowState.isRunning && slideshowState.runId === thisRunId) {
-            slideshowState.currentIndex = 0;
-            // Don't reset isRightSide, let it alternate naturally
-            showNextImage();
-          }
-        }, 15000);
-        return;
-      }
-
-
-      // Wrap index around if modified externally to be very large, or handle as above
-      // The above logic handles "end of list", but if we want infinite loop immediately after closing:
-      if (slideshowState.currentIndex >= slideshowState.validItems.length) {
-        slideshowState.currentIndex = 0; // Just in case resumeSlideshowNext pushed it over
-      }
-
-
-      const item = slideshowState.validItems[slideshowState.currentIndex];
-      const leftImage = document.getElementById('top-left-image');
-      const rightImage = document.getElementById('top-right-image');
-      const contentAudio = document.getElementById('content-audio');
-
-      if (!leftImage || !rightImage || !contentAudio) return;
-
-      const currentImage = slideshowState.isRightSide ? rightImage : leftImage;
-      const audioUrl = item.audio_url || item.video_url || '';
-
-      // Preload
-      try {
-        await preloadImage(item.photo_url);
-      } catch (e) {
-        console.warn('Preload failed', e);
-      }
-
-      currentImage.src = item.photo_url;
-
-      // Wait for image load
-      await new Promise(resolve => {
-        if (currentImage.complete) resolve();
-        else {
-          currentImage.onload = resolve;
-          currentImage.onerror = resolve;
-        }
-      });
-
-      if (slideshowState.runId !== thisRunId) return; // Check concurrency
-
-
-      if (audioUrl && audioUrl.trim() !== '') {
-        try { await preloadAudio(audioUrl); } catch (e) { }
-
-
-        contentAudio.src = audioUrl;
-        contentAudio.muted = slideshowState.isMuted;
-        contentAudio.volume = 1.0;
-        contentAudio.load();
-
-        // Wait for audio ready
-        await new Promise(resolve => {
-          if (contentAudio.readyState >= 3) resolve();
-          else {
-            const h = () => {
-              contentAudio.removeEventListener('canplay', h);
-              resolve();
-            };
-            contentAudio.addEventListener('canplay', h);
-            setTimeout(() => {
-              contentAudio.removeEventListener('canplay', h);
-              resolve();
-            }, 5000);
-          }
-        });
-
-        if (slideshowState.runId !== thisRunId) return; // Check concurrency
-
-        if (!slideshowState.isRunning) return; // Check again in case paused during await
-
-        // Show
-        if (slideshowState.isRightSide) rightImage.style.right = '-5svh';
-        else leftImage.style.left = '-5svh';
-
-        console.log(`Showing image ${slideshowState.currentIndex + 1}`);
-
-        contentAudio.play().then(() => {
-          const onEnded = () => {
-            contentAudio.removeEventListener('ended', onEnded);
-
-            // Hide
-            if (slideshowState.isRightSide) rightImage.style.right = '-50svh';
-            else leftImage.style.left = '-50svh';
-
-            slideshowState.timeout = setTimeout(() => {
-              if (slideshowState.isRunning && slideshowState.runId === thisRunId) {
-                slideshowState.currentIndex++;
-                slideshowState.isRightSide = !slideshowState.isRightSide;
-                showNextImage();
-              }
-            }, 3000);
-          };
-          contentAudio.addEventListener('ended', onEnded, { once: true });
-        }).catch(e => {
-          console.error('Audio play error', e);
-          // Fallback
-          slideshowState.timeout = setTimeout(() => {
-            if (slideshowState.isRightSide) rightImage.style.right = '-50svh';
-            else leftImage.style.left = '-50svh';
-
-            slideshowState.timeout = setTimeout(() => {
-              if (slideshowState.isRunning && slideshowState.runId === thisRunId) {
-                slideshowState.currentIndex++;
-                slideshowState.isRightSide = !slideshowState.isRightSide;
-                showNextImage();
-              }
-            }, 3000);
-          }, 3000);
-        });
+      if (codeParam) {
+        currentCode = codeParam.toUpperCase().trim();
+        initSession();
       } else {
-        // No audio
-        if (slideshowState.runId !== thisRunId) return; // Check concurrency
-        if (!slideshowState.isRunning) return;
-
-        if (slideshowState.isRightSide) rightImage.style.right = '-5svh';
-        else leftImage.style.left = '-5svh';
-
-        setTimeout(() => {
-          // Check runId again before hiding/proceeding? 
-          if (slideshowState.runId !== thisRunId || !slideshowState.isRunning) {
-            // If interrupted, ensure we hide images if they were shown by this run
-            return;
-          }
-
-          if (slideshowState.isRightSide) rightImage.style.right = '-50svh';
-          else leftImage.style.left = '-50svh';
-
-          slideshowState.timeout = setTimeout(() => {
-            if (slideshowState.isRunning && slideshowState.runId === thisRunId) {
-              slideshowState.currentIndex++;
-              slideshowState.isRightSide = !slideshowState.isRightSide;
-              showNextImage();
-            }
-          }, 3000);
-        }, 3000);
+        document.getElementById("enterCodeModal").classList.remove("hidden");
       }
+
+      setupMarkerListeners();
+    });
+
+    function submitManualCode() {
+      const input = document.getElementById("inputSessionCode");
+      const val = (input.value || "").toUpperCase().trim();
+      if (!val) return;
+      currentCode = val;
+      document.getElementById("enterCodeModal").classList.add("hidden");
+      const newUrl = window.location.pathname + "?code=" + encodeURIComponent(currentCode);
+      window.history.replaceState(null, "", newUrl);
+      initSession();
     }
 
-    // Function to start sequential image display with audio
-    function startSequentialImageDisplay(contentData) {
-      if (slideshowState.isRunning) return; // Already running
+    async function initSession() {
+      document.getElementById("sessionCodeBadge").textContent = currentCode;
+      document.getElementById("btnBackToGallery").href = `/softfile?code=${encodeURIComponent(currentCode)}`;
+      document.getElementById("headerStatusText").textContent = `LOADING: ${currentCode}...`;
 
-      // Filter items that have photo_url
-      const newValidItems = contentData.filter(item =>
-        item.photo_url && item.photo_url.trim() !== ''
-      );
-
-      if (newValidItems.length === 0) {
-        console.log('No valid items with photo_url for sequential display');
-        return;
-      }
-
-      slideshowState.validItems = newValidItems;
-
-      const leftImage = document.getElementById('top-left-image');
-      const rightImage = document.getElementById('top-right-image');
-      const contentAudio = document.getElementById('content-audio');
-
-      if (!leftImage || !rightImage || !contentAudio) {
-        console.error('Required elements not found for sequential display');
-        return;
-      }
-
-      // Initialize both images to be outside
-      leftImage.style.left = '-50svh';
-      rightImage.style.right = '-50svh';
-
-      // Resume from previous state if possible, otherwise reset
-      // We check if currentIndex is within bounds.
-      if (slideshowState.currentIndex >= slideshowState.validItems.length) {
-        slideshowState.currentIndex = 0;
-      }
-      // Note: We do NOT reset isRightSide, to preserve pattern continuity
-      // But if it's the very first run (runId 0), we might ensure defaults?
-      // slideshowState.runId is initialized to 0. 
-      if (slideshowState.runId === 0 && slideshowState.currentIndex === 0) {
-        slideshowState.isRightSide = true;
-      }
-
-      slideshowState.isRunning = true;
-      slideshowState.runId++;
-
-      showNextImage();
-    }
-
-    // Function to render letters in horizontal story list (circular buttons with letter SVGs)
-    async function renderLettersBottomLeft(lettersData) {
-      console.log('renderLettersBottomLeft called with data:', lettersData);
-      const lettersListBottom = document.getElementById('letters-list-bottom');
-      if (!lettersListBottom) {
-        console.error('letters-list-bottom element not found');
-        return;
-      }
-
-      // Setup scrollbar visibility on scroll (only once)
-      if (!lettersListBottom.dataset.scrollbarSetup) {
-        let scrollTimeout;
-        lettersListBottom.addEventListener('scroll', () => {
-          lettersListBottom.classList.add('scrolling');
-          clearTimeout(scrollTimeout);
-          scrollTimeout = setTimeout(() => {
-            lettersListBottom.classList.remove('scrolling');
-          }, 1000); // Hide scrollbar 1 second after scrolling stops
-        });
-        lettersListBottom.dataset.scrollbarSetup = 'true';
-      }
-
-      // Clear existing letters
-      lettersListBottom.innerHTML = '';
-
-      if (!lettersData || lettersData.length === 0) {
-        console.log('No letters data to render');
-        return;
-      }
-
-      console.log('Rendering', lettersData.length, 'letters');
-
-      // Import createSVGComponent dynamically
-      const { createSVGComponent } = await import('./svg-component.js');
-
-      // Color palette for sequential assignment
-      const colorPalette = [
-        '90FF77',
-        'FF5627',
-        '008177',
-        'FFC61C',
-        'FF443D',
-        '8142FF',
-        '28B7FF',
-        'FF7ADC'
-      ];
-
-      lettersData.forEach((letter, i) => {
-        // Create unique ID for filter IDs
-        const uniqueId = `letter_story_${i}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
-        // Get sequential color from palette
-        const colorIndex = i % colorPalette.length;
-        const selectedColor = colorPalette[colorIndex];
-
-        // Create SVG with sequential color
-        const svg = createSVGComponent(selectedColor, uniqueId);
-
-        // Create circular story button (like in provided HTML) - bigger size
-        const storyButton = document.createElement('div');
-        storyButton.className = 'story-button';
-        storyButton.style.height = 'auto';
-        storyButton.style.minWidth = '80px';
-        storyButton.style.width = '80px';
-        storyButton.style.overflow = 'visible';
-        storyButton.style.position = 'relative';
-        storyButton.style.cursor = 'pointer';
-        storyButton.style.transition = 'transform 0.3s ease';
-        storyButton.style.flexShrink = '0'; // Prevent shrinking
-        
-        // Add margin-left to first letter and margin-right to last letter
-        if (i === 0) {
-          storyButton.style.marginLeft = '15px';
-        }
-        if (i === lettersData.length - 1) {
-          storyButton.style.marginRight = '15px';
-        }
-
-        // Store letter data
-        storyButton.dataset.letterData = JSON.stringify({
-          video_url: letter.video_url || '',
-          audio_url: letter.audio_url || '',
-          message: letter.message || '',
-          name: letter.name || 'Anonymous',
-          photo_url: letter.photo_url || ''
-        });
-
-        // Make SVG fit in circular container - bigger
-        svg.style.width = '100%';
-        svg.style.height = '100%';
-        svg.style.display = 'block';
-        svg.style.objectFit = 'cover';
-
-        // Create wrapper for SVG to contain it
-        const svgWrapper = document.createElement('div');
-        svgWrapper.style.width = '100%';
-        svgWrapper.style.height = '100%';
-        svgWrapper.style.overflow = 'hidden';
-        svgWrapper.style.position = 'relative';
-        svgWrapper.appendChild(svg);
-
-        // Add name text at bottom right (overlay on SVG)
-        const nameText = document.createElement('div');
-        nameText.textContent = letter.name || 'Anonymous';
-        nameText.style.fontFamily = "'Playpen Sans', sans-serif";
-        nameText.style.position = 'absolute';
-        nameText.style.bottom = '8%';
-        nameText.style.right = '8%';
-        nameText.style.fontSize = '11px';
-        nameText.style.fontWeight = '600';
-        nameText.style.color = '#000000';
-        nameText.style.pointerEvents = 'none';
-        nameText.style.zIndex = '10';
-        nameText.style.whiteSpace = 'nowrap';
-        nameText.style.textShadow = '0 1px 2px rgba(255, 255, 255, 0.8)';
-        nameText.style.maxWidth = '70%';
-        nameText.style.overflow = 'hidden';
-        nameText.style.textOverflow = 'ellipsis';
-
-        // Append SVG wrapper and name
-        storyButton.appendChild(svgWrapper);
-        storyButton.appendChild(nameText);
-
-        // Add click handler
-        storyButton.addEventListener('click', (e) => {
-          e.stopPropagation();
-          // Remove active class from all buttons
-          document.querySelectorAll('.story-button').forEach((btn) => btn.classList.remove('active'));
-          // Add active class to clicked button
-          storyButton.classList.add('active');
-
-          const letterData = JSON.parse(storyButton.dataset.letterData);
-
-          // Dispatch custom event to open letter detail
-          const event = new CustomEvent('openLetterDetail', {
-            detail: {
-              letterData: {
-                video_url: letterData.video_url,
-                audio_url: letterData.audio_url,
-                message: letterData.message,
-                name: letterData.name,
-                photo_url: letterData.photo_url
-              }
-            }
-          });
-          document.dispatchEvent(event);
-        });
-
-        lettersListBottom.appendChild(storyButton);
-      });
-      
-      // Ensure the list scrolls to the left (first letter) after rendering
-      // Use setTimeout to ensure DOM is updated
-      setTimeout(() => {
-        lettersListBottom.scrollLeft = 0;
-        // Force scroll to ensure first letter is visible on mobile
-        requestAnimationFrame(() => {
-          lettersListBottom.scrollLeft = 0;
-        });
-      }, 0);
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-      // Ensure letters list is hidden on page load
-      const lettersListBottom = document.getElementById('letters-list-bottom');
-      if (lettersListBottom) {
-        lettersListBottom.style.display = 'none';
-      }
-
-      // Load the video but keep it paused
-      videoElement.load();
-      videoElement.play();
-
-      // Try to preload the video
-      videoElement.addEventListener("loadedmetadata", function () {
-        console.log("Video metadata loaded");
-        updateVideoHeight();
-        updateVideoWidth();
-      });
-
-      // Update dimensions when video source changes
-      videoElement.addEventListener("loadeddata", function () {
-        updateVideoHeight();
-        updateVideoWidth();
-      });
-
-      const orderID = getUrlParameter("orderID");
-      console.log("Fetching content for orderID:", orderID);
-
-      if (!orderID) {
-        console.log("No orderID found, redirecting to base URL...");
-        window.location.href =
-          "https://slamatslimit.byc.plus/experience-app/ar";
-        return;
-      }
-
-      // Fetch content from API with reCAPTCHA protection
-      const RECAPTCHA_SITE_KEY = '6Lcvk2AsAAAAAGcS4NE0cPn3bOM9TJf39w6-9m0F';
-      
-      // Get reCAPTCHA token and fetch gallery data
-      grecaptcha.ready(async () => {
-        try {
-          // Get reCAPTCHA token
-          let recaptchaToken = '';
+      try {
+        // 1. Direct Supabase Query
+        if (supabaseClient) {
           try {
-            recaptchaToken = await grecaptcha.execute(RECAPTCHA_SITE_KEY, { action: 'gallery_fetch' });
-            console.log('reCAPTCHA token obtained');
-          } catch (recaptchaError) {
-            console.error('Failed to get reCAPTCHA token:', recaptchaError);
-          }
+            const { data: sessionRows } = await supabaseClient
+              .from("tjf_sessions")
+              .select("*")
+              .eq("code", currentCode)
+              .limit(1);
 
-          // Build URL with reCAPTCHA token
-          const apiUrl = `https://slamatslimit.byc.plus/api/gallery?orderId=${orderID}&recaptchaToken=${encodeURIComponent(recaptchaToken)}`;
-          
-          const response = await fetch(apiUrl);
-          console.log("API Response status:", response.status);
-          
-          if (!response.ok) {
-            if (response.status === 403) {
-              console.error('reCAPTCHA verification failed');
-              throw new Error('reCAPTCHA verification failed');
+            if (sessionRows && sessionRows.length > 0) {
+              const row = sessionRows[0];
+              if (row.frame_video_url) motionVideoUrl = row.frame_video_url;
+              if (row.video_message_url) messageVideoUrl = row.video_message_url;
             }
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
-          
-          const data = await response.json();
-          console.log("API Response data:", data);
-          
-          if (!data || data.length === 0) {
-            console.log(
-              "No data received, redirecting to order-specific URL..."
-            );
-            window.location.href = `https://slamatslimit.byc.plus/experience-app/ar/${orderID}`;
-            return;
+          } catch (dbErr) {
+            console.warn("[AR] DB query notice:", dbErr);
           }
 
-          // Update AR images with data from API/Supabase
-          initializeImageGrids(data);
+          // Also check storage files if URLs not yet found
+          if (!motionVideoUrl || !messageVideoUrl) {
+            try {
+              const { data: storageFiles } = await supabaseClient
+                .storage
+                .from(STORAGE_BUCKET)
+                .list("photos", { limit: 100 });
 
-          // Render letters in bottom list
-          renderLettersBottomLeft(data).catch((error) => {
-            console.error("Error rendering letters:", error);
-          });
-
-          // Preload content assets on page load (while waiting for marker)
-          preloadContentAssets(data);
-
-          // Store content data globally for sequential display (will start when marker detected)
-          window.sequentialContentData = data;
-        } catch (error) {
-          console.error("Error fetching content:", error);
-        }
-      });
-
-      const messageModal = document.getElementById("messageModal");
-      const modalMessage = document.getElementById("modalMessage");
-
-      // Add the mute button to the right of the record button
-      const muteButton = document.createElement("div");
-      muteButton.id = "muteButton";
-      muteButton.style.position = "fixed";
-      muteButton.style.bottom = "4.5svh";
-      muteButton.style.left = "calc(50% + 13svh)";
-      muteButton.style.transform = "translateX(-50%)";
-      muteButton.style.width = "5svh";
-      muteButton.style.height = "5svh";
-      muteButton.style.backgroundColor = "#FFC61C";
-      muteButton.style.borderRadius = "50%";
-      muteButton.style.display = "flex";
-      muteButton.style.justifyContent = "center";
-      muteButton.style.alignItems = "center";
-      muteButton.style.cursor = "pointer";
-      muteButton.style.zIndex = "20";
-      muteButton.style.border = "none";
-      muteButton.style.padding = "0";
-      muteButton.innerHTML = `
-          <svg id="sound-on" style="width: 60%; height: 60%; display: block;" xmlns="http://www.w3.org/2000/svg" height="24"
-            viewBox="0 0 24 24" width="24">
-            <path d="M0 0h24v24H0z" fill="none" />
-            <path
-              d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"
-              fill="#000000" />
-          </svg>
-          <svg id="sound-off" style="width: 60%; height: 60%; display: none;" xmlns="http://www.w3.org/2000/svg" height="24"
-            viewBox="0 0 24 24" width="24">
-            <path d="M0 0h24v24H0z" fill="none" />
-            <path
-              d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"
-              fill="#000000" />
-          </svg>
-        `;
-      document.body.appendChild(muteButton);
-
-      // Add functionality to toggle mute state
-      const soundOn = muteButton.querySelector("#sound-on");
-      const soundOff = muteButton.querySelector("#sound-off");
-      // Remove local isMuted, use slideshowState.isMuted
-
-      muteButton.addEventListener("click", () => {
-        slideshowState.isMuted = !slideshowState.isMuted;
-        const isMuted = slideshowState.isMuted;
-
-        // Toggle video mute
-        if (videoElement) {
-          videoElement.muted = isMuted;
-        }
-
-        // Toggle slideshow audio mute
-        const contentAudio = document.getElementById('content-audio');
-        if (contentAudio) {
-          contentAudio.muted = isMuted;
-        }
-
-        // Toggle background music
-        const bgMusic = document.getElementById('background-music');
-        if (bgMusic) {
-          if (isMuted) {
-            bgMusic.muted = true;
-            bgMusic.pause();
-          } else {
-            bgMusic.muted = false;
-            if (bgMusic.paused) {
-              bgMusic.play().catch(e => console.log('Background music play error:', e));
+              if (storageFiles && storageFiles.length > 0) {
+                storageFiles.forEach(sf => {
+                  const name = sf.name;
+                  if (!name || !name.includes(currentCode)) return;
+                  const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/photos/${name}`;
+                  if (name.includes("_message.")) {
+                    messageVideoUrl = publicUrl;
+                  } else if (name.includes("_video.")) {
+                    motionVideoUrl = publicUrl;
+                  }
+                });
+              }
+            } catch (stErr) {
+              console.warn("[AR] Storage query notice:", stErr);
             }
           }
         }
 
-        // Toggle icon visibility
-        if (soundOn && soundOff) {
-          if (isMuted) {
-            soundOn.style.display = "none";
-            soundOff.style.display = "block";
-          } else {
-            soundOn.style.display = "block";
-            soundOff.style.display = "none";
+        // 2. Fallback to local server API if still missing
+        if (!motionVideoUrl && !messageVideoUrl) {
+          try {
+            const res = await fetch(`/api/session/${encodeURIComponent(currentCode)}/files`);
+            const data = await res.json();
+            if (data.success && data.files) {
+              if (data.files.frame_video && data.files.frame_video.url) {
+                motionVideoUrl = data.files.frame_video.url;
+              }
+              if (data.files.video_message && data.files.video_message.url) {
+                messageVideoUrl = data.files.video_message.url;
+              }
+            }
+          } catch (apiErr) {
+            console.warn("[AR] Local API query notice:", apiErr);
           }
         }
-      });
-
-
-
-      // Add event listener to close the modal when clicking on the overlay
-      messageModal.addEventListener("click", (event) => {
-        if (event.target === messageModal) {
-          messageModal.style.display = "none";
-        }
-      });
-
-      const closeModalButton = document.getElementById("closeModalButton");
-      closeModalButton.addEventListener("click", () => {
-        messageModal.style.display = "none";
-      });
-
-      // Close handlers for letter detail modal
-      const closeLetterDetail = () => {
-        if (lettersDetail) {
-          // Stop video and audio when closing
-          if (ruryVideo) {
-            ruryVideo.pause();
-            ruryVideo.currentTime = 0;
-          }
-          if (ruryAudio) {
-            ruryAudio.pause();
-            ruryAudio.currentTime = 0;
-          }
-
-          // Show the AR video again
-          const arsaVideo = document.getElementById('arsa-video');
-          if (arsaVideo) {
-            arsaVideo.style.display = '';
-          }
-
-          lettersDetail.style.display = 'none';
-
-          // Resulme slideshow from next item
-          resumeSlideshowNext();
-        }
-      };
-
-      if (lettersDetailOverlay) {
-        lettersDetailOverlay.addEventListener('click', closeLetterDetail);
+      } catch (err) {
+        console.error("[AR] Session loading error:", err);
       }
 
-      // Note: If you have a specific close button inside letters-detail, add event listener here
-      // For example:
-      // const closeLetterBtn = document.getElementById('close-letter-btn');
-      // if (closeLetterBtn) closeLetterBtn.addEventListener('click', closeLetterDetail);
+      console.log(`[AR] Session ${currentCode} loaded: motion=${motionVideoUrl}, message=${messageVideoUrl}`);
 
-      const recordButton = document.getElementById("recordButton");
-      const recordInner = document.getElementById("recordInner");
-      let isRecording = false;
+      // Decide initial media mode
+      if (messageVideoUrl) {
+        activeMediaMode = "message";
+      } else if (motionVideoUrl) {
+        activeMediaMode = "motion";
+      }
 
-      recordButton.addEventListener("click", () => {
-        isRecording = !isRecording;
-        if (isRecording) {
-          recordInner.style.borderRadius = "0";
-          recordInner.style.width = "20px";
-          recordInner.style.height = "20px";
+      // Update UI Switcher visibility
+      updateSwitcherUi();
+      loadActiveVideoSource();
+    }
+
+    function updateSwitcherUi() {
+      const btnMotion = document.getElementById("btnModeMotion");
+      const btnMessage = document.getElementById("btnModeMessage");
+      const switcher = document.getElementById("videoSourceSwitcher");
+
+      if (!motionVideoUrl && !messageVideoUrl) {
+        document.getElementById("headerStatusText").textContent = "NO VIDEOS FOUND";
+        return;
+      }
+
+      document.getElementById("headerStatusText").textContent = "READY • SCAN PHOTO";
+
+      // If only one video exists, hide the other button
+      if (!motionVideoUrl) btnMotion.classList.add("hidden");
+      else btnMotion.classList.remove("hidden");
+
+      if (!messageVideoUrl) btnMessage.classList.add("hidden");
+      else btnMessage.classList.remove("hidden");
+
+      if (!motionVideoUrl || !messageVideoUrl) {
+        // Only 1 mode available
+      } else {
+        switcher.classList.remove("hidden");
+      }
+
+      if (activeMediaMode === "message") {
+        btnMessage.className = "px-3.5 py-1.5 text-[11px] font-extrabold tracking-wider uppercase border border-charcoal bg-wine text-white transition-all cursor-pointer rounded-sm shadow-sm";
+        btnMotion.className = "px-3.5 py-1.5 text-[11px] font-extrabold tracking-wider uppercase border border-charcoal bg-white text-charcoal hover:bg-cream transition-all cursor-pointer rounded-sm";
+      } else {
+        btnMotion.className = "px-3.5 py-1.5 text-[11px] font-extrabold tracking-wider uppercase border border-charcoal bg-wine text-white transition-all cursor-pointer rounded-sm shadow-sm";
+        btnMessage.className = "px-3.5 py-1.5 text-[11px] font-extrabold tracking-wider uppercase border border-charcoal bg-white text-charcoal hover:bg-cream transition-all cursor-pointer rounded-sm";
+      }
+    }
+
+    function switchMediaMode(mode) {
+      if (mode === "message" && !messageVideoUrl) return;
+      if (mode === "motion" && !motionVideoUrl) return;
+
+      activeMediaMode = mode;
+      updateSwitcherUi();
+      loadActiveVideoSource();
+
+      // If message mode is selected, default to unmuted for voice
+      if (mode === "message" && isAudioMuted) {
+        toggleAudio(false); // Unmute
+      }
+    }
+
+    function loadActiveVideoSource() {
+      const targetUrl = (activeMediaMode === "message") ? (messageVideoUrl || motionVideoUrl) : (motionVideoUrl || messageVideoUrl);
+      if (!targetUrl) return;
+
+      videoEl.pause();
+      videoEl.src = targetUrl;
+      videoEl.muted = isAudioMuted;
+      videoEl.load();
+
+      // Adjust 3D AR Video Plane aspect ratio (3:4 for message, 2:3 for frame animation)
+      const planes = document.querySelectorAll("a-video");
+      planes.forEach(plane => {
+        if (activeMediaMode === "message") {
+          // 3:4 portrait ratio (width 1.5, height 2.0)
+          plane.setAttribute("width", "1.5");
+          plane.setAttribute("height", "2.0");
         } else {
-          recordInner.style.borderRadius = "50%";
-          recordInner.style.width = "30px";
-          recordInner.style.height = "30px";
+          // Frame strip portrait ratio (width 1.4, height 2.1)
+          plane.setAttribute("width", "1.4");
+          plane.setAttribute("height", "2.1");
         }
       });
 
-      const galleryButton = document.getElementById("galleryButton");
-      galleryButton.addEventListener("click", () => {
-        window.location.href = `/gallery.html?orderID=${orderID.toUpperCase()}`;
-      });
+      if (isMarkerDetected) {
+        videoEl.play().catch(e => console.log("[AR] Video play waiting for user gesture:", e));
+      }
+    }
 
-      // Track detected markers and background music state
-      const detectedMarkers = new Set();
-      const backgroundMusic = document.getElementById('background-music');
-      let backgroundMusicStarted = false;
-
-      // Setup background music
-      if (backgroundMusic) {
-        backgroundMusic.volume = 0.3; // Lower volume compared to modal audio (which is 1.0)
-        backgroundMusic.loop = true;
+    // Audio Toggle
+    function toggleAudio(forceState) {
+      if (typeof forceState === "boolean") {
+        isAudioMuted = forceState;
+      } else {
+        isAudioMuted = !isAudioMuted;
       }
 
-      // Add event listeners for both markers
-      document.querySelectorAll("a-marker").forEach((marker) => {
-        marker.addEventListener("markerFound", function () {
-          console.log("Marker is found");
-          const markerId = marker.id || marker.getAttribute('url');
-          detectedMarkers.add(markerId);
+      videoEl.muted = isAudioMuted;
+      const icon = document.getElementById("audioIcon");
+      const text = document.getElementById("audioText");
 
-          // Ensure video is loaded and play it
-          videoElement.load();
-          const playPromise = videoElement.play();
-          if (playPromise !== undefined) {
-            playPromise.catch((error) => {
-              console.log("Error playing video:", error);
-              // If autoplay with unmute fails, try playing muted
-              if (error.name === "NotAllowedError") {
-                videoElement.muted = true;
-                videoElement
-                  .play()
-                  .catch((e) =>
-                    console.log("Even muted autoplay failed:", e)
-                  );
-              }
-            });
-          }
-          if (pauseTimeout) {
-            clearTimeout(pauseTimeout);
-          }
+      if (isAudioMuted) {
+        icon.textContent = "🔇";
+        text.textContent = "Muted";
+      } else {
+        icon.textContent = "🔊";
+        text.textContent = "Sound On";
+      }
+    }
 
-          videoElement.muted = false; // Unmute when marker is detected
-          videoElement.volume = 1; // Set volume to maximum
+    // Marker Event Listeners
+    function setupMarkerListeners() {
+      const markers = document.querySelectorAll("a-marker");
+      markers.forEach(marker => {
+        marker.addEventListener("markerFound", () => {
+          console.log("[AR] Marker detected:", marker.id);
+          clearTimeout(markerLostTimeout);
+          isMarkerDetected = true;
 
-          // Show letters list when marker is found
-          const lettersListBottom = document.getElementById('letters-list-bottom');
-          if (lettersListBottom) {
-            lettersListBottom.style.display = 'flex';
-          }
+          // Update HUD
+          targetOverlay.classList.add("opacity-0", "pointer-events-none");
+          trackingActiveBadge.classList.remove("hidden");
 
-          // Start sequential image display when marker is detected (only if not already running)
-          if (window.sequentialContentData && !slideshowState.isRunning) {
-            startSequentialImageDisplay(window.sequentialContentData);
-          }
-
-          // Play background music when marker is found for the first time
-          if (backgroundMusic && !backgroundMusicStarted) {
-            backgroundMusic.play().catch(e => {
-              console.log('Background music play error:', e);
-              // Retry after a short delay
-              setTimeout(() => {
-                backgroundMusic.play().catch(err => console.log('Background music retry error:', err));
-              }, 500);
-            });
-            backgroundMusicStarted = true;
-          } else if (backgroundMusic && backgroundMusicStarted) {
-            // Resume background music if it was paused (don't reset position)
-            if (backgroundMusic.paused) {
-              backgroundMusic.play().catch(e => console.log('Background music resume error:', e));
-            }
-          }
-
-          // Hide the overlay when the marker is found
-          const markerNotFoundOverlay = document.getElementById(
-            "markerNotFoundOverlay"
-          );
-          if (!markerDetectedOnce) {
-            markerNotFoundOverlay.style.transition = "opacity 0.5s ease";
-            markerNotFoundOverlay.style.opacity = "0";
-            setTimeout(() => {
-              markerNotFoundOverlay.style.display = "none";
-            }, 500); // Wait for the transition to complete
-            markerDetectedOnce = true;
+          // Play active video
+          if (videoEl && videoEl.src) {
+            videoEl.play().catch(err => console.warn("[AR] Autoplay notice:", err));
           }
         });
 
-        marker.addEventListener("markerLost", function () {
-          console.log("Marker is lost");
-          const markerId = marker.id || marker.getAttribute('url');
-          detectedMarkers.delete(markerId);
-
-          pauseTimeout = setTimeout(() => {
-            // Only pause if marker is still lost (check if it's back in detectedMarkers)
-            if (!detectedMarkers.has(markerId)) {
-              videoElement.pause();
-              console.log("Video and audio paused due to marker loss");
-
-              // Check if a letter detail modal is open - if so, don't pause BGM
-              const lettersDetail = document.getElementById('letters-detail');
-              const isLetterOpen = lettersDetail && lettersDetail.style.display !== 'none';
-              
-              // Pause background music when marker is lost, but only if no letter is open
-              if (backgroundMusic && !backgroundMusic.paused && !isLetterOpen) {
-                backgroundMusic.pause();
-              }
-
-              // Hide letters list when all markers are lost
-              if (detectedMarkers.size === 0) {
-                const lettersListBottom = document.getElementById('letters-list-bottom');
-                if (lettersListBottom) {
-                  lettersListBottom.style.display = 'none';
-                }
-
-                // Hide sequential images and stop audio when all markers are lost
-                const leftImage = document.getElementById('top-left-image');
-                const rightImage = document.getElementById('top-right-image');
-                const contentAudio = document.getElementById('content-audio');
-
-                if (leftImage) {
-                  leftImage.style.left = '-50svh';
-                }
-                if (rightImage) {
-                  rightImage.style.right = '-50svh';
-                }
-                if (contentAudio) {
-                  contentAudio.pause();
-                  contentAudio.currentTime = 0;
-                }
-
-                // Stop sequential display
-                pauseSlideshow();
-              }
-
-              // Only show the overlay when ALL markers are lost
-              if (detectedMarkers.size === 0) {
-                const markerNotFoundOverlay = document.getElementById(
-                  "markerNotFoundOverlay"
-                );
-                markerNotFoundOverlay.style.display = "block";
-              }
-            }
-          }, 2000); // 2 second delay before hiding content
-
+        marker.addEventListener("markerLost", () => {
+          console.log("[AR] Marker lost");
+          clearTimeout(markerLostTimeout);
+          markerLostTimeout = setTimeout(() => {
+            isMarkerDetected = false;
+            targetOverlay.classList.remove("opacity-0", "pointer-events-none");
+            trackingActiveBadge.classList.add("hidden");
+            if (videoEl) videoEl.pause();
+          }, 800);
         });
       });
-    });
+    }
 
-    window.addEventListener("beforeunload", () => {
-      const videoElement = document.getElementById("arsa-video");
-      if (videoElement) {
-        videoElement.pause();
+    // Helper Modals
+    function toggleMarkerModal(show) {
+      const modal = document.getElementById("markerModal");
+      if (show) modal.classList.remove("hidden");
+      else modal.classList.add("hidden");
+    }
+
+    function setMarkerPreview(src, name) {
+      document.getElementById("markerPreviewImg").src = src;
+    }
+
+    // Snapshot of AR Scene
+    function captureArSnapshot() {
+      try {
+        const scene = document.querySelector("a-scene");
+        if (!scene) return;
+        const canvas = scene.components.screenshot ? scene.components.screenshot.getCanvas("perspective") : null;
+        if (canvas) {
+          const a = document.createElement("a");
+          a.download = `TJF_${currentCode}_AR_Snapshot.png`;
+          a.href = canvas.toDataURL("image/png");
+          a.click();
+        } else {
+          alert("Snapshot ready! You can also take a screenshot with your phone.");
+        }
+      } catch (err) {
+        console.warn("Snapshot notice:", err);
       }
-    });
-
-    // Letter detail modal functionality
-    const lettersDetail = document.getElementById('letters-detail');
-    const lettersDetailOverlay = document.getElementById('letters-detail-overlay');
-    const videoComponent = document.getElementById('video-component');
-    const letterComponent = document.getElementById('letter-component');
-    const ruryVideo = document.getElementById('rury-video');
-    const ruryAudio = document.getElementById('rury-audio');
-    const audioIcon = document.getElementById('audio-icon');
-
-    // Listen for letter detail open event
-    document.addEventListener('openLetterDetail', (e) => {
-      if (lettersDetail && e.detail && e.detail.letterData) {
-        const letterData = e.detail.letterData;
-
-        // Ensure BGM continues playing when letter is opened
-        const backgroundMusic = document.getElementById('background-music');
-        if (backgroundMusic && backgroundMusic.paused) {
-          backgroundMusic.play().catch(e => {
-            console.log('Background music play error when opening letter:', e);
-          });
-        }
-
-        // Pause sequential display
-        pauseSlideshow();
-
-        // Hide the AR video behind letters
-        const arsaVideo = document.getElementById('arsa-video');
-        if (arsaVideo) {
-          arsaVideo.style.display = 'none';
-        }
-
-        // Hide both video and audio initially
-        if (ruryVideo) {
-          ruryVideo.style.display = 'none';
-          ruryVideo.src = '';
-          ruryVideo.pause();
-        }
-        if (ruryAudio) {
-          ruryAudio.style.display = 'none';
-          ruryAudio.src = '';
-          ruryAudio.pause();
-        }
-        if (audioIcon) {
-          audioIcon.style.display = 'none';
-        }
-
-        // Update media component - prioritize video, then audio
-        // Support both video_url/audio_url (from API) and video/audio (from mailbox)
-        const hasVideo = (letterData.video_url && letterData.video_url.trim() !== '') ||
-          (letterData.video && letterData.video.trim() !== '');
-        const hasAudio = (letterData.audio_url && letterData.audio_url.trim() !== '') ||
-          (letterData.audio && letterData.audio.trim() !== '');
-
-        const videoUrl = letterData.video_url || letterData.video || '';
-        const audioUrl = letterData.audio_url || letterData.audio || '';
-
-        if (hasVideo && ruryVideo && videoUrl) {
-          if (audioIcon) audioIcon.style.display = 'none';
-          ruryVideo.src = videoUrl;
-          ruryVideo.style.display = 'block';
-          const playVideo = () => {
-            ruryVideo.play().catch(e => {
-              console.log('Video autoplay error:', e);
-              setTimeout(() => {
-                ruryVideo.play().catch(err => console.log('Video retry error:', err));
-              }, 500);
-            });
-          };
-          if (ruryVideo.readyState >= 2) {
-            playVideo();
-          } else {
-            ruryVideo.addEventListener('canplay', playVideo, { once: true });
-            ruryVideo.load();
-          }
-        } else if (hasAudio && ruryAudio && audioUrl) {
-          if (ruryVideo) ruryVideo.style.display = 'none';
-          if (audioIcon) audioIcon.style.display = 'flex';
-          ruryAudio.muted = false;
-          ruryAudio.volume = 1.0;
-          ruryAudio.src = audioUrl;
-          ruryAudio.style.display = 'block';
-          const playAudio = () => {
-            ruryAudio.muted = false;
-            ruryAudio.volume = 1.0;
-            ruryAudio.play().then(() => {
-              console.log('Audio playing successfully');
-            }).catch(e => {
-              console.log('Audio autoplay error:', e);
-              setTimeout(() => {
-                ruryAudio.muted = false;
-                ruryAudio.volume = 1.0;
-                ruryAudio.play().catch(err => console.log('Audio retry error:', err));
-              }, 500);
-            });
-          };
-          if (ruryAudio.readyState >= 2) {
-            playAudio();
-          } else {
-            ruryAudio.addEventListener('canplay', playAudio, { once: true });
-            ruryAudio.addEventListener('loadeddata', playAudio, { once: true });
-            ruryAudio.addEventListener('canplaythrough', playAudio, { once: true });
-            ruryAudio.load();
-          }
-        }
-
-        // Update photo component
-        const photoImg = document.getElementById('photo-component-img');
-        if (photoImg) {
-          const photoUrl = letterData.photo_url || letterData.photo || '';
-          if (photoUrl && photoUrl.trim() !== '') {
-            photoImg.src = photoUrl;
-            photoImg.style.display = 'block';
-          } else {
-            photoImg.style.display = 'none';
-          }
-        }
-
-        // Update sender name
-        const letterSender = document.getElementById('letter-component-sender');
-        if (letterSender) {
-          const senderName = letterData.name || letterData.senderName || '';
-          if (senderName && senderName.trim() !== '') {
-            letterSender.textContent = senderName;
-            letterSender.style.display = 'block';
-          } else {
-            letterSender.style.display = 'none';
-          }
-        }
-
-        // Update letter text component
-        const letterText = document.getElementById('letter-component-text');
-        if (letterText) {
-          const message = letterData.message || letterData.text || '';
-          if (message) {
-            letterText.textContent = message;
-          }
-        }
-
-        // Center letter if no video and no audio
-        if (!hasVideo && !hasAudio && letterComponent) {
-          letterComponent.style.left = '50%';
-          letterComponent.style.right = 'auto';
-          letterComponent.style.transform = 'translateX(-50%) rotate(1deg)';
-          if (videoComponent) videoComponent.style.display = 'none';
-          const pinSvg = document.getElementById('pin-svg');
-          if (pinSvg) pinSvg.style.display = 'none';
-        } else if (letterComponent) {
-          letterComponent.style.left = '0';
-          letterComponent.style.right = '0';
-          letterComponent.style.transform = 'rotate(1deg)';
-          if (videoComponent) videoComponent.style.display = 'flex';
-          const pinSvg = document.getElementById('pin-svg');
-          if (pinSvg) pinSvg.style.display = 'block';
-        }
-
-        lettersDetail.style.display = 'block';
-      }
-    });
-
-    // Close modal when overlay is clicked
-
+    }
   </script>
 </body>
-
 </html>

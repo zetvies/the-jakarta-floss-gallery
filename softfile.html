@@ -359,6 +359,71 @@
             </div>
           </div>
 
+          <!-- ===== BENTO TILE: VIDEO MESSAGE (VIDEOBOX) ===== -->
+          <div id="sectionVideoMessage" class="hidden lg:col-span-12 bento-card p-6 md:p-8 bg-[#FAF6F0] border-2 border-[#1F201E] flex flex-col md:flex-row items-center justify-between gap-6 shadow-[4px_4px_0px_#1F201E]">
+            <div class="flex-1 flex flex-col gap-3">
+              <div class="flex items-center gap-2">
+                <span class="inline-block bg-[#831C22] text-[#FCF8DD] text-[10px] font-black tracking-widest uppercase px-2.5 py-1 border border-[#1F201E]">
+                  🎬 SPECIAL VIDEO MESSAGE
+                </span>
+                <span class="text-xs text-charcoal/60 font-semibold font-mono">STEREO AUDIO</span>
+              </div>
+              <h3 class="font-instrument text-2xl md:text-3xl text-wine font-bold">Personal Greeting & Message</h3>
+              <p class="text-sm text-charcoal/80 max-w-lg leading-relaxed font-serif">
+                Recorded live inside the Videobox with enhanced vocal audio. Watch, listen, or download your personal greeting directly to your device.
+              </p>
+              <div class="mt-2">
+                <a
+                  id="btnDownloadVideoMessage"
+                  href="#"
+                  download="TJF_Video_Message.mp4"
+                  class="border-2 border-charcoal bg-[#831C22] hover:bg-[#681419] text-white text-xs font-bold tracking-widest uppercase px-4 py-2 shadow-[2px_2px_0px_rgba(31,32,30,1)] active:scale-95 transition-all inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>DOWNLOAD VIDEO MESSAGE</span>
+                </a>
+              </div>
+            </div>
+
+            <!-- Video Player (with audio and controls in 3:4 portrait) -->
+            <div class="w-full md:w-[320px] max-w-full aspect-[3/4] max-h-[480px] bg-black border-2 border-charcoal overflow-hidden shadow-[4px_4px_0px_rgba(31,32,30,0.15)] flex items-center justify-center shrink-0">
+              <video
+                id="messageVideoPlayer"
+                controls
+                playsinline
+                class="w-full h-full object-contain"
+              ></video>
+            </div>
+          </div>
+
+          <!-- ===== BENTO TILE: AR EXPERIENCE LAUNCHER ===== -->
+          <div id="sectionAR" class="lg:col-span-12 bento-card p-6 md:p-8 bg-[#FAF6F0] border-2 border-charcoal flex flex-col md:flex-row items-center justify-between gap-6 shadow-[4px_4px_0px_#1F201E]">
+            <div class="flex-1 flex flex-col gap-2">
+              <div class="flex items-center gap-2">
+                <span class="inline-block bg-[#801A20] text-white text-[10px] font-black tracking-widest uppercase px-2.5 py-1 border border-charcoal">
+                  ✦ AUGMENTED REALITY ✦
+                </span>
+                <span class="text-xs text-charcoal/60 font-semibold font-mono">WEB-AR CAMERA</span>
+              </div>
+              <h3 class="font-instrument text-2xl md:text-3xl text-wine font-bold">Bring Your Photo to Life with AR</h3>
+              <p class="text-sm text-charcoal/80 max-w-xl leading-relaxed font-serif">
+                Point your phone camera at your printed photobox strip or pattern marker to watch your motion video and greeting animate right in the palm of your hand in 3D augmented reality.
+              </p>
+            </div>
+            <a
+              id="btnLaunchAR"
+              href="#"
+              class="border-2 border-charcoal bg-[#801A20] hover:bg-[#631318] text-white text-xs font-bold tracking-widest uppercase px-6 py-3.5 shadow-[3px_3px_0px_rgba(31,32,30,1)] active:scale-95 transition-all inline-flex items-center gap-2 cursor-pointer shrink-0"
+            >
+              <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+              <span>LAUNCH AR EXPERIENCE ⚡</span>
+            </a>
+          </div>
+
           <!-- ===== BENTO TILE 3: RAW PHOTOS GRID (SPAN 12) ===== -->
           <div id="sectionRaw" class="lg:col-span-12 bento-card p-6 md:p-8 bg-white flex flex-col gap-6">
             <div class="flex items-center justify-between border-b-2 border-charcoal/10 pb-3">
@@ -495,12 +560,19 @@
             filesData = {
               frame_result: null,
               frame_video: null,
+              video_message: null,
               raw_photos: [],
               all_matched: [],
             };
 
             if (sessionRow && sessionRow.storage_url) {
               filesData.frame_result = { name: sessionRow.local_filename || "Frame_Result", url: sessionRow.storage_url };
+            }
+            if (sessionRow && sessionRow.video_message_url) {
+              filesData.video_message = { name: "Video_Message.mp4", url: sessionRow.video_message_url };
+            }
+            if (sessionRow && sessionRow.frame_video_url) {
+              filesData.frame_video = { name: "Frame_Video.mp4", url: sessionRow.frame_video_url };
             }
 
             matchedFiles.forEach(sf => {
@@ -512,6 +584,8 @@
                 if (!filesData.raw_photos.some(r => r.name === name)) {
                   filesData.raw_photos.push({ name, url: publicUrl });
                 }
+              } else if (name.includes("_message.")) {
+                filesData.video_message = { name, url: publicUrl };
               } else if (name.includes("_video.")) {
                 filesData.frame_video = { name, url: publicUrl };
               } else if ((name.endsWith(".jpg") || name.endsWith(".png")) && !filesData.frame_result) {
@@ -522,7 +596,7 @@
             // Sort raw photos
             filesData.raw_photos.sort((a, b) => a.name.localeCompare(b.name));
 
-            if (sessionRow || filesData.frame_result || filesData.raw_photos.length > 0) {
+            if (sessionRow || filesData.frame_result || filesData.frame_video || filesData.video_message || filesData.raw_photos.length > 0) {
               foundSuccess = true;
             }
 
@@ -548,9 +622,16 @@
                 filesData = {
                   frame_result: fJson.files.frame_result,
                   frame_video: fJson.files.frame_video,
+                  video_message: fJson.files.video_message,
                   raw_photos: fJson.files.raw_photos || [],
-                  all_matched: (fJson.files.raw_photos || []).concat(fJson.files.frame_result ? [fJson.files.frame_result] : []).concat(fJson.files.frame_video ? [fJson.files.frame_video] : []),
+                  all_matched: (fJson.files.raw_photos || []).concat(fJson.files.frame_result ? [fJson.files.frame_result] : []).concat(fJson.files.frame_video ? [fJson.files.frame_video] : []).concat(fJson.files.video_message ? [fJson.files.video_message] : []),
                 };
+              }
+              if (sJson.video_message_url && !filesData.video_message) {
+                filesData.video_message = { name: "Video_Message.mp4", url: sJson.video_message_url };
+              }
+              if (sJson.frame_video_url && !filesData.frame_video) {
+                filesData.frame_video = { name: "Frame_Video.mp4", url: sJson.frame_video_url };
               }
               foundSuccess = true;
             }
@@ -561,7 +642,7 @@
 
         showLoading(false);
 
-        const hasAnyFile = filesData && (filesData.frame_result || filesData.frame_video || filesData.raw_photos.length > 0);
+        const hasAnyFile = filesData && (filesData.frame_result || filesData.frame_video || filesData.video_message || filesData.raw_photos.length > 0);
 
         if (!foundSuccess && !hasAnyFile) {
           showError("Invalid Access Code 🔍", `We couldn't locate any photo session matching code "${currentCode}". Please verify the code printed on your photobox receipt or scan your QR link again.`);
@@ -593,8 +674,11 @@
 
         if (frameVideo && frameVideo.url) {
           document.getElementById("frameVideoPlayer").src = frameVideo.url;
-          document.getElementById("btnDownloadVideo").href = frameVideo.url;
-          document.getElementById("btnDownloadVideo").classList.remove("hidden");
+          const btnDlVideo = document.getElementById("btnDownloadVideo");
+          btnDlVideo.href = frameVideo.url;
+          const fvExt = frameVideo.url.split(".").pop().split("?")[0] || "mp4";
+          btnDlVideo.download = `TJF_${currentCode}_Motion.${fvExt}`;
+          btnDlVideo.classList.remove("hidden");
         } else {
           document.getElementById("frameVideoPlayer").removeAttribute("src");
           document.getElementById("btnDownloadVideo").classList.add("hidden");
@@ -611,6 +695,31 @@
             `;
             videoContainer.appendChild(notice);
           }
+        }
+
+        // 2b. Render Video Message Section (Videobox)
+        const videoMsg = filesData.video_message;
+        const sectionVideoMsg = document.getElementById("sectionVideoMessage");
+        if (sectionVideoMsg) {
+          if (videoMsg && videoMsg.url) {
+            sectionVideoMsg.classList.remove("hidden");
+            const player = document.getElementById("messageVideoPlayer");
+            if (player) player.src = videoMsg.url;
+            const btnDl = document.getElementById("btnDownloadVideoMessage");
+            if (btnDl) {
+              btnDl.href = videoMsg.url;
+              const vmExt = videoMsg.url.split(".").pop().split("?")[0] || "webm";
+              btnDl.download = `TJF_Video_Message.${vmExt}`;
+            }
+          } else {
+            sectionVideoMsg.classList.add("hidden");
+          }
+        }
+
+        // 2c. Wire AR Launcher Button
+        const btnLaunchAR = document.getElementById("btnLaunchAR");
+        if (btnLaunchAR) {
+          btnLaunchAR.href = `/gallery/?code=${encodeURIComponent(currentCode)}`;
         }
 
         // 3. Render Raw Photos Section
@@ -659,7 +768,7 @@
       }
 
       async function downloadSessionZip() {
-        if (!filesData || (!filesData.frame_result && !filesData.raw_photos.length && !filesData.frame_video)) {
+        if (!filesData || (!filesData.frame_result && !filesData.raw_photos.length && !filesData.frame_video && !filesData.video_message)) {
           showToast("No files available to package.");
           return;
         }
@@ -674,8 +783,13 @@
           if (filesData.frame_result) {
             filesToFetch.push({ url: filesData.frame_result.url, name: `Frame_Result_4R.jpg` });
           }
+          if (filesData.video_message) {
+            const vmExt = filesData.video_message.url.split(".").pop().split("?")[0] || "webm";
+            filesToFetch.push({ url: filesData.video_message.url, name: `Video_Message.${vmExt}` });
+          }
           if (filesData.frame_video) {
-            filesToFetch.push({ url: filesData.frame_video.url, name: `Frame_Video_Clip.mp4` });
+            const fvExt = filesData.frame_video.url.split(".").pop().split("?")[0] || "mp4";
+            filesToFetch.push({ url: filesData.frame_video.url, name: `Frame_Video_Clip.${fvExt}` });
           }
           filesData.raw_photos.forEach((r, idx) => {
             filesToFetch.push({ url: r.url, name: `Raw_Photo_${idx + 1}.jpg` });
