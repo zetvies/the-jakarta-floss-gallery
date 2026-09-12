@@ -105,8 +105,60 @@
 
 <body class="bg-black text-charcoal">
 
-  <!-- A-Frame Container Mount -->
-  <div id="arSceneContainer" class="fixed inset-0 w-full h-full z-[1]"></div>
+  <!-- A-Frame Container Mount with Static MindAR Scene (Starts camera immediately on HTML load!) -->
+  <div id="arSceneContainer" class="fixed inset-0 w-full h-full z-[1]">
+    <a-scene
+      id="mainArScene"
+      embedded
+      mindar-image="imageTargetSrc: assets/targets/targets.mind; autoStart: true; maxTrack: 6; uiLoading: no; uiError: no; uiScanning: no;"
+      color-space="sRGB"
+      renderer="colorManagement: true, physicallyCorrectLights: true"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+      style="width: 100%; height: 100%; position: absolute; inset: 0;"
+    >
+      <a-assets timeout="10000">
+        <video id="video-asset-0" src="https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
+        <video id="video-asset-1" src="https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
+        <video id="video-asset-2" src="https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
+        <video id="video-asset-3" src="https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
+        <video id="video-asset-4" src="https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
+        <video id="video-asset-5" src="https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
+      </a-assets>
+
+      <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+      <a-entity mindar-image-target="targetIndex: 0" id="target-anchor-0">
+        <a-plane width="1.0" height="1.33" position="0 0 0" material="color: #000; shader: flat; side: double;"></a-plane>
+        <a-video id="video-plane-0" src="#video-asset-0" width="1.0" height="1.33" position="0 0 0.005" material="shader: flat; side: double; transparent: false;"></a-video>
+      </a-entity>
+
+      <a-entity mindar-image-target="targetIndex: 1" id="target-anchor-1">
+        <a-plane width="1.0" height="1.33" position="0 0 0" material="color: #000; shader: flat; side: double;"></a-plane>
+        <a-video id="video-plane-1" src="#video-asset-1" width="1.0" height="1.33" position="0 0 0.005" material="shader: flat; side: double; transparent: false;"></a-video>
+      </a-entity>
+
+      <a-entity mindar-image-target="targetIndex: 2" id="target-anchor-2">
+        <a-plane width="1.0" height="1.33" position="0 0 0" material="color: #000; shader: flat; side: double;"></a-plane>
+        <a-video id="video-plane-2" src="#video-asset-2" width="1.0" height="1.33" position="0 0 0.005" material="shader: flat; side: double; transparent: false;"></a-video>
+      </a-entity>
+
+      <a-entity mindar-image-target="targetIndex: 3" id="target-anchor-3">
+        <a-plane width="1.0" height="1.33" position="0 0 0" material="color: #000; shader: flat; side: double;"></a-plane>
+        <a-video id="video-plane-3" src="#video-asset-3" width="1.0" height="1.33" position="0 0 0.005" material="shader: flat; side: double; transparent: false;"></a-video>
+      </a-entity>
+
+      <a-entity mindar-image-target="targetIndex: 4" id="target-anchor-4">
+        <a-plane width="1.0" height="1.33" position="0 0 0" material="color: #000; shader: flat; side: double;"></a-plane>
+        <a-video id="video-plane-4" src="#video-asset-4" width="1.0" height="1.33" position="0 0 0.005" material="shader: flat; side: double; transparent: false;"></a-video>
+      </a-entity>
+
+      <a-entity mindar-image-target="targetIndex: 5" id="target-anchor-5">
+        <a-plane width="1.0" height="1.33" position="0 0 0" material="color: #000; shader: flat; side: double;"></a-plane>
+        <a-video id="video-plane-5" src="#video-asset-5" width="1.0" height="1.33" position="0 0 0.005" material="shader: flat; side: double; transparent: false;"></a-video>
+      </a-entity>
+    </a-scene>
+  </div>
 
   <!-- Viewfinder Overlay for Marker Aiming -->
   <div id="scanOverlay" class="fixed inset-0 pointer-events-none z-10 flex flex-col items-center justify-between p-6">
@@ -120,24 +172,24 @@
       </div>
 
       <div class="flex gap-2">
-        <!-- Audio Unmute Toggle -->
+        <!-- Audio Toggle (Unmuted by default) -->
         <button
           id="btnToggleAudio"
           onclick="toggleAudio()"
           class="bento-btn bg-white hover:bg-cream text-charcoal px-3 py-1.5 text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
           title="Toggle Sound"
         >
-          <span id="audioIcon">🔇</span>
-          <span id="audioText" class="text-[10px]">Muted</span>
+          <span id="audioIcon">🔊</span>
+          <span id="audioText" class="text-[10px]">Sound On</span>
         </button>
 
-        <!-- Soft File Foto-Foto Button -->
+        <!-- Lihat Hasil Photobox Button -->
         <a
           id="btnBackSoftfile"
           href="softfile.html"
           class="bento-btn bg-wine text-white hover:bg-wine-dark px-3 py-1.5 text-[10px] font-bold tracking-wider uppercase flex items-center gap-1 shadow-sm cursor-pointer"
         >
-          📷 SOFT FILE FOTO-FOTO
+          📷 LIHAT HASIL PHOTOBOX
         </a>
       </div>
     </div>
@@ -172,64 +224,9 @@
     </div>
   </div>
 
-  <!-- Centered Video Player Screen Overlay (Triggered on Target Detect) -->
-  <div id="centeredVideoOverlay" class="hidden fixed inset-0 z-40 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-6">
-    <!-- Header Controls -->
-    <div class="w-full max-w-md flex items-center justify-between text-white z-10">
-      <div class="flex items-center gap-2 overflow-hidden">
-        <span class="text-xl">🎬</span>
-        <span id="activeVideoTitle" class="font-bold text-xs tracking-wider truncate text-cream">Videobox Message</span>
-      </div>
-      <div class="flex items-center gap-2">
-        <button
-          onclick="toggleVideoRotation()"
-          class="bento-btn bg-white/20 hover:bg-white/30 text-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded flex items-center gap-1 cursor-pointer"
-          title="Rotate Video 90°"
-        >
-          <span>🔄 ROTATE 90°</span>
-        </button>
-        <button
-          onclick="closeCenteredVideo()"
-          class="bento-btn bg-wine hover:bg-wine-dark text-white px-3 py-1 text-xs font-bold uppercase tracking-wider rounded cursor-pointer"
-        >
-          &times; CLOSE
-        </button>
-      </div>
-    </div>
-
-    <!-- Centered Video Container -->
-    <div class="relative w-full flex-1 flex items-center justify-center overflow-hidden my-2">
-      <video
-        id="centeredVideoPlayer"
-        playsinline
-        controls
-        loop
-        class="max-w-full max-h-[70vh] object-contain shadow-2xl transition-transform duration-300 rounded"
-      ></video>
-    </div>
-
-    <!-- Footer Controls & Soft File Link -->
-    <div class="w-full max-w-md flex items-center justify-between gap-3 z-10">
-      <a
-        id="btnModalSoftfile"
-        href="softfile.html"
-        class="bento-btn bg-wine text-white hover:bg-wine-dark px-4 py-2 text-[10px] font-bold tracking-widest uppercase flex items-center gap-1.5 shadow-md cursor-pointer"
-      >
-        📷 SOFT FILE FOTO-FOTO
-      </a>
-      <button
-        onclick="toggleAudio()"
-        class="bento-btn bg-white text-charcoal px-3 py-2 text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 cursor-pointer"
-      >
-        <span id="modalAudioIcon">🔇</span>
-        <span id="modalAudioText">Muted</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Loading / Compiling Overlay Screen -->
-  <div id="loadingOverlay" class="fixed inset-0 bg-[#F9F6F0] z-50 flex flex-col items-center justify-center p-6 text-center">
-    <div class="max-w-xs w-full bg-white border-2 border-charcoal p-6 shadow-[4px_4px_0px_#1F201E] flex flex-col items-center gap-4">
+  <!-- Loading Overlay Screen -->
+  <div id="loadingOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-6 text-center transition-opacity duration-300">
+    <div class="max-w-xs w-full bg-[#F9F6F0] border-2 border-charcoal p-6 shadow-[4px_4px_0px_#1F201E] flex flex-col items-center gap-4">
       <!-- Spinning Vintage Icon -->
       <div class="w-14 h-14 rounded-full border-4 border-charcoal/20 border-t-wine animate-spin flex items-center justify-center">
         <span class="text-lg animate-pulse">✦</span>
@@ -238,13 +235,13 @@
       <div>
         <h2 class="font-instrument text-3xl text-wine font-bold leading-tight">Starting AR Video</h2>
         <p id="loadingStatusText" class="text-xs text-charcoal/70 mt-1 font-medium">
-          Loading camera and markers...
+          Activating camera...
         </p>
       </div>
 
       <!-- Progress Bar -->
       <div class="w-full bg-cream border border-charcoal/30 h-3 rounded-full overflow-hidden p-0.5">
-        <div id="loadingProgressBar" class="bg-wine h-full w-0 transition-all duration-300 rounded-full"></div>
+        <div id="loadingProgressBar" class="bg-wine h-full w-2/3 transition-all duration-300 rounded-full"></div>
       </div>
 
       <div class="text-[10px] text-charcoal/50 font-mono tracking-wider">
@@ -257,7 +254,16 @@
     // Configuration & Supabase
     const SUPABASE_URL = "https://fowdecmskhvfgmdwwnxg.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDE1MTk2MjUsImV4cCI6MjAxNzA5NTYyNX0.icC5QydnHRC-qu4Vf0Ik0_BxpaU39TCaU8bXijdqv9Y";
-    const STORAGE_BUCKET = "tjf_photos";
+    const DEFAULT_VIDEO_URL = "https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4";
+
+    const TARGET_NAMES = [
+      "Buttercake",
+      "Bolen Lilit",
+      "Abon Gulung",
+      "Soft Cake Floss",
+      "Abon Gulung Mini",
+      "Abon Gulung Sosis Gochujang"
+    ];
 
     let supabaseClient = null;
     try {
@@ -271,11 +277,19 @@
     // State Variables
     const urlParams = new URLSearchParams(window.location.search);
     const sessionCode = (urlParams.get("code") || "").toUpperCase().trim();
-    let isAudioUnmuted = false;
-    let markersList = [];
-    let currentMindBlobUrl = null;
-    let videoRotationDeg = 90;
+    let isAudioUnmuted = true;
     let activeVideoElements = {};
+
+    // Enable unmuted audio on first interaction (mobile policy)
+    function enableAudioOnGesture() {
+      Object.values(activeVideoElements).forEach((v) => {
+        if (v && isAudioUnmuted) {
+          v.muted = false;
+        }
+      });
+    }
+    window.addEventListener("click", enableAudioOnGesture, { once: true });
+    window.addEventListener("touchstart", enableAudioOnGesture, { once: true });
 
     // UI Elements
     const loadingOverlay = document.getElementById("loadingOverlay");
@@ -286,13 +300,11 @@
       const sessionIndicator = document.getElementById("sessionIndicator");
       const lblSessionCode = document.getElementById("lblSessionCode");
       const btnBackSoftfile = document.getElementById("btnBackSoftfile");
-      const btnModalSoftfile = document.getElementById("btnModalSoftfile");
       const softfileUrl = `softfile.html?code=${encodeURIComponent(sessionCode)}`;
 
       if (sessionIndicator) sessionIndicator.classList.remove("hidden");
       if (lblSessionCode) lblSessionCode.textContent = sessionCode;
       if (btnBackSoftfile) btnBackSoftfile.href = softfileUrl;
-      if (btnModalSoftfile) btnModalSoftfile.href = softfileUrl;
     }
 
     function updateProgress(percent, text) {
@@ -307,69 +319,12 @@
       if (audioIcon) audioIcon.textContent = isAudioUnmuted ? "🔊" : "🔇";
       if (audioText) audioText.textContent = isAudioUnmuted ? "Sound On" : "Muted";
 
-      const modalAudioIcon = document.getElementById("modalAudioIcon");
-      const modalAudioText = document.getElementById("modalAudioText");
-      if (modalAudioIcon) modalAudioIcon.textContent = isAudioUnmuted ? "🔊" : "🔇";
-      if (modalAudioText) modalAudioText.textContent = isAudioUnmuted ? "Sound On" : "Muted";
-
-      const videoPlayer = document.getElementById("centeredVideoPlayer");
-      if (videoPlayer) {
-        videoPlayer.muted = !isAudioUnmuted;
-        if (isAudioUnmuted) videoPlayer.play().catch(() => {});
-      }
       Object.values(activeVideoElements).forEach((vid) => {
         if (vid) {
           vid.muted = !isAudioUnmuted;
           if (isAudioUnmuted) vid.play().catch(() => {});
         }
       });
-    }
-
-    function toggleVideoRotation() {
-      videoRotationDeg = (videoRotationDeg + 90) % 360;
-      applyVideoRotation();
-    }
-
-    function applyVideoRotation() {
-      const videoPlayer = document.getElementById("centeredVideoPlayer");
-      if (videoPlayer) {
-        if (videoRotationDeg === 90 || videoRotationDeg === 270) {
-          videoPlayer.style.transform = `rotate(${videoRotationDeg}deg) scale(0.85)`;
-        } else {
-          videoPlayer.style.transform = `rotate(${videoRotationDeg}deg) scale(1)`;
-        }
-      }
-    }
-
-    function openCenteredVideo(videoUrl, title, startTime = 0) {
-      const overlay = document.getElementById("centeredVideoOverlay");
-      const videoPlayer = document.getElementById("centeredVideoPlayer");
-      const titleEl = document.getElementById("activeVideoTitle");
-
-      if (titleEl && title) titleEl.textContent = title;
-
-      if (overlay && videoPlayer) {
-        overlay.classList.remove("hidden");
-        if (videoUrl && videoPlayer.src !== videoUrl) {
-          videoPlayer.src = videoUrl;
-        }
-        if (startTime > 0) {
-          try { videoPlayer.currentTime = startTime; } catch (_) {}
-        }
-        applyVideoRotation();
-        videoPlayer.muted = !isAudioUnmuted;
-        videoPlayer.play().catch(e => console.warn("Video play error:", e));
-      }
-    }
-
-    function closeCenteredVideo() {
-      const overlay = document.getElementById("centeredVideoOverlay");
-      const videoPlayer = document.getElementById("centeredVideoPlayer");
-      const centerViewfinder = document.getElementById("centerViewfinder");
-
-      if (videoPlayer) videoPlayer.pause();
-      if (overlay) overlay.classList.add("hidden");
-      if (centerViewfinder) centerViewfinder.classList.remove("hidden");
     }
 
     // Audio chime on marker detect
@@ -391,40 +346,82 @@
       } catch (_) {}
     }
 
-    // Fetch AR markers from Supabase / API
-    async function loadMarkers() {
-      updateProgress(10, "Fetching AR markers...");
-      markersList = [];
+    // Smoothly dismiss loading overlay only when camera feed is ready and live
+    function dismissLoading() {
+      if (loadingOverlay && !loadingOverlay.classList.contains("hidden")) {
+        updateProgress(100, "Ready!");
+        loadingOverlay.style.opacity = "0";
+        setTimeout(() => loadingOverlay.classList.add("hidden"), 350);
+      }
+    }
 
-      // 1. Fetch CMS markers from Supabase tjf_ar_markers table
-      if (supabaseClient) {
-        try {
-          const { data, error } = await supabaseClient
-            .from("tjf_ar_markers")
-            .select("*")
-            .eq("is_active", true)
-            .order("created_at", { ascending: false });
+    // Setup Target Anchors & Listeners
+    for (let i = 0; i < 6; i++) {
+      const vid = document.getElementById(`video-asset-${i}`);
+      if (vid) activeVideoElements[i] = vid;
 
-          if (!error && data && data.length > 0) {
-            markersList = data;
+      const anchorEl = document.getElementById(`target-anchor-${i}`);
+      if (anchorEl) {
+        // TARGET FOUND: Overlay video in 3D directly on physical marker, hide square & center UI!
+        anchorEl.addEventListener("targetFound", () => {
+          console.log(`[AR] Target detected: ${TARGET_NAMES[i]}`);
+          playDetectChime();
+
+          const centerViewfinder = document.getElementById("centerViewfinder");
+          if (centerViewfinder) centerViewfinder.classList.add("hidden");
+
+          const vid3D = activeVideoElements[i];
+          if (vid3D) {
+            vid3D.muted = !isAudioUnmuted;
+            vid3D.play().catch((e) => console.warn("Video 3D play notice:", e));
           }
-        } catch (dbErr) {
-          console.warn("Supabase markers lookup notice:", dbErr);
+        });
+
+        // TARGET LOST: Marker is gone - pause video and restore center viewfinder (DO NOT open video details)
+        anchorEl.addEventListener("targetLost", () => {
+          console.log(`[AR] Target lost: ${TARGET_NAMES[i]}`);
+          const vid3D = activeVideoElements[i];
+          if (vid3D) {
+            vid3D.pause();
+          }
+
+          // Restore center viewfinder
+          const centerViewfinder = document.getElementById("centerViewfinder");
+          if (centerViewfinder) centerViewfinder.classList.remove("hidden");
+        });
+      }
+    }
+
+    // Listen for MindAR Engine and Camera Readiness
+    const sceneEl = document.getElementById("mainArScene");
+    if (sceneEl) {
+      sceneEl.addEventListener("arReady", () => {
+        console.log("[AR] MindAR engine and camera are ready!");
+        updateProgress(95, "Camera active!");
+        // Verify camera video element is playing so camera is already visible on screen
+        const camVideo = document.querySelector("video:not([id^='video-asset'])");
+        if (camVideo && camVideo.readyState < 2) {
+          camVideo.addEventListener("playing", () => {
+            setTimeout(dismissLoading, 100);
+          }, { once: true });
+        } else {
+          setTimeout(dismissLoading, 100);
         }
-      }
+      });
 
-      // Fallback: fetch from local API if Supabase table is empty or offline
-      if (markersList.length === 0) {
-        try {
-          const res = await fetch("/api/markers");
-          const data = await res.json();
-          if (data && data.success && data.markers) {
-            markersList = data.markers;
-          }
-        } catch (_) {}
-      }
+      sceneEl.addEventListener("arError", (err) => {
+        console.error("[AR] Camera error:", err);
+        updateProgress(100, "Camera permission required.");
+      });
+    }
 
-      // 2. If session code provided, fetch session data for videobox message video
+    // Safety fallback: ensure loading screen clears within 2.5s
+    setTimeout(dismissLoading, 2500);
+
+    // Asynchronously fetch session video or CMS markers to update video source if needed
+    async function syncSessionAndMarkers() {
+      let sessionVideoUrl = null;
+
       if (sessionCode) {
         let sRow = null;
         if (supabaseClient) {
@@ -436,7 +433,7 @@
               .maybeSingle();
             if (data) sRow = data;
           } catch (sErr) {
-            console.warn("Session marker check notice:", sErr);
+            console.warn("Session check notice:", sErr);
           }
         }
         if (!sRow) {
@@ -448,245 +445,23 @@
         }
 
         if (sRow) {
-          const sessionVideoUrl = sRow.video_message_url || sRow.frame_video_url;
-          const photoUrl = sRow.storage_url || (sRow.local_filename ? `/photos/${sRow.local_filename}` : null);
-
-          if (sessionVideoUrl) {
-            markersList.forEach(m => {
-              if (!m.video_url || m.video_url.trim() === "") {
-                m.video_url = sessionVideoUrl;
-              }
-            });
-
-            if (photoUrl) {
-              markersList.unshift({
-                id: `session-${sessionCode}`,
-                name: `Session Photo (${sessionCode})`,
-                image_url: photoUrl,
-                video_url: sessionVideoUrl,
-                height: 1.5,
-              });
-            }
-          }
+          sessionVideoUrl = sRow.video_message_url || sRow.frame_video_url;
         }
       }
 
-      console.log(`Loaded ${markersList.length} total AR markers.`);
-      return markersList;
-    }
-
-    // Compile MindAR Image Targets in Browser
-    async function compileAndStartAR() {
-      try {
-        const markers = await loadMarkers();
-
-        if (!markers || markers.length === 0) {
-          updateProgress(100, "No active markers found.");
-          setTimeout(() => {
-            if (loadingOverlay) loadingOverlay.classList.add("hidden");
-          }, 1000);
-          alert("No AR markers configured yet. You can upload markers in the Admin / AR CMS!");
-          return;
-        }
-
-        updateProgress(25, `Preparing ${markers.length} image targets...`);
-
-        const images = [];
-        for (let i = 0; i < markers.length; i++) {
-          const m = markers[i];
-          updateProgress(30 + Math.floor((i / markers.length) * 20), `Loading target ${i + 1}/${markers.length}...`);
-
-          let base64Url = m.image_url;
-          try {
-            const resp = await fetch(m.image_url);
-            const blob = await resp.blob();
-            base64Url = await new Promise((resolve, reject) => {
-              const r = new FileReader();
-              r.onloadend = () => resolve(r.result);
-              r.onerror = reject;
-              r.readAsDataURL(blob);
-            });
-          } catch (fetchErr) {
-            console.warn(`Direct URL fallback for ${m.name}:`, fetchErr);
-          }
-
-          const img = new Image();
-          img.crossOrigin = "anonymous";
-          img.src = base64Url;
-
-          await new Promise((resolve) => {
-            img.onload = resolve;
-            img.onerror = resolve;
-          });
-
-          if (img.complete && img.naturalWidth > 0) {
-            images.push(img);
-          } else {
-            console.warn(`Could not load image for marker ${m.name}`);
+      if (sessionVideoUrl) {
+        console.log("Applying session video to AR targets:", sessionVideoUrl);
+        for (let i = 0; i < 6; i++) {
+          const vid = activeVideoElements[i];
+          if (vid && vid.src !== sessionVideoUrl) {
+            vid.src = sessionVideoUrl;
+            vid.load();
           }
         }
-
-        if (images.length === 0) {
-          alert("Could not load marker images. Please check the marker image URLs in the AR CMS.");
-          return;
-        }
-
-        updateProgress(50, "Compiling AR tracking features...");
-
-        const compiler = new window.MINDAR.IMAGE.Compiler();
-        const dataList = await compiler.compileImageTargets(images, (progress) => {
-          const pct = 50 + Math.round(progress * 0.45);
-          updateProgress(pct, `Compiling AR tracking: ${Math.round(progress)}%`);
-        });
-
-        const buffer = await compiler.exportData();
-        const blob = new Blob([buffer], { type: "application/octet-stream" });
-
-        if (currentMindBlobUrl) URL.revokeObjectURL(currentMindBlobUrl);
-        currentMindBlobUrl = URL.createObjectURL(blob);
-
-        updateProgress(98, "Starting AR camera engine...");
-        launchAFrameScene(currentMindBlobUrl, markers);
-
-      } catch (err) {
-        console.error("AR setup failure:", err);
-        updateProgress(100, "Camera or compile error. Check console.");
-        alert("Could not initialize AR: " + err.message);
       }
     }
 
-    // Launch A-Frame Scene with MindAR
-    function launchAFrameScene(mindBlobUrl, markers) {
-      const container = document.getElementById("arSceneContainer");
-      container.innerHTML = "";
-
-      const totalTrackLimit = markers.length;
-
-      // 1. Build Video Assets HTML for 3D AR Video Plane
-      let assetsHTML = `<a-assets timeout="10000">`;
-      markers.forEach((m, idx) => {
-        assetsHTML += `
-          <video
-            id="video-asset-${idx}"
-            src="${m.video_url}"
-            crossorigin="anonymous"
-            playsinline
-            webkit-playsinline
-            loop
-            preload="auto"
-            ${isAudioUnmuted ? "" : "muted"}
-          ></video>
-        `;
-      });
-      assetsHTML += `</a-assets>`;
-
-      // 2. Build A-Frame Scene HTML with 3D Video Plane tracking physical marker
-      let sceneHTML = `
-        <a-scene
-          embedded
-          mindar-image="imageTargetSrc: ${mindBlobUrl}; autoStart: true; maxTrack: ${totalTrackLimit}; uiLoading: no; uiError: no; uiScanning: no;"
-          color-space="sRGB"
-          renderer="colorManagement: true, physicallyCorrectLights: true"
-          vr-mode-ui="enabled: false"
-          device-orientation-permission-ui="enabled: false"
-          style="width: 100%; height: 100%; position: absolute; inset: 0;"
-        >
-          ${assetsHTML}
-          <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-      `;
-
-      markers.forEach((m, idx) => {
-        const heightRatio = m.height || 1.33;
-        sceneHTML += `
-          <a-entity mindar-image-target="targetIndex: ${idx}" id="target-anchor-${idx}">
-            <a-plane
-              width="1.0"
-              height="${heightRatio}"
-              position="0 0 0"
-              material="color: #000; shader: flat; side: double;"
-            ></a-plane>
-            <a-video
-              id="video-plane-${idx}"
-              src="#video-asset-${idx}"
-              width="1.0"
-              height="${heightRatio}"
-              position="0 0 0.005"
-              material="shader: flat; side: double; transparent: false;"
-            ></a-video>
-          </a-entity>
-        `;
-      });
-
-      sceneHTML += `</a-scene>`;
-      container.innerHTML = sceneHTML;
-
-      // Store video elements references
-      markers.forEach((m, idx) => {
-        const vid = document.getElementById(`video-asset-${idx}`);
-        if (vid) activeVideoElements[idx] = vid;
-      });
-
-      // 3. Attach Target Event Listeners
-      markers.forEach((m, idx) => {
-        const anchorId = `target-anchor-${idx}`;
-        const checkInterval = setInterval(() => {
-          const anchorEl = document.getElementById(anchorId);
-          if (anchorEl) {
-            clearInterval(checkInterval);
-
-            // TARGET FOUND: Overlay video in 3D directly on physical marker, hide square & center UI!
-            anchorEl.addEventListener("targetFound", () => {
-              console.log(`[AR] Target detected: ${m.name}`);
-              playDetectChime();
-
-              // Hide center viewfinder square box & instructions when detected!
-              const centerViewfinder = document.getElementById("centerViewfinder");
-              if (centerViewfinder) centerViewfinder.classList.add("hidden");
-
-              // Hide screen overlay if open, because video is overlaying directly in 3D on top of marker!
-              const overlay = document.getElementById("centeredVideoOverlay");
-              if (overlay) overlay.classList.add("hidden");
-
-              // Play 3D video on top of marker
-              const vid3D = activeVideoElements[idx];
-              if (vid3D) {
-                vid3D.muted = !isAudioUnmuted;
-                vid3D.play().catch((e) => console.warn("Video 3D play notice:", e));
-              }
-            });
-
-            // TARGET LOST (Marker is gone): Rotate video 90deg and make it centered on screen!
-            anchorEl.addEventListener("targetLost", () => {
-              console.log(`[AR] Target lost: ${m.name}`);
-              const vid3D = activeVideoElements[idx];
-              let currentSec = 0;
-              if (vid3D) {
-                currentSec = vid3D.currentTime;
-                vid3D.pause();
-              }
-
-              // Marker is gone: Open centered video rotated 90deg continuing from current time!
-              openCenteredVideo(m.video_url, m.name, currentSec);
-            });
-          }
-        }, 100);
-      });
-
-      // Hide loading screen once camera starts
-      setTimeout(() => {
-        updateProgress(100, "Ready!");
-        if (loadingOverlay) {
-          loadingOverlay.style.opacity = "0";
-          loadingOverlay.style.transition = "opacity 0.4s ease";
-          setTimeout(() => loadingOverlay.classList.add("hidden"), 400);
-        }
-      }, 1500);
-    }
-
-    // Start on window load
-    window.addEventListener("DOMContentLoaded", () => {
-      compileAndStartAR();
-    });
+    syncSessionAndMarkers();
   </script>
 </body>
 </html>
