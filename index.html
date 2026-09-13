@@ -1318,8 +1318,6 @@
         reader.readAsDataURL(file);
       }
 
-      let activeCornerIndex = -1;
-
       function getCanvasCoords(e, canvas) {
         const rect = canvas.getBoundingClientRect();
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
