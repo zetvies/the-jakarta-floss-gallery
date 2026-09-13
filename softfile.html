@@ -505,10 +505,11 @@
             }
 
             // C. List files from Supabase Storage tjf_photos bucket
-            const { data: storageFiles } = await supabaseClient
-              .storage
-              .from(STORAGE_BUCKET)
-              .list("photos", { limit: 1000, search: currentCode });
+            const [res1, res2] = await Promise.all([
+              supabaseClient.storage.from(STORAGE_BUCKET).list("photos", { limit: 1000, search: `TJF_${currentCode}` }),
+              supabaseClient.storage.from(STORAGE_BUCKET).list("photos", { limit: 1000, search: currentCode })
+            ]);
+            const storageFiles = Array.from(new Map([...(res1.data || []), ...(res2.data || [])].map(item => [item.name, item])).values());
 
             let matchedFiles = [];
             if (storageFiles && storageFiles.length > 0) {
