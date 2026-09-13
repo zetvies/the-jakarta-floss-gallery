@@ -1199,7 +1199,7 @@
                   <div class="relative w-full aspect-[4/3] bg-black/5 border-b-2 border-charcoal flex items-center justify-center overflow-hidden group">
                     <img src="${m.image_url}" alt="${m.name}" class="w-full h-full object-contain" />
                     <div class="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-3 text-white">
-                      <video src="${m.video_url}" muted loop playsinline class="w-full h-full object-contain" onmouseenter="this.play()" onmouseleave="this.pause()"></video>
+                      <video src="${m.video_url || ''}" muted loop playsinline class="w-full h-full object-contain" onmouseenter="if(this.src && this.src !== window.location.href) this.play().catch(e=>{})" onmouseleave="if(this.src && this.src !== window.location.href) this.pause()"></video>
                       <span class="absolute bottom-2 text-[9px] font-bold tracking-widest uppercase bg-black/70 px-2 py-0.5 rounded">HOVER TO PREVIEW VIDEO</span>
                     </div>
                     <div class="absolute top-2 right-2 border ${statusClass} text-[9px] font-black tracking-widest uppercase px-2 py-0.5 bg-white shadow-sm">
@@ -1479,23 +1479,89 @@
         updateRectifiedOutput();
       }
 
+      function drawPerspectiveWarp(ctx, img, srcCorners, dstW, dstH) {
+        const gridX = 10;
+        const gridY = 10;
+
+        const p0 = srcCorners[0];
+        const p1 = srcCorners[1];
+        const p2 = srcCorners[2];
+        const p3 = srcCorners[3];
+
+        function getQuadPoint(u, v) {
+          return {
+            x: (1 - u) * (1 - v) * p0.x + u * (1 - v) * p1.x + u * v * p2.x + (1 - u) * v * p3.x,
+            y: (1 - u) * (1 - v) * p0.y + u * (1 - v) * p1.y + u * v * p2.y + (1 - u) * v * p3.y
+          };
+        }
+
+        for (let gy = 0; gy < gridY; gy++) {
+          for (let gx = 0; gx < gridX; gx++) {
+            const u0 = gx / gridX;
+            const u1 = (gx + 1) / gridX;
+            const v0 = gy / gridY;
+            const v1 = (gy + 1) / gridY;
+
+            const dx0 = u0 * dstW;
+            const dx1 = u1 * dstW;
+            const dy0 = v0 * dstH;
+            const dy1 = v1 * dstH;
+
+            const pt00 = getQuadPoint(u0, v0);
+            const pt10 = getQuadPoint(u1, v0);
+            const pt11 = getQuadPoint(u1, v1);
+            const pt01 = getQuadPoint(u0, v1);
+
+            drawTriangle(ctx, img, pt00, pt10, pt01, dx0, dy0, dx1, dy0, dx0, dy1);
+            drawTriangle(ctx, img, pt10, pt11, pt01, dx1, dy0, dx1, dy1, dx0, dy1);
+          }
+        }
+      }
+
+      function drawTriangle(ctx, img, s0, s1, s2, d0x, d0y, d1x, d1y, d2x, d2y) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(d0x, d0y);
+        ctx.lineTo(d1x, d1y);
+        ctx.lineTo(d2x, d2y);
+        ctx.closePath();
+        ctx.clip();
+
+        const denom = (s0.x * (s1.y - s2.y) - s1.x * (s0.y - s2.y) + s2.x * (s0.y - s1.y));
+        if (Math.abs(denom) < 0.0001) {
+          ctx.restore();
+          return;
+        }
+
+        const m11 = (d0x * (s1.y - s2.y) - d1x * (s0.y - s2.y) + d2x * (s0.y - s1.y)) / denom;
+        const m12 = (d0y * (s1.y - s2.y) - d1y * (s0.y - s2.y) + d2y * (s0.y - s1.y)) / denom;
+        const m21 = (d0x * (s2.x - s1.x) - d1x * (s2.x - s0.x) + d2x * (s1.x - s0.x)) / denom;
+        const m22 = (d0y * (s2.x - s1.x) - d1y * (s2.x - s0.x) + d2y * (s1.x - s0.x)) / denom;
+        const dx = (d0x * (s1.x * s2.y - s2.x * s1.y) - d1x * (s0.x * s2.y - s2.x * s0.y) + d2x * (s0.x * s1.y - s1.x * s0.y)) / denom;
+        const dy = (d0y * (s1.x * s2.y - s2.x * s1.y) - d1y * (s0.x * s2.y - s2.x * s0.y) + d2y * (s0.x * s1.y - s1.x * s0.y)) / denom;
+
+        ctx.transform(m11, m12, m21, m22, dx, dy);
+        ctx.drawImage(img, 0, 0);
+        ctx.restore();
+      }
+
       function updateRectifiedOutput() {
         if (!sourceImage || !corners || corners.length < 4) return;
         const previewCanvas = document.getElementById("rectifiedPreviewCanvas");
         if (!previewCanvas) return;
         const ctx = previewCanvas.getContext("2d");
 
-        const minX = Math.min(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
-        const maxX = Math.max(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
-        const minY = Math.min(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
-        const maxY = Math.max(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
+        const topW = Math.hypot(corners[1].x - corners[0].x, corners[1].y - corners[0].y);
+        const botW = Math.hypot(corners[2].x - corners[3].x, corners[2].y - corners[3].y);
+        const leftH = Math.hypot(corners[3].x - corners[0].x, corners[3].y - corners[0].y);
+        const rightH = Math.hypot(corners[2].x - corners[1].x, corners[2].y - corners[1].y);
 
-        const cropW = Math.max(1, maxX - minX);
-        const cropH = Math.max(1, maxY - minY);
-        const aspect = cropW / cropH;
+        const avgW = Math.max(10, (topW + botW) / 2);
+        const avgH = Math.max(10, (leftH + rightH) / 2);
+        const aspect = avgW / avgH;
 
         const dstW = 400;
-        const dstH = Math.round(dstW / aspect);
+        const dstH = Math.max(10, Math.round(dstW / aspect));
         previewCanvas.width = dstW;
         previewCanvas.height = dstH;
         
@@ -1508,7 +1574,7 @@
         const c = parseFloat(document.getElementById("sliderContrast")?.value || 100);
         ctx.filter = `brightness(${b}%) contrast(${c}%)`;
 
-        ctx.drawImage(sourceImage, minX, minY, cropW, cropH, 0, 0, dstW, dstH);
+        drawPerspectiveWarp(ctx, sourceImage, corners, dstW, dstH);
         ctx.filter = "none";
       }
 
