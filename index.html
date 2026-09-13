@@ -841,6 +841,7 @@
       // Global State
       let allMarkers = [];
       let allCodes = [];
+      let rawSessionsStore = [];
       let allSessions = [];
       let currentAnalyticsFilteredSessions = [];
       let currentTab = "analytics";
@@ -1111,7 +1112,7 @@
         currentAnalyticsFilteredSessions.forEach(s => {
           const isVideobox = (s.type === "Videobox") || (s.code && s.code.includes("VIDEOBOX")) || (s.video_message_url) || (s.frame_video_url && s.video_message_url);
           const typeStr = isVideobox ? "Videobox" : "Photobox";
-          const codeStr = s.code || "";
+          const codeStr = s.variants && s.variants.length > 1 ? `${s.code} (${s.variants.join(';')})` : (s.code || "");
           const boothStr = s.booth_id || s.booth || "Booth 1";
           const dateStr = s.created_at || "";
           const printStr = s.printed ? "Yes" : "No";
@@ -1811,6 +1812,63 @@
       // 8. PHOTO SESSIONS MANAGEMENT
       // ========================================================
 
+      function getBaseSessionCode(code) {
+        if (!code) return "";
+        // Strip trailing numeric suffix (_1, _2, -1, -2, .1, .2, _01, etc.) or single letter suffix (_A, _B)
+        return code.replace(/[._-]([0-9]{1,2}|[a-zA-Z])$/, "");
+      }
+
+      function groupSessionsByBaseCode(sessions) {
+        if (!sessions || !Array.isArray(sessions)) return [];
+
+        const groups = new Map();
+
+        sessions.forEach(s => {
+          const rawCode = s.code || "";
+          const baseCode = getBaseSessionCode(rawCode);
+          const key = baseCode || rawCode;
+
+          if (!groups.has(key)) {
+            groups.set(key, {
+              code: key,
+              variants: [rawCode],
+              originalSessions: [s],
+              created_at: s.created_at || s.timestamp,
+              booth_id: s.booth_id || s.booth || "Booth 1",
+              type: s.type || "Photobox",
+              storage_url: s.storage_url || s.photo_url || "",
+              video_message_url: s.video_message_url || "",
+              frame_video_url: s.frame_video_url || "",
+              printed: !!(s.printed || s.printed_at || s.is_printed),
+            });
+          } else {
+            const existing = groups.get(key);
+            if (rawCode && !existing.variants.includes(rawCode)) {
+              existing.variants.push(rawCode);
+            }
+            existing.originalSessions.push(s);
+
+            if (!existing.storage_url && (s.storage_url || s.photo_url)) {
+              existing.storage_url = s.storage_url || s.photo_url;
+            }
+            if (!existing.video_message_url && s.video_message_url) {
+              existing.video_message_url = s.video_message_url;
+            }
+            if (!existing.frame_video_url && s.frame_video_url) {
+              existing.frame_video_url = s.frame_video_url;
+            }
+            if (s.type === "Videobox") {
+              existing.type = "Videobox";
+            }
+            if (s.printed || s.printed_at || s.is_printed) {
+              existing.printed = true;
+            }
+          }
+        });
+
+        return Array.from(groups.values());
+      }
+
       async function loadSessions() {
         const badge = document.getElementById("sessionsCountBadge");
 
@@ -1832,9 +1890,10 @@
             } catch (_) {}
           }
 
-          allSessions = sessions;
-          if (badge) badge.textContent = sessions.length;
-          renderSessionsTable(sessions);
+          rawSessionsStore = sessions;
+          allSessions = groupSessionsByBaseCode(sessions);
+          if (badge) badge.textContent = allSessions.length;
+          renderSessionsTable(allSessions);
           applyAnalyticsFilters();
         } catch (e) {
           console.error(e);
@@ -1854,6 +1913,12 @@
           const created = new Date(s.created_at || Date.now()).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" });
           const hasVideoMsg = !!s.video_message_url;
           const hasFrameVideo = !!s.frame_video_url;
+          const variantCount = s.variants ? s.variants.length : 1;
+          const variantBadge = variantCount > 1 
+            ? `<span class="bg-wine/10 text-wine border border-wine/20 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ml-1.5" title="Grouped session codes: ${s.variants.join(', ')}">${variantCount} codes</span>`
+            : '';
+
+          const variantsJsonStr = JSON.stringify(s.variants || [s.code]).replace(/"/g, '&quot;');
 
           return `
             <tr class="border-b border-charcoal/10 hover:bg-cream/40 transition-colors">
@@ -1864,6 +1929,7 @@
               </td>
               <td class="px-4 py-3">
                 <span class="font-instrument text-base font-bold text-wine">${s.code}</span>
+                ${variantBadge}
               </td>
               <td class="px-4 py-3">
                 <span class="editorial-badge text-[9px] px-2 py-0.5 border ${s.type === 'Videobox' ? 'bg-wine text-white border-charcoal' : 'bg-cream text-charcoal border-charcoal/30'}">
@@ -1881,7 +1947,7 @@
               <td class="px-4 py-3 text-charcoal/60 text-[11px]">${created}</td>
               <td class="px-4 py-3 text-right">
                 <a href="softfile.html?code=${encodeURIComponent(s.code)}" target="_blank" class="text-[10px] font-bold tracking-widest uppercase text-wine mr-3 hover:underline">VIEW</a>
-                <button onclick="deleteSession('${s.code}')" class="text-[10px] font-bold tracking-widest uppercase text-charcoal/40 hover:text-wine-light transition-colors cursor-pointer">DELETE</button>
+                <button onclick="deleteSession('${s.code}', ${variantsJsonStr})" class="text-[10px] font-bold tracking-widest uppercase text-charcoal/40 hover:text-wine-light transition-colors cursor-pointer">DELETE</button>
               </td>
             </tr>
           `;
@@ -1890,19 +1956,29 @@
 
       function filterSessionsTable() {
         const q = document.getElementById("searchSessionsInput").value.trim().toUpperCase();
-        const filtered = allSessions.filter(s => s.code.includes(q) || (s.booth_id && s.booth_id.toUpperCase().includes(q)));
+        const filtered = allSessions.filter(s => {
+          const codeMatch = s.code.toUpperCase().includes(q) || (s.variants && s.variants.some(v => v.toUpperCase().includes(q)));
+          const boothMatch = s.booth_id && s.booth_id.toUpperCase().includes(q);
+          return codeMatch || boothMatch;
+        });
         renderSessionsTable(filtered);
       }
 
-      async function deleteSession(code) {
-        if (!confirm(`Delete photo session ${code}?`)) return;
+      async function deleteSession(code, variants) {
+        const codesToDelete = (variants && variants.length > 0) ? variants : [code];
+        const msg = codesToDelete.length > 1 
+          ? `Delete photo session group ${code} (${codesToDelete.length} codes: ${codesToDelete.join(', ')})?`
+          : `Delete photo session ${code}?`;
+        if (!confirm(msg)) return;
         try {
-          if (supabaseClient) {
-            await supabaseClient.from("tjf_sessions").delete().eq("code", code);
+          for (const c of codesToDelete) {
+            if (supabaseClient) {
+              await supabaseClient.from("tjf_sessions").delete().eq("code", c);
+            }
+            try {
+              await fetch(`/api/session/${c}`, { method: "DELETE" });
+            } catch (_) {}
           }
-          try {
-            await fetch(`/api/session/${code}`, { method: "DELETE" });
-          } catch (_) {}
           showToast(`Deleted session ${code}`);
           loadSessions();
         } catch (e) {
