@@ -172,42 +172,23 @@
     <!-- ===== MAIN BENTO CONTAINER ===== -->
     <div class="flex-1 flex flex-col">
       <!-- ===== BRAND HEADER ===== -->
-      <header class="w-full pt-8 pb-6 px-6 md:px-10 bg-cream border-b-2 border-charcoal/10">
+      <header class="w-full pt-6 pb-5 px-6 md:px-10 bg-cream border-b-2 border-charcoal/10">
         <div class="max-w-[1100px] mx-auto flex items-center justify-between gap-4">
-          <div class="flex items-center gap-4">
-            <!-- Floss Bread Icon -->
-            <div class="w-12 h-12 text-wine flex-shrink-0">
-              <svg
-                viewBox="0 0 64 64"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                class="w-full h-full drop-shadow-sm"
-              >
-                <path
-                  d="M14 42 C8 38, 8 26, 18 20 C28 14, 46 16, 52 24 C58 32, 54 44, 44 48 C34 52, 20 46, 14 42 Z"
-                  fill="#FDF9F2"
-                  stroke="currentColor"
-                />
-                <path d="M24 24 C28 28, 30 36, 26 42" stroke="#C49A45" stroke-width="2.5" />
-                <path d="M34 22 C38 27, 40 35, 36 43" stroke="#C49A45" stroke-width="2.5" />
-                <path d="M44 26 C47 30, 48 36, 45 41" stroke="#C49A45" stroke-width="2.5" />
-                <path d="M22 14 Q24 10 22 7" stroke="currentColor" stroke-width="2" />
-                <path d="M34 12 Q36 8 34 5" stroke="currentColor" stroke-width="2" />
-                <path d="M46 15 Q48 11 46 8" stroke="currentColor" stroke-width="2" />
-              </svg>
-            </div>
-            <div>
-              <h1 class="font-instrument text-3xl md:text-4xl text-wine leading-tight">
-                The Jakarta Floss
-              </h1>
-              <div class="text-[10px] md:text-[11px] editorial-badge text-forest/70 -mt-0.5">
-                Softfile & Digital Gallery
-              </div>
-            </div>
-          </div>
+          <a href="index.html" class="flex items-center gap-3 group">
+            <img src="assets/tjf_logo.png" alt="The Jakarta Floss" class="h-12 md:h-14 w-auto object-contain drop-shadow-sm transition-transform group-hover:scale-105" />
+          </a>
+
+          <!-- Top Right: AR App Button -->
+          <a
+            id="btnTopARApp"
+            href="videobox.html"
+            class="border-2 border-charcoal bg-wine hover:bg-wine-dark text-white text-xs md:text-sm font-bold tracking-widest uppercase px-4 py-2.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] active:scale-95 transition-all inline-flex items-center gap-2 cursor-pointer"
+          >
+            <svg class="w-4.5 h-4.5 text-gold-light animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+            </svg>
+            <span>AR App</span>
+          </a>
         </div>
       </header>
 
@@ -398,30 +379,6 @@
             </div>
           </div>
 
-          <!-- ===== BENTO TILE: AR EXPERIENCE LAUNCHER ===== -->
-          <div id="sectionAR" class="lg:col-span-12 bento-card p-6 md:p-8 bg-[#FAF6F0] border-2 border-charcoal flex flex-col md:flex-row items-center justify-between gap-6 shadow-[4px_4px_0px_#1F201E]">
-            <div class="flex-1 flex flex-col gap-2">
-              <div class="flex items-center gap-2">
-                <span class="inline-block bg-[#801A20] text-white text-[10px] font-black tracking-widest uppercase px-2.5 py-1 border border-charcoal">
-                  ✦ AUGMENTED REALITY ✦
-                </span>
-                <span class="text-xs text-charcoal/60 font-semibold font-mono">WEB-AR CAMERA</span>
-              </div>
-              <h3 class="font-instrument text-2xl md:text-3xl text-wine font-bold">Bring Your Photo to Life with AR</h3>
-              <p class="text-sm text-charcoal/80 max-w-xl leading-relaxed font-serif">
-                Point your phone camera at your printed photobox strip or pattern marker to watch your motion video and greeting animate right in the palm of your hand in 3D augmented reality.
-              </p>
-            </div>
-            <a
-              id="btnLaunchAR"
-              href="#"
-              class="border-2 border-charcoal bg-[#801A20] hover:bg-[#631318] text-white text-xs font-bold tracking-widest uppercase px-6 py-3.5 shadow-[3px_3px_0px_rgba(31,32,30,1)] active:scale-95 transition-all inline-flex items-center gap-2 cursor-pointer shrink-0"
-            >
-              <svg class="w-4 h-4 text-yellow-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-              </svg>
-              <span>LAUNCH AR EXPERIENCE ⚡</span>
-            </a>
           </div>
 
           <!-- ===== BENTO TILE 3: RAW PHOTOS GRID (SPAN 12) ===== -->
@@ -658,43 +615,41 @@
       }
 
       function renderSoftfilePage() {
-        // 1. Render Frame Result Section
+        // Top right AR App button url
+        const btnTopARApp = document.getElementById("btnTopARApp");
+        if (btnTopARApp) {
+          btnTopARApp.href = currentCode ? `videobox.html?code=${encodeURIComponent(currentCode)}` : `videobox.html`;
+        }
+
         const frameResult = filesData.frame_result;
         const frameImgUrl = frameResult ? frameResult.url : (sessionRowData ? sessionRowData.storage_url || sessionRowData.photo_url : "");
-        
-        if (frameImgUrl) {
+        const frameVideo = filesData.frame_video;
+        const sectionFrame = document.getElementById("sectionFrame");
+        const sectionVideo = document.getElementById("sectionVideo");
+
+        // 1. Render Frame Result Section
+        if (frameImgUrl && sectionFrame) {
           document.getElementById("frameResultImg").src = frameImgUrl;
           document.getElementById("btnDownloadFrameResult").href = frameImgUrl;
-        } else {
-          document.getElementById("sectionFrame").classList.add("hidden");
+          sectionFrame.className = (frameVideo && frameVideo.url) ? "lg:col-span-7 bento-card p-6 bg-white flex flex-col justify-between gap-6" : "lg:col-span-12 bento-card p-6 bg-white flex flex-col justify-between gap-6";
+          sectionFrame.classList.remove("hidden");
+        } else if (sectionFrame) {
+          sectionFrame.classList.add("hidden");
         }
 
         // 2. Render Animated Video Section
-        const frameVideo = filesData.frame_video;
-
-        if (frameVideo && frameVideo.url) {
+        if (frameVideo && frameVideo.url && sectionVideo) {
           document.getElementById("frameVideoPlayer").src = frameVideo.url;
           const btnDlVideo = document.getElementById("btnDownloadVideo");
           btnDlVideo.href = frameVideo.url;
           const fvExt = frameVideo.url.split(".").pop().split("?")[0] || "mp4";
           btnDlVideo.download = `TJF_${currentCode}_Motion.${fvExt}`;
           btnDlVideo.classList.remove("hidden");
-        } else {
+          sectionVideo.classList.remove("hidden");
+        } else if (sectionVideo) {
           document.getElementById("frameVideoPlayer").removeAttribute("src");
           document.getElementById("btnDownloadVideo").classList.add("hidden");
-          
-          const videoContainer = document.getElementById("sectionVideo");
-          if (videoContainer && !videoContainer.querySelector(".no-video-notice")) {
-            const notice = document.createElement("div");
-            notice.className = "no-video-notice w-full p-6 text-center bg-cream/60 border border-charcoal/20 text-charcoal/80 text-xs font-semibold flex flex-col items-center gap-2 my-auto";
-            notice.innerHTML = `
-              <span class="text-xl">🎬</span>
-              <span><strong>Motion Video Coming Soon!</strong></span>
-              <span class="text-[11px] opacity-75 max-w-xs">Your animated video clip is currently uploading to the cloud archive.</span>
-              <button onclick="loadSoftfileData()" class="mt-1 px-3 py-1.5 bg-wine hover:bg-wine-dark text-white font-bold text-[10px] uppercase border border-charcoal shadow-[1px_1px_0px_#000] tracking-wider transition-all cursor-pointer">CHECK PROGRESS</button>
-            `;
-            videoContainer.appendChild(notice);
-          }
+          sectionVideo.classList.add("hidden");
         }
 
         // 2b. Render Video Message Section (Videobox)
@@ -716,18 +671,14 @@
           }
         }
 
-        // 2c. Wire AR Launcher Button
-        const btnLaunchAR = document.getElementById("btnLaunchAR");
-        if (btnLaunchAR) {
-          btnLaunchAR.href = `/videobox.html?code=${encodeURIComponent(currentCode)}`;
-        }
-
         // 3. Render Raw Photos Section
         const rawPhotos = filesData.raw_photos || [];
+        const sectionRaw = document.getElementById("sectionRaw");
         const rawGrid = document.getElementById("rawPhotosGrid");
         rawGrid.innerHTML = "";
 
         if (rawPhotos.length > 0) {
+          if (sectionRaw) sectionRaw.classList.remove("hidden");
           rawPhotos.forEach((photo, idx) => {
             const card = document.createElement("div");
             card.className = "bento-card p-3 bg-white border-2 border-charcoal flex flex-col items-center gap-3 hover:-translate-y-0.5 transition-transform";
@@ -752,14 +703,7 @@
             rawGrid.appendChild(card);
           });
         } else {
-          rawGrid.innerHTML = `
-            <div class="col-span-full p-8 text-center bg-cream/60 border border-charcoal/20 text-charcoal/80 text-xs font-semibold flex flex-col items-center gap-2">
-              <span class="text-xl">📷</span>
-              <span><strong>Raw Photos Coming Soon!</strong></span>
-              <span class="text-[11px] opacity-75 max-w-xs">Your individual camera shots are currently uploading to your digital gallery.</span>
-              <button onclick="loadSoftfileData()" class="mt-1 px-3 py-1.5 bg-wine hover:bg-wine-dark text-white font-bold text-[10px] uppercase border border-charcoal shadow-[1px_1px_0px_#000] tracking-wider transition-all cursor-pointer">CHECK PROGRESS</button>
-            </div>
-          `;
+          if (sectionRaw) sectionRaw.classList.add("hidden");
         }
 
         // Show Bento Grid gallery content

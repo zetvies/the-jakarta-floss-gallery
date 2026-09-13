@@ -276,29 +276,54 @@
     </div>
   </div>
 
-  <!-- Loading Overlay Screen: Fully opaque solid backdrop prevents seeing blue spinner or uninitialized camera -->
-  <div id="loadingOverlay" class="fixed inset-0 bg-[#0F100E] z-[99999] flex flex-col items-center justify-center p-6 text-center transition-opacity duration-500">
-    <div class="max-w-xs w-full bg-[#F9F6F0] border-2 border-charcoal p-6 shadow-[6px_6px_0px_#801A20] flex flex-col items-center gap-4">
-      <!-- Spinning Vintage Icon -->
-      <div class="w-14 h-14 rounded-full border-4 border-charcoal/20 border-t-wine animate-spin flex items-center justify-center">
-        <span class="text-lg animate-pulse text-wine">✦</span>
+  <!-- Loading Overlay Screen: Full-page TJF aesthetic backdrop preventing uninitialized camera flicker -->
+  <div id="loadingOverlay" class="fixed inset-0 bg-[#F9F6F0] z-[99999] flex flex-col justify-between p-6 md:p-10 transition-opacity duration-500 overflow-hidden">
+    <!-- Top Brand Header Bar -->
+    <div class="w-full max-w-4xl mx-auto flex items-center justify-between border-b-2 border-charcoal/10 pb-4">
+      <div class="flex items-center gap-3">
+        <img src="assets/tjf_logo.png" alt="The Jakarta Floss" class="h-10 md:h-12 w-auto object-contain drop-shadow-sm" />
+      </div>
+      <div class="hidden sm:flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-wine bg-wine/10 px-3.5 py-1 border border-wine/20 rounded-full">
+        <span>✦ AR EXPERIENCE ✦</span>
+      </div>
+    </div>
+
+    <!-- Center Hero Bento Card -->
+    <div class="max-w-md w-full mx-auto my-auto bento-card p-8 md:p-10 bg-white border-2 border-charcoal shadow-[6px_6px_0px_#801A20] text-center flex flex-col items-center gap-6">
+      <!-- Vintage Loading Icon Container -->
+      <div class="relative w-20 h-20 flex items-center justify-center">
+        <div class="absolute inset-0 rounded-full border-4 border-wine/20 border-t-wine animate-spin"></div>
+        <div class="w-12 h-12 rounded-full bg-cream flex items-center justify-center text-wine border-2 border-charcoal shadow-[2px_2px_0px_#000] text-xl">
+          ⚡
+        </div>
       </div>
 
       <div>
-        <h2 class="font-instrument text-3xl text-wine font-bold leading-tight">Starting AR Video</h2>
-        <p id="loadingStatusText" class="text-xs text-charcoal/70 mt-1 font-medium">
-          Activating camera...
+        <span class="editorial-badge text-[10px] text-wine font-extrabold bg-wine/10 px-3 py-1 border border-wine/30">
+          INITIALIZING CAMERA & 3D ENGINE
+        </span>
+        <h2 class="font-instrument text-3xl md:text-4xl text-wine font-bold leading-tight mt-2.5">
+          Starting AR Video
+        </h2>
+        <p id="loadingStatusText" class="text-xs md:text-sm text-charcoal/70 mt-1.5 font-medium leading-relaxed max-w-xs mx-auto">
+          Preparing camera stream & 3D recognition...
         </p>
       </div>
 
-      <!-- Progress Bar -->
-      <div class="w-full bg-cream border border-charcoal/30 h-3 rounded-full overflow-hidden p-0.5">
-        <div id="loadingProgressBar" class="bg-wine h-full w-2/3 transition-all duration-300 rounded-full"></div>
+      <!-- Animated Progress Bar -->
+      <div class="w-full bg-cream border-2 border-charcoal h-3.5 rounded-full overflow-hidden p-0.5 shadow-[inset_0_1px_3px_rgba(0,0,0,0.1)]">
+        <div id="loadingProgressBar" class="bg-wine h-full w-1/3 transition-all duration-300 rounded-full bg-gradient-to-r from-wine to-wine-light"></div>
       </div>
 
-      <div class="text-[10px] text-charcoal/50 font-mono tracking-wider">
-        THE JAKARTA FLOSS
+      <div class="text-[11px] text-charcoal/60 font-serif italic">
+        "Arahkan kamera ke Cover Packaging Gift Station"
       </div>
+    </div>
+
+    <!-- Bottom Footer Bar -->
+    <div class="w-full max-w-4xl mx-auto pt-4 border-t-2 border-charcoal/10 flex items-center justify-between text-[11px] text-forest/70">
+      <span class="font-serif italic text-xs md:text-sm">The Jakarta Floss</span>
+      <span class="editorial-badge text-[10px]">Made with ❤️ by Moven Lab</span>
     </div>
   </div>
 
