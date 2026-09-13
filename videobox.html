@@ -213,32 +213,36 @@
   <div id="scanOverlay" class="fixed inset-0 pointer-events-none z-10 flex flex-col items-center justify-between p-4 md:p-6 opacity-0 transition-opacity duration-500">
     <!-- Top Header -->
     <div class="w-full max-w-lg flex items-center justify-between pointer-events-auto px-2">
-      <!-- Top Left: TJF Photobox Logo -->
-      <a href="index.html" class="flex items-center gap-2">
-        <img src="assets/tjf_logo.png" alt="The Jakarta Floss" class="h-12 md:h-16 w-auto object-contain drop-shadow-xl" />
+      <!-- Top Left: TJF Photobox Logo in Rounded Container -->
+      <a href="index.html" class="flex items-center gap-2 group">
+        <div class="bg-white/90 backdrop-blur-md border-2 border-charcoal rounded-2xl p-2 shadow-[3px_3px_0px_#1F201E] flex items-center justify-center transition-transform group-hover:scale-105">
+          <img src="assets/tjf_logo.png" alt="The Jakarta Floss" class="h-9 md:h-11 w-auto object-contain" />
+        </div>
       </a>
 
-      <!-- Top Right: Simple Gallery Link -->
+      <!-- Top Right: Gallery Button -->
       <a
         id="btnBackSoftfile"
         href="softfile.html"
-        class="border-2 border-charcoal bg-wine hover:bg-wine-dark text-white text-xs md:text-sm font-bold tracking-wider uppercase px-4.5 py-2.5 rounded-full shadow-[3px_3px_0px_#1F201E] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#1F201E] transition-all inline-flex items-center gap-2 cursor-pointer select-none shrink-0"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl border-2 border-charcoal bg-wine hover:bg-wine-dark text-white text-xs md:text-sm font-bold tracking-wider uppercase shadow-[3px_3px_0px_#1F201E] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#1F201E] transition-all cursor-pointer select-none shrink-0"
       >
-        <span>🖼️</span>
+        <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
         <span>Gallery</span>
       </a>
     </div>
 
-    <!-- Center Viewfinder & Marker Slideshow (Rounded Rectangle Container Box) -->
-    <div id="centerViewfinder" class="flex flex-col items-center justify-center gap-3.5 my-auto pointer-events-none transition-all duration-500 bg-cream/95 backdrop-blur-md border-2 border-charcoal p-5 md:p-6 rounded-3xl shadow-[6px_6px_0px_#801A20] max-w-sm w-full text-center">
+    <!-- Center Viewfinder & Marker Slideshow -->
+    <div id="centerViewfinder" class="flex flex-col items-center justify-center gap-3 my-auto pointer-events-none transition-all duration-500">
       <!-- Instruction Text -->
-      <div class="editorial-badge text-[10px] md:text-[11px] text-wine bg-wine/10 border border-wine/30 px-3.5 py-1.5 rounded-full tracking-wider font-bold">
-        Arahkan kamera ke <span class="text-wine font-black underline">Cover Packaging</span>
+      <div class="editorial-badge text-[11px] md:text-xs text-white bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full tracking-wider text-center font-bold shadow-xl">
+        Arahkan kamera ke <span class="text-gold font-bold">Cover Packaging Gift Station</span>
       </div>
 
       <!-- Slideshow Card -->
-      <div class="relative p-2 rounded-2xl bg-white border-2 border-charcoal shadow-[3px_3px_0px_#1F201E] flex flex-col items-center gap-2 w-full">
-        <div class="relative overflow-hidden rounded-xl w-36 h-48 md:w-44 md:h-56 border border-charcoal/20">
+      <div class="relative p-2.5 rounded-2xl bg-black/40 backdrop-blur-md border border-white/20 shadow-[0_12px_35px_rgba(0,0,0,0.7)] flex flex-col items-center gap-2">
+        <div class="relative overflow-hidden rounded-xl w-36 h-48 md:w-44 md:h-56 border border-white/10">
           <img
             id="slideshowImg"
             src="assets/targets/0_Buttercake.jpg"
@@ -248,22 +252,22 @@
         </div>
 
         <!-- Marker Name Badge -->
-        <div id="slideshowName" class="text-[10px] font-bold text-wine tracking-widest uppercase bg-cream px-3 py-0.5 rounded-full border border-charcoal/30">
+        <div id="slideshowName" class="text-[10px] font-bold text-gold tracking-widest uppercase bg-black/70 px-3 py-0.5 rounded-full border border-gold/40">
           Buttercake
         </div>
 
         <!-- Indicator Dots -->
-        <div id="slideshowDots" class="flex items-center gap-1.5 pt-0.5 pb-1">
-          <span class="dot-item w-2.5 h-2.5 rounded-full bg-wine shadow-md transition-all duration-300"></span>
-          <span class="dot-item w-1.5 h-1.5 rounded-full bg-charcoal/30 transition-all duration-300"></span>
-          <span class="dot-item w-1.5 h-1.5 rounded-full bg-charcoal/30 transition-all duration-300"></span>
-          <span class="dot-item w-1.5 h-1.5 rounded-full bg-charcoal/30 transition-all duration-300"></span>
-          <span class="dot-item w-1.5 h-1.5 rounded-full bg-charcoal/30 transition-all duration-300"></span>
-          <span class="dot-item w-1.5 h-1.5 rounded-full bg-charcoal/30 transition-all duration-300"></span>
+        <div id="slideshowDots" class="flex items-center gap-1.5 pt-0.5">
+          <span class="dot-item w-2.5 h-2.5 rounded-full bg-gold shadow-md transition-all duration-300"></span>
+          <span class="dot-item w-1.5 h-1.5 rounded-full bg-white/40 transition-all duration-300"></span>
+          <span class="dot-item w-1.5 h-1.5 rounded-full bg-white/40 transition-all duration-300"></span>
+          <span class="dot-item w-1.5 h-1.5 rounded-full bg-white/40 transition-all duration-300"></span>
+          <span class="dot-item w-1.5 h-1.5 rounded-full bg-white/40 transition-all duration-300"></span>
+          <span class="dot-item w-1.5 h-1.5 rounded-full bg-white/40 transition-all duration-300"></span>
         </div>
       </div>
 
-      <div id="targetFoundBadge" class="hidden bg-wine text-white font-black text-[11px] px-4 py-1.5 rounded-full shadow-lg tracking-widest uppercase animate-bounce border-2 border-charcoal">
+      <div id="targetFoundBadge" class="hidden bg-emerald-500 text-white font-black text-[11px] px-4 py-1.5 rounded-full shadow-lg tracking-widest uppercase animate-bounce border border-white/30">
         ✦ MARKER DETECTED ✦
       </div>
     </div>
@@ -281,7 +285,9 @@
     <!-- Top Brand Header Bar -->
     <div class="w-full max-w-4xl mx-auto flex items-center justify-between border-b-2 border-charcoal/10 pb-4">
       <div class="flex items-center gap-3">
-        <img src="assets/tjf_logo.png" alt="The Jakarta Floss" class="h-10 md:h-12 w-auto object-contain drop-shadow-sm" />
+        <div class="bg-white border-2 border-charcoal rounded-2xl p-2 shadow-[3px_3px_0px_#1F201E] flex items-center justify-center">
+          <img src="assets/tjf_logo.png" alt="The Jakarta Floss" class="h-9 md:h-11 w-auto object-contain" />
+        </div>
       </div>
       <div class="hidden sm:flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase text-wine bg-wine/10 px-3.5 py-1 border border-wine/20 rounded-full">
         <span>✦ AR EXPERIENCE ✦</span>
