@@ -239,7 +239,7 @@
     <div id="centerViewfinder" class="flex flex-col items-center justify-center gap-3 my-auto pointer-events-none transition-all duration-500">
       <!-- Instruction Text -->
       <div class="editorial-badge text-[11px] md:text-xs text-white bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full tracking-wider text-center font-bold shadow-xl">
-        Arahkan kamera ke <span class="text-gold font-bold">Cover Packaging Gift Station</span>
+        Sorot <span class="text-gold font-bold">Foto atau Packaging Gift Station</span> untuk menghidupkan momenmu
       </div>
 
       <!-- Slideshow Card -->
@@ -366,13 +366,13 @@
 
       <div>
         <span class="editorial-badge text-[10px] text-wine font-extrabold bg-wine/10 px-3 py-1 border border-wine/30">
-          INITIALIZING CAMERA & 3D ENGINE
+          ✦ CREATING THE EXPERIENCE ✦
         </span>
         <h2 class="font-instrument text-3xl md:text-4xl text-wine font-bold leading-tight mt-2.5">
-          Starting AR Video
+          Bringing Memories to Life
         </h2>
         <p id="loadingStatusText" class="text-xs md:text-sm text-charcoal/70 mt-1.5 font-medium leading-relaxed max-w-xs mx-auto">
-          Preparing camera stream & 3D recognition...
+          Sebentar ya, kami sedang menyiapkan momen spesialmu...
         </p>
       </div>
 
@@ -382,7 +382,7 @@
       </div>
 
       <div class="text-[11px] text-charcoal/60 font-serif italic">
-        "Arahkan kamera ke Cover Packaging Gift Station"
+        "Sorot Foto atau Packaging Gift Station untuk menghidupkan momenmu"
       </div>
     </div>
 
@@ -652,7 +652,6 @@
     }, 15000);
 
     // URL Query Control Parameter (?control=true, ?control=1, ?controls=true, ?controls=1)
-    const urlParams = new URLSearchParams(window.location.search);
     const hasControlParam =
       urlParams.has("control") ||
       urlParams.has("controls") ||
