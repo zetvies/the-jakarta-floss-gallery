@@ -1318,6 +1318,72 @@
         reader.readAsDataURL(file);
       }
 
+      let activeCornerIndex = -1;
+
+      function getCanvasCoords(e, canvas) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const scaleX = canvas.width / (rect.width || 1);
+        const scaleY = canvas.height / (rect.height || 1);
+        return {
+          x: (clientX - rect.left) * scaleX,
+          y: (clientY - rect.top) * scaleY
+        };
+      }
+
+      function initCropCanvasEvents() {
+        const canvas = document.getElementById("cropCanvas");
+        if (!canvas || canvas.dataset.initialized === "true") return;
+        canvas.dataset.initialized = "true";
+
+        function startDrag(e) {
+          if (!sourceImage || !corners || corners.length < 4) return;
+          const pos = getCanvasCoords(e, canvas);
+          const r = Math.max(30, canvas.width / 15); // Hit radius for easy handle dragging
+
+          let minDist = Infinity;
+          let closestIdx = -1;
+          corners.forEach((c, idx) => {
+            const dist = Math.hypot(c.x - pos.x, c.y - pos.y);
+            if (dist < minDist && dist <= r) {
+              minDist = dist;
+              closestIdx = idx;
+            }
+          });
+
+          if (closestIdx !== -1) {
+            activeCornerIndex = closestIdx;
+            if (e.cancelable) e.preventDefault();
+          }
+        }
+
+        function moveDrag(e) {
+          if (activeCornerIndex === -1 || !sourceImage) return;
+          if (e.cancelable) e.preventDefault();
+          const pos = getCanvasCoords(e, canvas);
+
+          const clampedX = Math.max(0, Math.min(canvas.width, pos.x));
+          const clampedY = Math.max(0, Math.min(canvas.height, pos.y));
+
+          corners[activeCornerIndex] = { x: clampedX, y: clampedY };
+          drawCropCanvas();
+          updateRectifiedOutput();
+        }
+
+        function stopDrag() {
+          activeCornerIndex = -1;
+        }
+
+        canvas.addEventListener("mousedown", startDrag);
+        canvas.addEventListener("mousemove", moveDrag);
+        window.addEventListener("mouseup", stopDrag);
+
+        canvas.addEventListener("touchstart", startDrag, { passive: false });
+        canvas.addEventListener("touchmove", moveDrag, { passive: false });
+        window.addEventListener("touchend", stopDrag);
+      }
+
       function loadImageToCropCanvas(url) {
         const img = new Image();
         img.crossOrigin = "anonymous";
@@ -1327,6 +1393,7 @@
           canvas.width = img.naturalWidth;
           canvas.height = img.naturalHeight;
           
+          initCropCanvasEvents();
           resetCornersFull();
           document.getElementById("cropPlaceholder").classList.add("hidden");
           drawCropCanvas();
@@ -1387,7 +1454,7 @@
         ctx.fill();
 
         // Draw handles
-        const r = Math.max(8, canvas.width / 60);
+        const r = Math.max(10, canvas.width / 50);
         corners.forEach((c, idx) => {
           ctx.beginPath();
           ctx.arc(c.x, c.y, r, 0, Math.PI * 2);
@@ -1396,6 +1463,13 @@
           ctx.strokeStyle = "#1F201E";
           ctx.lineWidth = Math.max(2, r / 4);
           ctx.stroke();
+
+          // Corner label number
+          ctx.fillStyle = "#1F201E";
+          ctx.font = `bold ${Math.round(r * 0.9)}px sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(idx + 1, c.x, c.y);
         });
       }
 
@@ -1408,26 +1482,36 @@
       }
 
       function updateRectifiedOutput() {
-        if (!sourceImage) return;
+        if (!sourceImage || !corners || corners.length < 4) return;
         const previewCanvas = document.getElementById("rectifiedPreviewCanvas");
+        if (!previewCanvas) return;
         const ctx = previewCanvas.getContext("2d");
 
-        const topW = Math.hypot(corners[1].x - corners[0].x, corners[1].y - corners[0].y);
-        const botW = Math.hypot(corners[2].x - corners[3].x, corners[2].y - corners[3].y);
-        const leftH = Math.hypot(corners[3].x - corners[0].x, corners[3].y - corners[0].y);
-        const rightH = Math.hypot(corners[2].x - corners[1].x, corners[2].y - corners[1].y);
+        const minX = Math.min(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+        const maxX = Math.max(corners[0].x, corners[1].x, corners[2].x, corners[3].x);
+        const minY = Math.min(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
+        const maxY = Math.max(corners[0].y, corners[1].y, corners[2].y, corners[3].y);
 
-        const avgW = (topW + botW) / 2;
-        const avgH = (leftH + rightH) / 2;
-        const aspect = avgW / (avgH || 1);
+        const cropW = Math.max(1, maxX - minX);
+        const cropH = Math.max(1, maxY - minY);
+        const aspect = cropW / cropH;
 
         const dstW = 400;
         const dstH = Math.round(dstW / aspect);
         previewCanvas.width = dstW;
         previewCanvas.height = dstH;
-        document.getElementById("rectifiedDims").textContent = `${dstW} × ${dstH} px`;
+        
+        const dimsEl = document.getElementById("rectifiedDims");
+        if (dimsEl) dimsEl.textContent = `${dstW} × ${dstH} px`;
 
-        ctx.drawImage(sourceImage, 0, 0, dstW, dstH);
+        ctx.clearRect(0, 0, dstW, dstH);
+
+        const b = parseFloat(document.getElementById("sliderBrightness")?.value || 100);
+        const c = parseFloat(document.getElementById("sliderContrast")?.value || 100);
+        ctx.filter = `brightness(${b}%) contrast(${c}%)`;
+
+        ctx.drawImage(sourceImage, minX, minY, cropW, cropH, 0, 0, dstW, dstH);
+        ctx.filter = "none";
       }
 
       function handleMarkerVideoUpload(event) {
