@@ -222,23 +222,23 @@
       <a
         id="btnBackSoftfile"
         href="softfile.html"
-        class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-black/40 hover:bg-black/60 border border-white/25 text-white backdrop-blur-md transition-all text-xs font-bold tracking-wider uppercase shadow-lg cursor-pointer"
+        class="border-2 border-charcoal bg-wine hover:bg-wine-dark text-white text-xs md:text-sm font-bold tracking-wider uppercase px-4.5 py-2.5 rounded-full shadow-[3px_3px_0px_#1F201E] active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#1F201E] transition-all inline-flex items-center gap-2 cursor-pointer select-none shrink-0"
       >
         <span>🖼️</span>
         <span>Gallery</span>
       </a>
     </div>
 
-    <!-- Center Viewfinder & Marker Slideshow -->
-    <div id="centerViewfinder" class="flex flex-col items-center justify-center gap-3 my-auto pointer-events-none transition-all duration-500">
+    <!-- Center Viewfinder & Marker Slideshow (Rounded Rectangle Container Box) -->
+    <div id="centerViewfinder" class="flex flex-col items-center justify-center gap-3.5 my-auto pointer-events-none transition-all duration-500 bg-cream/95 backdrop-blur-md border-2 border-charcoal p-5 md:p-6 rounded-3xl shadow-[6px_6px_0px_#801A20] max-w-sm w-full text-center">
       <!-- Instruction Text -->
-      <div class="editorial-badge text-[11px] md:text-xs text-white bg-black/60 backdrop-blur-md border border-white/20 px-4 py-2 rounded-full tracking-wider text-center font-bold shadow-xl">
-        Arahkan kamera ke <span class="text-gold font-bold">Cover Packaging Gift Station</span>
+      <div class="editorial-badge text-[10px] md:text-[11px] text-wine bg-wine/10 border border-wine/30 px-3.5 py-1.5 rounded-full tracking-wider font-bold">
+        Arahkan kamera ke <span class="text-wine font-black underline">Cover Packaging</span>
       </div>
 
       <!-- Slideshow Card -->
-      <div class="relative p-2.5 rounded-2xl bg-black/40 backdrop-blur-md border border-white/20 shadow-[0_12px_35px_rgba(0,0,0,0.7)] flex flex-col items-center gap-2">
-        <div class="relative overflow-hidden rounded-xl w-36 h-48 md:w-44 md:h-56 border border-white/10">
+      <div class="relative p-2 rounded-2xl bg-white border-2 border-charcoal shadow-[3px_3px_0px_#1F201E] flex flex-col items-center gap-2 w-full">
+        <div class="relative overflow-hidden rounded-xl w-36 h-48 md:w-44 md:h-56 border border-charcoal/20">
           <img
             id="slideshowImg"
             src="assets/targets/0_Buttercake.jpg"
@@ -248,22 +248,22 @@
         </div>
 
         <!-- Marker Name Badge -->
-        <div id="slideshowName" class="text-[10px] font-bold text-gold tracking-widest uppercase bg-black/70 px-3 py-0.5 rounded-full border border-gold/40">
+        <div id="slideshowName" class="text-[10px] font-bold text-wine tracking-widest uppercase bg-cream px-3 py-0.5 rounded-full border border-charcoal/30">
           Buttercake
         </div>
 
         <!-- Indicator Dots -->
-        <div id="slideshowDots" class="flex items-center gap-1.5 pt-0.5">
-          <span class="dot-item w-2.5 h-2.5 rounded-full bg-gold shadow-md transition-all duration-300"></span>
-          <span class="dot-item w-1.5 h-1.5 rounded-full bg-white/40 transition-all duration-300"></span>
-          <span class="dot-item w-1.5 h-1.5 rounded-full bg-white/40 transition-all duration-300"></span>
-          <span class="dot-item w-1.5 h-1.5 rounded-full bg-white/40 transition-all duration-300"></span>
-          <span class="dot-item w-1.5 h-1.5 rounded-full bg-white/40 transition-all duration-300"></span>
-          <span class="dot-item w-1.5 h-1.5 rounded-full bg-white/40 transition-all duration-300"></span>
+        <div id="slideshowDots" class="flex items-center gap-1.5 pt-0.5 pb-1">
+          <span class="dot-item w-2.5 h-2.5 rounded-full bg-wine shadow-md transition-all duration-300"></span>
+          <span class="dot-item w-1.5 h-1.5 rounded-full bg-charcoal/30 transition-all duration-300"></span>
+          <span class="dot-item w-1.5 h-1.5 rounded-full bg-charcoal/30 transition-all duration-300"></span>
+          <span class="dot-item w-1.5 h-1.5 rounded-full bg-charcoal/30 transition-all duration-300"></span>
+          <span class="dot-item w-1.5 h-1.5 rounded-full bg-charcoal/30 transition-all duration-300"></span>
+          <span class="dot-item w-1.5 h-1.5 rounded-full bg-charcoal/30 transition-all duration-300"></span>
         </div>
       </div>
 
-      <div id="targetFoundBadge" class="hidden bg-emerald-500 text-white font-black text-[11px] px-4 py-1.5 rounded-full shadow-lg tracking-widest uppercase animate-bounce border border-white/30">
+      <div id="targetFoundBadge" class="hidden bg-wine text-white font-black text-[11px] px-4 py-1.5 rounded-full shadow-lg tracking-widest uppercase animate-bounce border-2 border-charcoal">
         ✦ MARKER DETECTED ✦
       </div>
     </div>
@@ -692,45 +692,50 @@
       canvas.height = 1540;
       const ctx = canvas.getContext("2d");
 
-      // 1. Background: Vintage Cream #F9F6F0
+      function drawRoundedRect(x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+      }
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // 1. Background: Vintage Cream #F9F6F0 Rounded Container Box
       ctx.fillStyle = "#F9F6F0";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      drawRoundedRect(16, 16, canvas.width - 32, canvas.height - 32, 48);
+      ctx.fill();
 
       // 2. Outer Charcoal Border
       ctx.strokeStyle = "#1F201E";
       ctx.lineWidth = 16;
-      ctx.strokeRect(10, 10, canvas.width - 20, canvas.height - 20);
+      drawRoundedRect(16, 16, canvas.width - 32, canvas.height - 32, 48);
+      ctx.stroke();
 
       // 3. Deep Wine Band
       ctx.strokeStyle = "#801A20";
       ctx.lineWidth = 10;
-      ctx.strokeRect(26, 26, canvas.width - 52, canvas.height - 52);
+      drawRoundedRect(36, 36, canvas.width - 72, canvas.height - 72, 36);
+      ctx.stroke();
 
       // 4. Inner Gold Filigree Line
       ctx.strokeStyle = "#C49A45";
       ctx.lineWidth = 5;
-      ctx.strokeRect(42, 42, canvas.width - 84, canvas.height - 84);
+      drawRoundedRect(52, 52, canvas.width - 104, canvas.height - 104, 28);
+      ctx.stroke();
 
-      // 5. Ornate L-shaped Corner Accents (4 Corners)
-      const cLen = 75;
-      const pad = 54;
-      ctx.strokeStyle = "#C49A45";
-      ctx.lineWidth = 8;
-
-      // Top-Left
-      ctx.beginPath(); ctx.moveTo(pad, pad + cLen); ctx.lineTo(pad, pad); ctx.lineTo(pad + cLen, pad); ctx.stroke();
-      // Top-Right
-      ctx.beginPath(); ctx.moveTo(canvas.width - pad - cLen, pad); ctx.lineTo(canvas.width - pad, pad); ctx.lineTo(canvas.width - pad, pad + cLen); ctx.stroke();
-      // Bottom-Left
-      ctx.beginPath(); ctx.moveTo(pad, canvas.height - pad - cLen); ctx.lineTo(pad, canvas.height - pad); ctx.lineTo(pad + cLen, canvas.height - pad); ctx.stroke();
-      // Bottom-Right
-      ctx.beginPath(); ctx.moveTo(canvas.width - pad - cLen, canvas.height - pad); ctx.lineTo(canvas.width - pad, canvas.height - pad); ctx.lineTo(canvas.width - pad, canvas.height - pad - cLen); ctx.stroke();
-
-      // 6. Bottom Brand Text: ✦ THE JAKARTA FLOSS ✦
+      // 5. Bottom Brand Text: ✦ THE JAKARTA FLOSS ✦
       ctx.fillStyle = "#801A20";
       ctx.font = "900 32px 'Plus Jakarta Sans', sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText("✦ THE JAKARTA FLOSS ✦", canvas.width / 2, canvas.height - 40);
+      ctx.fillText("✦ THE JAKARTA FLOSS ✦", canvas.width / 2, canvas.height - 48);
 
       const frameImg = document.getElementById("tjf-frame-texture");
       if (frameImg) {
