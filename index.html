@@ -145,7 +145,7 @@
     <div id="loginScreen" class="flex-1 flex items-center justify-center px-6 py-12">
       <div class="w-full max-w-[420px]">
         <div class="flex flex-col items-center justify-center mb-6 text-center">
-          <img src="assets/tjf_logo.png" alt="The Jakarta Floss" class="w-[40svw] max-w-[200px] h-auto object-contain drop-shadow-md mb-3" />
+          <img src="tjf-logo.svg" alt="The Jakarta Floss" class="w-[40svw] max-w-[200px] h-auto object-contain drop-shadow-md mb-3" />
           <p class="font-sans text-xs font-semibold tracking-[0.2em] uppercase text-forest/70">Central Admin &amp; Analytics Studio</p>
         </div>
 
@@ -1869,7 +1869,7 @@
         }
 
         tbody.innerHTML = sessions.map(s => {
-          const thumb = s.storage_url || "/icon.ico";
+          const thumb = s.storage_url || "tjf-logo.svg";
           const created = new Date(s.created_at || Date.now()).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" });
           const hasVideoMsg = !!s.video_message_url;
           const hasFrameVideo = !!s.frame_video_url;
