@@ -345,7 +345,7 @@
         </div>
 
         <!-- Metric Summary Cards Grid -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
           <!-- Total Sessions Card -->
           <div class="vintage-box p-5 bg-white border-2 border-charcoal">
             <div class="flex items-center justify-between">
@@ -354,16 +354,6 @@
             </div>
             <div id="analyticsTotalSessions" class="font-instrument text-4xl font-bold text-wine mt-1">0</div>
             <p id="analyticsSessionsSubtext" class="text-[11px] text-charcoal/60 mt-1 font-mono">0 Photobox &bull; 0 Videobox</p>
-          </div>
-
-          <!-- Total Revenue Card -->
-          <div class="vintage-box p-5 bg-white border-2 border-charcoal">
-            <div class="flex items-center justify-between">
-              <span class="editorial-badge text-[10px] text-forest/70">ESTIMATED REVENUE</span>
-              <span class="text-xs">💰</span>
-            </div>
-            <div id="analyticsTotalRevenue" class="font-instrument text-3xl md:text-4xl font-bold text-forest mt-1">Rp 0</div>
-            <p id="analyticsRevenueSubtext" class="text-[11px] text-charcoal/60 mt-1 font-mono">Photobox @35k &bull; Videobox @50k</p>
           </div>
 
           <!-- Photobox Ratio Card -->
@@ -413,12 +403,11 @@
                   <th class="px-4 py-3">Videobox</th>
                   <th class="px-4 py-3">Total Sessions</th>
                   <th class="px-4 py-3">Printed (4R)</th>
-                  <th class="px-4 py-3 text-right">Est. Revenue</th>
                 </tr>
               </thead>
               <tbody id="analyticsTableBody">
                 <tr>
-                  <td colspan="7" class="text-center py-8 text-charcoal/40 font-serif italic">Loading analytics report...</td>
+                  <td colspan="6" class="text-center py-8 text-charcoal/40 font-serif italic">Loading analytics report...</td>
                 </tr>
               </tbody>
             </table>
@@ -1034,15 +1023,9 @@
           else photoboxCount++;
         });
 
-        // Estimated Revenue: Photobox Rp 35.000, Videobox Rp 50.000
-        const estimatedRevenue = (photoboxCount * 35000) + (videoboxCount * 50000);
-
         // Update UI
         const totalEl = document.getElementById("analyticsTotalSessions");
         if (totalEl) totalEl.textContent = totalSessions;
-
-        const revEl = document.getElementById("analyticsTotalRevenue");
-        if (revEl) revEl.textContent = `Rp ${estimatedRevenue.toLocaleString("id-ID")}`;
 
         const pbEl = document.getElementById("analyticsPhotoboxCount");
         if (pbEl) pbEl.textContent = photoboxCount;
@@ -1068,7 +1051,7 @@
         tbody.innerHTML = "";
 
         if (sessions.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-charcoal/40 font-serif italic text-base">Tidak ada data sesi yang cocok dengan filter.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-charcoal/40 font-serif italic text-base">Tidak ada data sesi yang cocok dengan filter.</td></tr>`;
           return;
         }
 
@@ -1102,7 +1085,6 @@
 
         sortedKeys.forEach(k => {
           const g = groups[k];
-          const rev = (g.photobox * 35000) + (g.videobox * 50000);
           const tr = document.createElement("tr");
           tr.className = "border-b border-charcoal/10 hover:bg-cream/50 font-medium";
           tr.innerHTML = `
@@ -1114,7 +1096,6 @@
             <td class="px-4 py-2.5 text-wine font-bold">${g.videobox}</td>
             <td class="px-4 py-2.5 font-bold text-wine">${g.total}</td>
             <td class="px-4 py-2.5 text-forest font-bold">${g.printed}</td>
-            <td class="px-4 py-2.5 text-right font-bold text-forest">Rp ${rev.toLocaleString("id-ID")}</td>
           `;
           tbody.appendChild(tr);
         });
