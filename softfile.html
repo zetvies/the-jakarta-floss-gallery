@@ -508,7 +508,7 @@
             const { data: storageFiles } = await supabaseClient
               .storage
               .from(STORAGE_BUCKET)
-              .list("photos", { limit: 100 });
+              .list("photos", { limit: 1000, search: currentCode });
 
             let matchedFiles = [];
             if (storageFiles && storageFiles.length > 0) {
