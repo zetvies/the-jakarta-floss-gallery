@@ -282,49 +282,91 @@
     </div>
   </div>
 
-  <!-- Bottom-Left AR Fine-Tuning Control Panel (Only visible if ?control=true or ?control=1 in URL) -->
-  <div id="controlPanelContainer" class="hidden fixed bottom-4 left-4 z-50 pointer-events-auto flex flex-col items-start gap-2 opacity-40 hover:opacity-100 transition-opacity duration-300">
-    <!-- Expandable Control Card -->
-    <div id="controlCard" class="hidden p-3.5 rounded-2xl bg-black/70 backdrop-blur-md border border-white/20 text-white text-xs shadow-2xl flex flex-col gap-2.5 w-64 select-none">
+  <!-- Bottom-Left AR Fine-Tuning Control Panel (Only visible if ?control=true in URL) -->
+  <div id="controlPanelContainer" class="hidden fixed bottom-4 left-4 z-[100000] pointer-events-auto flex flex-col items-start gap-2 opacity-40 hover:opacity-100 transition-opacity duration-300">
+    <!-- Expandable 3D Transform Control Card -->
+    <div id="controlCard" class="hidden p-3.5 rounded-2xl bg-black/80 backdrop-blur-md border border-white/20 text-white text-xs shadow-2xl flex flex-col gap-2.5 w-72 max-h-[80vh] overflow-y-auto select-none">
       <div class="flex items-center justify-between font-bold border-b border-white/10 pb-1.5 text-gold">
-        <span class="flex items-center gap-1.5">🎛️ <span>AR Controls</span></span>
+        <span class="flex items-center gap-1.5">🎛️ <span>3D Transform Controls</span></span>
         <button id="btnCloseControls" class="text-white/60 hover:text-white text-base leading-none px-1">&times;</button>
       </div>
 
-      <!-- Scale Control -->
-      <div class="flex flex-col gap-1">
-        <div class="flex justify-between text-[11px] font-semibold text-white/80">
-          <span>3D Scale:</span>
-          <span id="controlScaleVal" class="text-gold font-mono">0.60</span>
+      <!-- POSITION (X, Y, Z) -->
+      <div class="flex flex-col gap-1.5 border-b border-white/10 pb-2">
+        <span class="text-[10px] uppercase font-bold text-gold tracking-wider">Position (X, Y, Z)</span>
+        
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[11px] font-semibold text-white/80">
+            <span>PosX (Left/Right):</span>
+            <span id="ctrlPosXVal" class="text-gold font-mono">0.00</span>
+          </div>
+          <input type="range" id="ctrlPosX" min="-2.0" max="2.0" step="0.01" value="0" class="w-full accent-gold h-1.5 bg-white/20 rounded-lg cursor-pointer" />
         </div>
-        <input type="range" id="controlScaleRange" min="0.2" max="1.5" step="0.05" value="0.6" class="w-full accent-gold h-1.5 bg-white/20 rounded-lg cursor-pointer" />
+
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[11px] font-semibold text-white/80">
+            <span>PosY (Up/Down):</span>
+            <span id="ctrlPosYVal" class="text-gold font-mono">0.39</span>
+          </div>
+          <input type="range" id="ctrlPosY" min="-2.0" max="2.0" step="0.01" value="0.39" class="w-full accent-gold h-1.5 bg-white/20 rounded-lg cursor-pointer" />
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[11px] font-semibold text-white/80">
+            <span>PosZ (Depth):</span>
+            <span id="ctrlPosZVal" class="text-gold font-mono">0.48</span>
+          </div>
+          <input type="range" id="ctrlPosZ" min="-2.0" max="2.0" step="0.01" value="0.48" class="w-full accent-gold h-1.5 bg-white/20 rounded-lg cursor-pointer" />
+        </div>
       </div>
 
-      <!-- Pitch Tilt Control -->
-      <div class="flex flex-col gap-1">
-        <div class="flex justify-between text-[11px] font-semibold text-white/80">
-          <span>Tilt Angle:</span>
-          <span id="controlTiltVal" class="text-gold font-mono">35°</span>
+      <!-- ROTATION (Pitch, Yaw, Roll) -->
+      <div class="flex flex-col gap-1.5 border-b border-white/10 pb-2">
+        <span class="text-[10px] uppercase font-bold text-gold tracking-wider">Rotation (Pitch, Yaw, Roll)</span>
+        
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[11px] font-semibold text-white/80">
+            <span>RotX (Pitch Tilt):</span>
+            <span id="ctrlRotXVal" class="text-gold font-mono">35°</span>
+          </div>
+          <input type="range" id="ctrlRotX" min="-180" max="180" step="1" value="35" class="w-full accent-gold h-1.5 bg-white/20 rounded-lg cursor-pointer" />
         </div>
-        <input type="range" id="controlTiltRange" min="0" max="90" step="1" value="35" class="w-full accent-gold h-1.5 bg-white/20 rounded-lg cursor-pointer" />
+
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[11px] font-semibold text-white/80">
+            <span>RotY (Yaw):</span>
+            <span id="ctrlRotYVal" class="text-gold font-mono">-1°</span>
+          </div>
+          <input type="range" id="ctrlRotY" min="-180" max="180" step="1" value="-1" class="w-full accent-gold h-1.5 bg-white/20 rounded-lg cursor-pointer" />
+        </div>
+
+        <div class="flex flex-col gap-1">
+          <div class="flex justify-between text-[11px] font-semibold text-white/80">
+            <span>RotZ (Roll):</span>
+            <span id="ctrlRotZVal" class="text-gold font-mono">-1°</span>
+          </div>
+          <input type="range" id="ctrlRotZ" min="-180" max="180" step="1" value="-1" class="w-full accent-gold h-1.5 bg-white/20 rounded-lg cursor-pointer" />
+        </div>
       </div>
 
-      <!-- Z Position Offset -->
-      <div class="flex flex-col gap-1">
+      <!-- SCALE -->
+      <div class="flex flex-col gap-1 pb-2 border-b border-white/10">
+        <span class="text-[10px] uppercase font-bold text-gold tracking-wider">Scale</span>
         <div class="flex justify-between text-[11px] font-semibold text-white/80">
-          <span>Depth Z-Offset:</span>
-          <span id="controlZVal" class="text-gold font-mono">0.48</span>
+          <span>Scale Size:</span>
+          <span id="ctrlScaleVal" class="text-gold font-mono">0.60</span>
         </div>
-        <input type="range" id="controlZRange" min="0.1" max="1.2" step="0.02" value="0.48" class="w-full accent-gold h-1.5 bg-white/20 rounded-lg cursor-pointer" />
+        <input type="range" id="ctrlScale" min="0.1" max="3.0" step="0.05" value="0.6" class="w-full accent-gold h-1.5 bg-white/20 rounded-lg cursor-pointer" />
       </div>
 
-      <!-- Test Trigger Target -->
-      <div class="flex flex-col gap-1 pt-1 border-t border-white/10">
-        <span class="text-[10px] uppercase font-bold text-white/60 tracking-wider">Test Target Detect</span>
-        <div class="grid grid-cols-3 gap-1">
-          <button onclick="triggerDebugTarget(0)" class="px-1.5 py-1 bg-white/10 hover:bg-gold/30 rounded border border-white/20 text-[10px] font-bold text-center">#0 Buttercake</button>
-          <button onclick="triggerDebugTarget(1)" class="px-1.5 py-1 bg-white/10 hover:bg-gold/30 rounded border border-white/20 text-[10px] font-bold text-center">#1 TJF</button>
-          <button onclick="triggerDebugTarget(2)" class="px-1.5 py-1 bg-white/10 hover:bg-gold/30 rounded border border-white/20 text-[10px] font-bold text-center">#2 Floss</button>
+      <!-- Output & Actions -->
+      <div class="flex flex-col gap-1.5">
+        <div id="transformOutput" class="p-1.5 bg-black/60 rounded border border-white/10 text-[9px] font-mono text-gold leading-tight break-all">
+          pos="0 0.39 0.48" rot="35 -1 -1" scale="0.6 0.6 0.6"
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button id="btnResetTransform" class="flex-1 py-1 bg-white/10 hover:bg-white/20 rounded border border-white/20 text-[10px] font-bold text-center">Reset Default</button>
+          <button onclick="triggerDebugTarget(0)" class="py-1 px-2 bg-gold/20 hover:bg-gold/40 border border-gold/40 rounded text-[10px] font-bold text-gold">Test Detect</button>
         </div>
       </div>
     </div>
@@ -332,12 +374,12 @@
     <!-- Bottom Left Trigger Button -->
     <button
       id="btnToggleControls"
-      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/30 bg-black/60 backdrop-blur-md text-white text-xs font-bold shadow-lg hover:bg-black/80 cursor-pointer active:scale-95 transition-all"
+      class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border-2 border-gold/40 bg-black/80 backdrop-blur-md text-white text-xs font-bold shadow-2xl hover:bg-black/95 cursor-pointer active:scale-95 transition-all"
     >
       <svg class="w-4 h-4 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
       </svg>
-      <span>Controls</span>
+      <span>3D Controls</span>
     </button>
   </div>
 
@@ -651,7 +693,7 @@
       }
     }, 15000);
 
-    // URL Query Control Parameter (?control=true, ?control=1, ?controls=true, ?controls=1)
+    // URL Query Control Parameter Check (?control=true, ?control=1, ?controls=true, ?controls=1)
     const hasControlParam =
       urlParams.has("control") ||
       urlParams.has("controls") ||
@@ -681,25 +723,34 @@
     }
 
     function update3DPlaneTransforms() {
-      const scaleEl = document.getElementById("controlScaleRange");
-      const tiltEl = document.getElementById("controlTiltRange");
-      const zEl = document.getElementById("controlZRange");
-      if (!scaleEl || !tiltEl || !zEl) return;
+      const posX = parseFloat(document.getElementById("ctrlPosX")?.value || 0);
+      const posY = parseFloat(document.getElementById("ctrlPosY")?.value || 0.39);
+      const posZ = parseFloat(document.getElementById("ctrlPosZ")?.value || 0.48);
 
-      const scaleVal = parseFloat(scaleEl.value);
-      const tiltVal = parseFloat(tiltEl.value);
-      const zVal = parseFloat(zEl.value);
+      const rotX = parseFloat(document.getElementById("ctrlRotX")?.value || 35);
+      const rotY = parseFloat(document.getElementById("ctrlRotY")?.value || -1);
+      const rotZ = parseFloat(document.getElementById("ctrlRotZ")?.value || -1);
 
-      const scaleValEl = document.getElementById("controlScaleVal");
-      const tiltValEl = document.getElementById("controlTiltVal");
-      const zValEl = document.getElementById("controlZVal");
+      const scaleVal = parseFloat(document.getElementById("ctrlScale")?.value || 0.6);
 
-      if (scaleValEl) scaleValEl.innerText = scaleVal.toFixed(2);
-      if (tiltValEl) tiltValEl.innerText = `${tiltVal}°`;
-      if (zValEl) zValEl.innerText = zVal.toFixed(2);
+      // Update Label Displays
+      if (document.getElementById("ctrlPosXVal")) document.getElementById("ctrlPosXVal").innerText = posX.toFixed(2);
+      if (document.getElementById("ctrlPosYVal")) document.getElementById("ctrlPosYVal").innerText = posY.toFixed(2);
+      if (document.getElementById("ctrlPosZVal")) document.getElementById("ctrlPosZVal").innerText = posZ.toFixed(2);
 
-      const rotStr = `${tiltVal} -1 -1`;
+      if (document.getElementById("ctrlRotXVal")) document.getElementById("ctrlRotXVal").innerText = `${rotX}°`;
+      if (document.getElementById("ctrlRotYVal")) document.getElementById("ctrlRotYVal").innerText = `${rotY}°`;
+      if (document.getElementById("ctrlRotZVal")) document.getElementById("ctrlRotZVal").innerText = `${rotZ}°`;
+
+      if (document.getElementById("ctrlScaleVal")) document.getElementById("ctrlScaleVal").innerText = scaleVal.toFixed(2);
+
+      const rotStr = `${rotX} ${rotY} ${rotZ}`;
       const scaleStr = `${scaleVal} ${scaleVal} ${scaleVal}`;
+
+      const outputEl = document.getElementById("transformOutput");
+      if (outputEl) {
+        outputEl.innerText = `pos="${posX.toFixed(2)} ${posY.toFixed(2)} ${posZ.toFixed(2)}" rot="${rotX} ${rotY} ${rotZ}" scale="${scaleVal.toFixed(2)}"`;
+      }
 
       for (let i = 0; i < 6; i++) {
         const fPlane = document.getElementById(`frame-plane-${i}`);
@@ -709,25 +760,42 @@
         if (fPlane) {
           fPlane.setAttribute("rotation", rotStr);
           fPlane.setAttribute("scale", scaleStr);
-          fPlane.setAttribute("position", `0 0.39 ${zVal}`);
+          fPlane.setAttribute("position", `${posX} ${posY} ${posZ}`);
         }
         if (bPlane) {
           bPlane.setAttribute("rotation", rotStr);
           bPlane.setAttribute("scale", scaleStr);
-          bPlane.setAttribute("position", `0 0.39 ${zVal + 0.015}`);
+          bPlane.setAttribute("position", `${posX} ${posY} ${posZ + 0.015}`);
         }
         if (vPlane) {
           vPlane.setAttribute("rotation", rotStr);
           vPlane.setAttribute("scale", scaleStr);
-          vPlane.setAttribute("position", `0 0.39 ${zVal + 0.02}`);
+          vPlane.setAttribute("position", `${posX} ${posY} ${posZ + 0.02}`);
         }
       }
     }
 
-    ["controlScaleRange", "controlTiltRange", "controlZRange"].forEach((id) => {
+    ["ctrlPosX", "ctrlPosY", "ctrlPosZ", "ctrlRotX", "ctrlRotY", "ctrlRotZ", "ctrlScale"].forEach((id) => {
       const el = document.getElementById(id);
       if (el) el.addEventListener("input", update3DPlaneTransforms);
     });
+
+    const btnResetTransform = document.getElementById("btnResetTransform");
+    if (btnResetTransform) {
+      btnResetTransform.addEventListener("click", () => {
+        if (document.getElementById("ctrlPosX")) document.getElementById("ctrlPosX").value = 0;
+        if (document.getElementById("ctrlPosY")) document.getElementById("ctrlPosY").value = 0.39;
+        if (document.getElementById("ctrlPosZ")) document.getElementById("ctrlPosZ").value = 0.48;
+
+        if (document.getElementById("ctrlRotX")) document.getElementById("ctrlRotX").value = 35;
+        if (document.getElementById("ctrlRotY")) document.getElementById("ctrlRotY").value = -1;
+        if (document.getElementById("ctrlRotZ")) document.getElementById("ctrlRotZ").value = -1;
+
+        if (document.getElementById("ctrlScale")) document.getElementById("ctrlScale").value = 0.6;
+
+        update3DPlaneTransforms();
+      });
+    }
 
     window.triggerDebugTarget = function (idx) {
       const anchorEl = document.getElementById(`target-anchor-${idx}`);
