@@ -1814,8 +1814,34 @@
 
       function getBaseSessionCode(code) {
         if (!code) return "";
-        // Strip trailing numeric suffix (_1, _2, -1, -2, .1, .2, _01, etc.) or single letter suffix (_A, _B)
-        return code.replace(/[._-]([0-9]{1,2}|[a-zA-Z])$/, "");
+        const str = String(code).trim();
+        // Strip trailing _suffix or -suffix (e.g. _B7FB, _7367, _0F09, _1, -1, .1)
+        const stripped = str.replace(/[._-][A-Za-z0-9]{1,8}$/, "");
+        return stripped || str;
+      }
+
+      function getBestPhotoUrl(s) {
+        if (!s) return "";
+        if (s.storage_url && typeof s.storage_url === "string" && s.storage_url.trim()) return s.storage_url.trim();
+        if (s.photo_url && typeof s.photo_url === "string" && s.photo_url.trim()) return s.photo_url.trim();
+        if (s.image_url && typeof s.image_url === "string" && s.image_url.trim()) return s.image_url.trim();
+        if (s.url && typeof s.url === "string" && s.url.trim()) return s.url.trim();
+        if (s.local_filename && typeof s.local_filename === "string" && s.local_filename.trim()) {
+          const fn = s.local_filename.trim();
+          if (fn.startsWith("http://") || fn.startsWith("https://")) return fn;
+          const cleanFn = fn.replace(/^\/+photos\//, "").replace(/^\/+/, "");
+          return `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${cleanFn}`;
+        }
+        return "";
+      }
+
+      function getBestGroupPhotoUrl(originalSessions) {
+        if (!originalSessions || !Array.isArray(originalSessions)) return "";
+        for (const s of originalSessions) {
+          const url = getBestPhotoUrl(s);
+          if (url) return url;
+        }
+        return "";
       }
 
       function groupSessionsByBaseCode(sessions) {
@@ -1824,7 +1850,7 @@
         const groups = new Map();
 
         sessions.forEach(s => {
-          const rawCode = s.code || "";
+          const rawCode = (s.code || "").trim();
           const baseCode = getBaseSessionCode(rawCode);
           const key = baseCode || rawCode;
 
@@ -1836,7 +1862,7 @@
               created_at: s.created_at || s.timestamp,
               booth_id: s.booth_id || s.booth || "Booth 1",
               type: s.type || "Photobox",
-              storage_url: s.storage_url || s.photo_url || "",
+              storage_url: getBestPhotoUrl(s),
               video_message_url: s.video_message_url || "",
               frame_video_url: s.frame_video_url || "",
               printed: !!(s.printed || s.printed_at || s.is_printed),
@@ -1848,8 +1874,9 @@
             }
             existing.originalSessions.push(s);
 
-            if (!existing.storage_url && (s.storage_url || s.photo_url)) {
-              existing.storage_url = s.storage_url || s.photo_url;
+            const pUrl = getBestPhotoUrl(s);
+            if (!existing.storage_url && pUrl) {
+              existing.storage_url = pUrl;
             }
             if (!existing.video_message_url && s.video_message_url) {
               existing.video_message_url = s.video_message_url;
@@ -1863,6 +1890,13 @@
             if (s.printed || s.printed_at || s.is_printed) {
               existing.printed = true;
             }
+          }
+        });
+
+        // Ensure every group has the best photo preview URL available across all original sessions
+        groups.forEach(g => {
+          if (!g.storage_url) {
+            g.storage_url = getBestGroupPhotoUrl(g.originalSessions);
           }
         });
 
@@ -1892,6 +1926,26 @@
 
           rawSessionsStore = sessions;
           allSessions = groupSessionsByBaseCode(sessions);
+
+          // Auto-enrich photo previews from Supabase Storage bucket if missing
+          if (supabaseClient) {
+            try {
+              const { data: storageFiles } = await supabaseClient.storage.from("tjf_photos").list("photos", { limit: 1000 });
+              if (storageFiles && storageFiles.length > 0) {
+                allSessions.forEach(g => {
+                  if (!g.storage_url) {
+                    const match = storageFiles.find(f => f.name && (g.variants.some(v => v && f.name.includes(v)) || (g.code && f.name.includes(g.code))));
+                    if (match) {
+                      g.storage_url = `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${match.name}`;
+                    }
+                  }
+                });
+              }
+            } catch (stErr) {
+              console.warn("Storage auto-enrichment warning:", stErr);
+            }
+          }
+
           if (badge) badge.textContent = allSessions.length;
           renderSessionsTable(allSessions);
           applyAnalyticsFilters();
@@ -1924,7 +1978,7 @@
             <tr class="border-b border-charcoal/10 hover:bg-cream/40 transition-colors">
               <td class="px-4 py-2 w-16">
                 <a href="${thumb}" target="_blank">
-                  <img src="${thumb}" class="w-12 h-14 object-cover border border-charcoal shadow-sm bg-cream" />
+                  <img src="${thumb}" onerror="this.onerror=null; this.src='tjf-logo.svg';" class="w-12 h-14 object-cover border border-charcoal shadow-sm bg-cream" />
                 </a>
               </td>
               <td class="px-4 py-3">
