@@ -162,12 +162,12 @@
     >
       <a-assets timeout="10000">
         <img id="tjf-frame-texture" src="" crossorigin="anonymous" />
-        <video id="video-asset-0" src="https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
-        <video id="video-asset-1" src="https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
-        <video id="video-asset-2" src="https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
-        <video id="video-asset-3" src="https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
-        <video id="video-asset-4" src="https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
-        <video id="video-asset-5" src="https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
+        <video id="video-asset-0" src="" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
+        <video id="video-asset-1" src="" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
+        <video id="video-asset-2" src="" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
+        <video id="video-asset-3" src="" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
+        <video id="video-asset-4" src="" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
+        <video id="video-asset-5" src="" crossorigin="anonymous" playsinline webkit-playsinline loop preload="auto" muted></video>
       </a-assets>
 
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
@@ -221,6 +221,13 @@
           <img src="gs-logo.svg" alt="Gift Station" class="h-9 md:h-11 w-auto object-contain transition-transform group-hover:scale-105 drop-shadow-[0_2px_8px_rgba(0,0,0,0.8)]" />
         </div>
       </a>
+
+      <!-- Top Center: Active Session Code Badge / Input Button -->
+      <button id="btnOpenCodeModal" onclick="openCodeInputModal()"
+        class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-white/30 bg-black/60 backdrop-blur-md hover:bg-black/80 text-white text-[10px] md:text-xs font-bold tracking-wider uppercase shadow-md active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer select-none">
+        <span class="w-2 h-2 rounded-full bg-amber-500" id="sessionStatusDot"></span>
+        <span id="sessionBadgeLabel">MASUKKAN KODE</span>
+      </button>
 
       <!-- Top Right: Gallery Button -->
       <a
@@ -435,11 +442,75 @@
     </div>
   </div>
 
+  <!-- Vintage Modal: Input Kode Sesi -->
+  <div id="codeInputModal" class="hidden fixed inset-0 z-[100001] flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm transition-all duration-300">
+    <div class="relative w-full max-w-md bg-[#F9F6F0] rounded-2xl border-2 border-[#1F201E] shadow-[6px_6px_0px_#801A20] p-6 text-charcoal flex flex-col gap-4">
+      <!-- Close button -->
+      <button onclick="closeCodeInputModal()" class="absolute top-4 right-4 text-charcoal/50 hover:text-charcoal text-2xl font-bold leading-none p-1 transition-colors cursor-pointer">
+        &times;
+      </button>
+
+      <!-- Header -->
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-full bg-wine/10 border border-wine/30 flex items-center justify-center text-wine text-lg">
+          📹
+        </div>
+        <div>
+          <span class="text-[10px] font-extrabold text-wine uppercase tracking-widest block">TJF VIDEOBOX AR</span>
+          <h3 class="font-instrument text-2xl font-bold text-wine leading-tight">Masukkan Kode Sesi</h3>
+        </div>
+      </div>
+
+      <p class="text-xs text-charcoal/70 leading-relaxed font-medium">
+        Ketik 6 digit kode sesi pada struk atau layar photobox untuk memuat video AR kamu.
+      </p>
+
+      <!-- Form -->
+      <form onsubmit="handleCodeSubmit(event)" class="flex flex-col gap-3">
+        <div class="relative">
+          <input
+            type="text"
+            id="manualCodeInput"
+            maxlength="10"
+            placeholder="Contoh: S5TWEB"
+            class="w-full px-4 py-3 rounded-xl border-2 border-[#1F201E] bg-white text-charcoal font-mono text-center text-lg uppercase tracking-widest font-bold focus:outline-none focus:ring-2 focus:ring-wine/50 shadow-inner"
+            autocomplete="off"
+            autocapitalize="characters"
+          />
+        </div>
+
+        <div id="codeErrorMsg" class="hidden text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg p-2.5 font-medium leading-tight">
+        </div>
+
+        <div class="flex items-center gap-2 pt-1">
+          <button
+            type="button"
+            onclick="closeCodeInputModal()"
+            class="w-1/3 py-2.5 px-3 rounded-xl border-2 border-[#1F201E] bg-cream hover:bg-cream-dark text-charcoal text-xs font-bold uppercase tracking-wider transition-all cursor-pointer"
+          >
+            Batal
+          </button>
+          <button
+            type="submit"
+            id="btnSubmitCode"
+            class="w-2/3 py-2.5 px-3 rounded-xl border-2 border-[#1F201E] bg-wine hover:bg-wine-dark text-white text-xs font-bold uppercase tracking-wider shadow-[3px_3px_0px_#1F201E] active:translate-x-0.5 active:translate-y-0.5 active:shadow-none transition-all cursor-pointer"
+          >
+            Muat Video AR →
+          </button>
+        </div>
+      </form>
+
+      <div class="text-[10px] text-charcoal/50 text-center font-serif italic border-t border-charcoal/10 pt-2.5">
+        ✦ Sorot packaging Gift Station setelah video AR berhasil dimuat ✦
+      </div>
+    </div>
+  </div>
+
   <script>
     // Configuration & Supabase
     const SUPABASE_URL = "https://fowdecmskhvfgmdwwnxg.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDE1MTk2MjUsImV4cCI6MjAxNzA5NTYyNX0.icC5QydnHRC-qu4Vf0Ik0_BxpaU39TCaU8bXijdqv9Y";
-    const DEFAULT_VIDEO_URL = "https://fowdecmskhvfgmdwwnxg.supabase.co/storage/v1/object/public/tjf_photos/photos/TJF_TJF-VIDEOBOX_video.mp4";
+    const DEFAULT_VIDEO_URL = "";
 
     const TARGET_NAMES = [
       "Buttercake",
@@ -804,81 +875,162 @@
       }
     };
 
-    // Asynchronously fetch session video or CMS markers to update video source if needed
-    async function syncSessionAndMarkers() {
+    let currentLoadedCode = sessionCode || "";
+
+    function updateSessionBadge(code, hasVideo = true) {
+      currentLoadedCode = code;
+      const dot = document.getElementById("sessionStatusDot");
+      const label = document.getElementById("sessionBadgeLabel");
+      const btnBack = document.getElementById("btnBackSoftfile");
+      if (dot) dot.className = hasVideo ? "w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" : "w-2 h-2 rounded-full bg-amber-500";
+      if (label) label.textContent = code ? `SESI: ${code}` : "MASUKKAN KODE";
+      if (btnBack && code) btnBack.href = `softfile.html?code=${encodeURIComponent(code)}`;
+    }
+
+    function openCodeInputModal() {
+      const modal = document.getElementById("codeInputModal");
+      const input = document.getElementById("manualCodeInput");
+      const err = document.getElementById("codeErrorMsg");
+      if (err) err.classList.add("hidden");
+      if (input) input.value = currentLoadedCode || sessionCode || "";
+      if (modal) {
+        modal.classList.remove("hidden");
+        setTimeout(() => input && input.focus(), 150);
+      }
+    }
+
+    function closeCodeInputModal() {
+      const modal = document.getElementById("codeInputModal");
+      if (modal) modal.classList.add("hidden");
+    }
+
+    async function loadSessionVideo(targetCode) {
+      if (!targetCode) return false;
+      const cleanCode = targetCode.trim().toUpperCase();
       let sessionVideoUrl = null;
 
-      if (sessionCode) {
-        let sRow = null;
-        if (supabaseClient) {
-          try {
-            const { data } = await supabaseClient
-              .from("tjf_sessions")
-              .select("*")
-              .eq("code", sessionCode)
-              .maybeSingle();
-            if (data) sRow = data;
-          } catch (sErr) {
-            console.warn("Session check notice:", sErr);
+      // 1. Check Supabase tjf_sessions
+      if (supabaseClient) {
+        try {
+          const { data } = await supabaseClient
+            .from("tjf_sessions")
+            .select("*")
+            .eq("code", cleanCode)
+            .maybeSingle();
+          if (data) {
+            sessionVideoUrl = data.video_message_url || data.frame_video_url;
           }
+        } catch (sErr) {
+          console.warn("Session check notice:", sErr);
         }
-        if (!sRow) {
-          try {
-            const r = await fetch(`/api/session/${sessionCode}`);
-            const d = await r.json();
-            if (d.success && d.session) sRow = d.session;
-          } catch (_) {}
-        }
+      }
 
-        if (sRow) {
-          sessionVideoUrl = sRow.video_message_url || sRow.frame_video_url;
-        }
+      // 2. Check local API if available
+      if (!sessionVideoUrl) {
+        try {
+          const r = await fetch(`/api/session/${cleanCode}`);
+          const d = await r.json();
+          if (d.success && d.session) {
+            sessionVideoUrl = d.session.video_message_url || d.session.frame_video_url;
+          }
+        } catch (_) {}
+      }
 
-        // Storage fallback if DB record is missing or URLs not populated
-        if (!sessionVideoUrl && supabaseClient) {
-          try {
-            const { data: msgFiles } = await supabaseClient.storage.from("tjf_photos").list(`photos/${sessionCode}/videobox message`, { limit: 5 });
-            if (msgFiles && msgFiles.length > 0) {
-              for (const mf of msgFiles) {
-                const mn = mf.name || "";
-                if (mn.endsWith(".mp4") || mn.endsWith(".webm")) {
-                  sessionVideoUrl = `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${sessionCode}/videobox%20message/${mn}`;
+      // 3. Check Supabase Storage subfolders
+      if (!sessionVideoUrl && supabaseClient) {
+        try {
+          const { data: msgFiles } = await supabaseClient.storage.from("tjf_photos").list(`photos/${cleanCode}/videobox message`, { limit: 5 });
+          if (msgFiles && msgFiles.length > 0) {
+            for (const mf of msgFiles) {
+              const mn = mf.name || "";
+              if (mn.endsWith(".mp4") || mn.endsWith(".webm")) {
+                sessionVideoUrl = `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${cleanCode}/videobox%20message/${mn}`;
+                break;
+              }
+            }
+          }
+          if (!sessionVideoUrl) {
+            const { data: animFiles } = await supabaseClient.storage.from("tjf_photos").list(`photos/${cleanCode}/video animation`, { limit: 5 });
+            if (animFiles && animFiles.length > 0) {
+              for (const af of animFiles) {
+                const an = af.name || "";
+                if ((an.endsWith(".mp4") || an.endsWith(".webm")) && !an.includes("_raw")) {
+                  sessionVideoUrl = `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${cleanCode}/video%20animation/${an}`;
                   break;
                 }
               }
             }
-            if (!sessionVideoUrl) {
-              const { data: animFiles } = await supabaseClient.storage.from("tjf_photos").list(`photos/${sessionCode}/video animation`, { limit: 5 });
-              if (animFiles && animFiles.length > 0) {
-                for (const af of animFiles) {
-                  const an = af.name || "";
-                  if ((an.endsWith(".mp4") || an.endsWith(".webm")) && !an.includes("_raw")) {
-                    sessionVideoUrl = `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${sessionCode}/video%20animation/${an}`;
-                    break;
-                  }
-                }
-              }
-            }
-          } catch (storageErr) {
-            console.warn("Direct storage video lookup notice:", storageErr);
           }
+        } catch (storageErr) {
+          console.warn("Direct storage video lookup notice:", storageErr);
         }
       }
 
       if (sessionVideoUrl) {
-        console.log("Applying session video to AR targets:", sessionVideoUrl);
+        console.log(`[AR] Applying session video for ${cleanCode}:`, sessionVideoUrl);
         for (let i = 0; i < 6; i++) {
           const vid = activeVideoElements[i];
-          if (vid && vid.src !== sessionVideoUrl) {
+          if (vid) {
             vid.src = sessionVideoUrl;
             vid.load();
             vid.addEventListener("loadedmetadata", () => syncVideoPlaneAspect(i), { once: true });
           }
         }
+        updateSessionBadge(cleanCode, true);
+        return true;
+      } else {
+        updateSessionBadge(cleanCode, false);
+        return false;
       }
     }
 
-    syncSessionAndMarkers();
+    async function handleCodeSubmit(e) {
+      if (e) e.preventDefault();
+      const input = document.getElementById("manualCodeInput");
+      const err = document.getElementById("codeErrorMsg");
+      const submitBtn = document.getElementById("btnSubmitCode");
+      const codeVal = input ? input.value.trim().toUpperCase() : "";
+      if (!codeVal) return;
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "MEMUAT...";
+      }
+
+      try {
+        const ok = await loadSessionVideo(codeVal);
+        if (ok) {
+          closeCodeInputModal();
+          const newUrl = new URL(window.location);
+          newUrl.searchParams.set("code", codeVal);
+          window.history.replaceState({}, "", newUrl);
+        } else {
+          if (err) {
+            err.textContent = `Video untuk sesi "${codeVal}" belum ditemukan atau belum diunggah.`;
+            err.classList.remove("hidden");
+          }
+        }
+      } catch (ex) {
+        if (err) {
+          err.textContent = "Terjadi kesalahan: " + ex.message;
+          err.classList.remove("hidden");
+        }
+      } finally {
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "MUAT VIDEO AR →";
+        }
+      }
+    }
+
+    // Initial session load or prompt if no code
+    if (sessionCode) {
+      updateSessionBadge(sessionCode, false);
+      loadSessionVideo(sessionCode);
+    } else {
+      updateSessionBadge("", false);
+      setTimeout(openCodeInputModal, 600);
+    }
 
     // ==========================================
     // MARKER SLIDESHOW RUNNER
