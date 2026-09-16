@@ -833,6 +833,36 @@
         if (sRow) {
           sessionVideoUrl = sRow.video_message_url || sRow.frame_video_url;
         }
+
+        // Storage fallback if DB record is missing or URLs not populated
+        if (!sessionVideoUrl && supabaseClient) {
+          try {
+            const { data: msgFiles } = await supabaseClient.storage.from("tjf_photos").list(`photos/${sessionCode}/videobox message`, { limit: 5 });
+            if (msgFiles && msgFiles.length > 0) {
+              for (const mf of msgFiles) {
+                const mn = mf.name || "";
+                if (mn.endsWith(".mp4") || mn.endsWith(".webm")) {
+                  sessionVideoUrl = `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${sessionCode}/videobox%20message/${mn}`;
+                  break;
+                }
+              }
+            }
+            if (!sessionVideoUrl) {
+              const { data: animFiles } = await supabaseClient.storage.from("tjf_photos").list(`photos/${sessionCode}/video animation`, { limit: 5 });
+              if (animFiles && animFiles.length > 0) {
+                for (const af of animFiles) {
+                  const an = af.name || "";
+                  if ((an.endsWith(".mp4") || an.endsWith(".webm")) && !an.includes("_raw")) {
+                    sessionVideoUrl = `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${sessionCode}/video%20animation/${an}`;
+                    break;
+                  }
+                }
+              }
+            }
+          } catch (storageErr) {
+            console.warn("Direct storage video lookup notice:", storageErr);
+          }
+        }
       }
 
       if (sessionVideoUrl) {

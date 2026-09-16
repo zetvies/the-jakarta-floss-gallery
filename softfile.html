@@ -557,6 +557,42 @@
               }
             });
 
+            // E. Check subfolders: photos/{code}/frame/, raw/, video animation/, videobox message/
+            const subfolderBase = `photos/${currentCode}`;
+            const subfolderChecks = [
+              { path: `${subfolderBase}/frame`, key: "frame_result", exts: [".jpg", ".png"] },
+              { path: `${subfolderBase}/video animation`, key: "frame_video", exts: [".mp4", ".webm"] },
+              { path: `${subfolderBase}/videobox message`, key: "video_message", exts: [".mp4", ".webm"] },
+              { path: `${subfolderBase}/raw`, key: "raw_photos", exts: [".jpg", ".png"] },
+            ];
+
+            for (const check of subfolderChecks) {
+              try {
+                const { data: subFiles, error: subErr } = await supabaseClient.storage.from(STORAGE_BUCKET).list(check.path, { limit: 100 });
+                if (subFiles && subFiles.length > 0) {
+                  for (const sf of subFiles) {
+                    const sn = sf.name || "";
+                    if (!check.exts.some(ext => sn.endsWith(ext))) continue;
+                    const subUrl = `${SUPABASE_URL}/storage/v1/object/public/${STORAGE_BUCKET}/${check.path}/${sn}`;
+
+                    if (check.key === "frame_result" && !filesData.frame_result) {
+                      filesData.frame_result = { name: sn, url: subUrl };
+                    } else if (check.key === "frame_video" && !filesData.frame_video && !sn.includes("_raw")) {
+                      filesData.frame_video = { name: sn, url: subUrl };
+                    } else if (check.key === "video_message" && !filesData.video_message) {
+                      filesData.video_message = { name: sn, url: subUrl };
+                    } else if (check.key === "raw_photos") {
+                      if (!filesData.raw_photos.some(r => r.name === sn)) {
+                        filesData.raw_photos.push({ name: sn, url: subUrl });
+                      }
+                    }
+                  }
+                }
+              } catch (subFolderErr) {
+                // Subfolder may not exist, skip silently
+              }
+            }
+
             // Sort raw photos
             filesData.raw_photos.sort((a, b) => a.name.localeCompare(b.name));
 
