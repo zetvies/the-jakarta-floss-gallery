@@ -512,6 +512,13 @@
               class="border-2 border-charcoal px-3 py-1.5 text-xs font-bold outline-none bg-white shadow-[2px_2px_0px_rgba(31,32,30,1)]"
             />
             <button
+              onclick="openGalleryAssetCms()"
+              class="border-2 border-charcoal bg-forest hover:bg-forest/90 text-white text-[11px] font-bold tracking-widest uppercase px-3 py-1.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] transition-all cursor-pointer flex items-center gap-1.5"
+              title="Manual CMS: Check and upload missing session files"
+            >
+              <span>📂 ASSET CMS / UPLOAD</span>
+            </button>
+            <button
               onclick="loadSessions()"
               class="border-2 border-charcoal bg-white hover:bg-cream text-charcoal text-[11px] font-bold tracking-widest uppercase px-3 py-1.5 shadow-[2px_2px_0px_rgba(31,32,30,1)] transition-all cursor-pointer"
             >
@@ -1861,7 +1868,7 @@
               originalSessions: [s],
               created_at: s.created_at || s.timestamp,
               booth_id: s.booth_id || s.booth || "Booth 1",
-              type: s.type || "Photobox",
+              type: (s.type === "Videobox" || s.video_message_url) ? "Videobox" : (s.type || "Photobox"),
               storage_url: getBestPhotoUrl(s),
               video_message_url: s.video_message_url || "",
               frame_video_url: s.frame_video_url || "",
@@ -1884,7 +1891,7 @@
             if (!existing.frame_video_url && s.frame_video_url) {
               existing.frame_video_url = s.frame_video_url;
             }
-            if (s.type === "Videobox") {
+            if (s.type === "Videobox" || s.video_message_url || existing.video_message_url) {
               existing.type = "Videobox";
             }
             if (s.printed || s.printed_at || s.is_printed) {
@@ -1967,6 +1974,8 @@
           const created = new Date(s.created_at || Date.now()).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short" });
           const hasVideoMsg = !!s.video_message_url;
           const hasFrameVideo = !!s.frame_video_url;
+          const hasRaw = !!(s.has_raw || (s.raw_count && s.raw_count > 0));
+          const isVbox = s.type === 'Videobox' || hasVideoMsg;
           const variantCount = s.variants ? s.variants.length : 1;
           const variantBadge = variantCount > 1 
             ? `<span class="bg-wine/10 text-wine border border-wine/20 text-[9px] font-mono font-bold px-1.5 py-0.5 rounded ml-1.5" title="Grouped session codes: ${s.variants.join(', ')}">${variantCount} codes</span>`
@@ -1986,20 +1995,34 @@
                 ${variantBadge}
               </td>
               <td class="px-4 py-3">
-                <span class="editorial-badge text-[9px] px-2 py-0.5 border ${s.type === 'Videobox' ? 'bg-wine text-white border-charcoal' : 'bg-cream text-charcoal border-charcoal/30'}">
-                  ${s.type || 'Photobox'}
+                <span class="editorial-badge text-[9px] px-2 py-0.5 border ${isVbox ? 'bg-wine text-white border-charcoal' : 'bg-cream text-charcoal border-charcoal/30'}">
+                  ${isVbox ? 'Videobox' : (s.type || 'Photobox')}
                 </span>
               </td>
               <td class="px-4 py-3 text-charcoal/70 font-mono text-[11px]">${s.booth_id || 'Booth 1'}</td>
               <td class="px-4 py-3 text-[11px]">
                 <div class="flex items-center gap-1.5 flex-wrap">
-                  ${hasVideoMsg ? '<span class="bg-amber-100 text-amber-900 border border-amber-800 text-[9px] font-bold px-1.5 py-0.2 rounded">🎬 Video Msg</span>' : ''}
-                  ${hasFrameVideo ? '<span class="bg-blue-100 text-blue-900 border border-blue-800 text-[9px] font-bold px-1.5 py-0.2 rounded">🎞️ Motion</span>' : ''}
-                  ${s.storage_url ? '<span class="bg-forest/10 text-forest text-[9px] font-bold px-1.5 py-0.2 rounded">📸 Photo 4R</span>' : ''}
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${s.storage_url ? 'bg-emerald-50 text-emerald-800 border-emerald-300' : 'bg-rose-50 text-rose-800 border-rose-300'}" title="4R Composite Frame: ${s.storage_url ? 'Ready' : 'Missing'}">
+                    ${s.storage_url ? '✅' : '❌'} 4R
+                  </span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${hasFrameVideo ? 'bg-blue-50 text-blue-800 border-blue-300' : 'bg-rose-50 text-rose-800 border-rose-300'}" title="Motion Animation Video: ${hasFrameVideo ? 'Ready' : 'Missing'}">
+                    ${hasFrameVideo ? '✅' : '❌'} Motion
+                  </span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${hasRaw ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-gray-50 text-gray-400 border-gray-200'}" title="Raw Shots: ${hasRaw ? (s.raw_count ? s.raw_count + ' photos' : 'Ready') : 'None'}">
+                    ${hasRaw ? '✅' : '⚪'} Raw${s.raw_count ? ` (${s.raw_count})` : ''}
+                  </span>
+                  ${isVbox ? `
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded border ${hasVideoMsg ? 'bg-purple-50 text-purple-800 border-purple-300' : 'bg-rose-50 text-rose-800 border-rose-300'}" title="Videobox Message: ${hasVideoMsg ? 'Ready' : 'Missing'}">
+                    ${hasVideoMsg ? '✅' : '❌'} Msg
+                  </span>
+                  ` : ''}
                 </div>
               </td>
               <td class="px-4 py-3 text-charcoal/60 text-[11px]">${created}</td>
-              <td class="px-4 py-3 text-right">
+              <td class="px-4 py-3 text-right whitespace-nowrap">
+                <button onclick="openGalleryAssetCms('${s.code}')" class="text-[10px] font-bold tracking-widest uppercase bg-wine hover:bg-wine-dark text-white border border-charcoal px-2.5 py-1 mr-2 transition-all shadow-sm cursor-pointer" title="Open Asset CMS & Upload Missing Files">
+                  📂 ASSET CMS
+                </button>
                 <a href="softfile.html?code=${encodeURIComponent(s.code)}" target="_blank" class="text-[10px] font-bold tracking-widest uppercase text-wine mr-3 hover:underline">VIEW</a>
                 <button onclick="deleteSession('${s.code}', ${variantsJsonStr})" class="text-[10px] font-bold tracking-widest uppercase text-charcoal/40 hover:text-wine-light transition-colors cursor-pointer">DELETE</button>
               </td>
@@ -2038,6 +2061,359 @@
         } catch (e) {
           console.error(e);
         }
+      }
+
+      // ==========================================
+      // GALLERY ASSET CMS & MANUAL CLOUD UPLOADER
+      // ==========================================
+      async function openGalleryAssetCms(code) {
+        if (!code) {
+          const inputCode = prompt("Enter Photobox Session Code to inspect/upload assets (e.g. S5TWEB):");
+          if (!inputCode) return;
+          code = inputCode.trim().toUpperCase();
+        }
+
+        showToast("Auditing cloud assets for " + code + "...");
+
+        const existing = document.getElementById("galleryAssetCmsModal");
+        if (existing) existing.remove();
+
+        const overlay = document.createElement("div");
+        overlay.id = "galleryAssetCmsModal";
+        overlay.className = "fixed inset-0 bg-black/60 z-[9999] flex items-center justify-center p-4 backdrop-blur-sm";
+        overlay.innerHTML = `
+          <div class="vintage-box max-w-[680px] w-full p-6 bg-white border-2 border-charcoal text-charcoal shadow-2xl">
+            <div class="font-instrument text-2xl text-wine font-bold">Loading Session Assets...</div>
+            <p class="text-xs text-charcoal/60 mt-1">Connecting to Supabase Storage and Database for code: ${code}</p>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+
+        try {
+          let sRow = null;
+          if (supabaseClient) {
+            const { data } = await supabaseClient
+              .from("tjf_sessions")
+              .select("*")
+              .eq("code", code)
+              .maybeSingle();
+            if (data) sRow = data;
+          }
+
+          let frameResult = null;
+          let frameVideo = null;
+          let videoMessage = null;
+          let rawPhotos = [];
+
+          if (supabaseClient) {
+            const [fRes, vRes, mRes, rRes, flatRes] = await Promise.all([
+              supabaseClient.storage.from("tjf_photos").list(`photos/${code}/frame`),
+              supabaseClient.storage.from("tjf_photos").list(`photos/${code}/video animation`),
+              supabaseClient.storage.from("tjf_photos").list(`photos/${code}/videobox message`),
+              supabaseClient.storage.from("tjf_photos").list(`photos/${code}/raw`, { limit: 100 }),
+              supabaseClient.storage.from("tjf_photos").list("photos", { limit: 1000, search: code }),
+            ]);
+
+            // Frame Result
+            if (fRes.data && fRes.data.length > 0) {
+              const f = fRes.data.find(x => x.name && (x.name.endsWith(".jpg") || x.name.endsWith(".png")));
+              if (f) frameResult = { name: f.name, url: `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${code}/frame/${f.name}` };
+            }
+            if (!frameResult && sRow?.storage_url) {
+              frameResult = { name: sRow.local_filename || "Frame_4R.jpg", url: sRow.storage_url };
+            }
+            if (!frameResult && flatRes.data) {
+              const f = flatRes.data.find(x => x.name && x.name.startsWith(`TJF_${code}_`) && (x.name.endsWith(".jpg") || x.name.endsWith(".png")) && !x.name.includes("_raw_") && !x.name.includes("_video") && !x.name.includes("_message"));
+              if (f) frameResult = { name: f.name, url: `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${f.name}` };
+            }
+
+            // Video Animation
+            if (vRes.data && vRes.data.length > 0) {
+              const v = vRes.data.find(x => x.name && (x.name.endsWith(".mp4") || x.name.endsWith(".webm")) && !x.name.includes("_raw"));
+              if (v) frameVideo = { name: v.name, url: `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${code}/video%20animation/${v.name}` };
+            }
+            if (!frameVideo && sRow?.frame_video_url) {
+              frameVideo = { name: "Frame_Video.mp4", url: sRow.frame_video_url };
+            }
+            if (!frameVideo && flatRes.data) {
+              const v = flatRes.data.find(x => x.name && x.name.startsWith(`TJF_${code}_`) && x.name.includes("_video.") && (x.name.endsWith(".mp4") || x.name.endsWith(".webm")));
+              if (v) frameVideo = { name: v.name, url: `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${v.name}` };
+            }
+
+            // Videobox Message
+            if (mRes.data && mRes.data.length > 0) {
+              const m = mRes.data.find(x => x.name && (x.name.endsWith(".mp4") || x.name.endsWith(".webm")));
+              if (m) videoMessage = { name: m.name, url: `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${code}/videobox%20message/${m.name}` };
+            }
+            if (!videoMessage && sRow?.video_message_url) {
+              videoMessage = { name: "Video_Message.mp4", url: sRow.video_message_url };
+            }
+            if (!videoMessage && flatRes.data) {
+              const m = flatRes.data.find(x => x.name && x.name.startsWith(`TJF_${code}_`) && x.name.includes("_message.") && (x.name.endsWith(".mp4") || x.name.endsWith(".webm")));
+              if (m) videoMessage = { name: m.name, url: `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${m.name}` };
+            }
+
+            // Raw Photos
+            if (rRes.data && rRes.data.length > 0) {
+              rawPhotos = rRes.data
+                .filter(x => x.name && (x.name.endsWith(".jpg") || x.name.endsWith(".png")))
+                .map(x => ({ name: x.name, url: `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${code}/raw/${x.name}` }));
+            }
+            if (rawPhotos.length === 0 && flatRes.data) {
+              rawPhotos = flatRes.data
+                .filter(x => x.name && x.name.startsWith(`TJF_${code}_`) && x.name.includes("_raw_") && (x.name.endsWith(".jpg") || x.name.endsWith(".png")))
+                .map(x => ({ name: x.name, url: `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/photos/${x.name}` }));
+            }
+          }
+
+          const hasFrame = !!frameResult;
+          const hasVideo = !!frameVideo;
+          const hasMsg = !!videoMessage;
+          const rawCount = rawPhotos.length;
+          const isVbox = (sRow?.type || '').toLowerCase() === 'videobox';
+          const allComplete = hasFrame && hasVideo && (hasMsg || !isVbox) && rawCount > 0;
+
+          let statusBadgeClass = allComplete ? "bg-emerald-100 text-emerald-900 border-emerald-400" : "bg-rose-100 text-rose-900 border-rose-300";
+          let statusText = allComplete ? "✅ ALL ASSETS READY" : "⚠️ INCOMPLETE ASSETS";
+
+          overlay.innerHTML = `
+            <div class="vintage-box max-w-[680px] w-full bg-white border-2 border-charcoal shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
+              <!-- Header -->
+              <div class="p-4 border-b-2 border-charcoal bg-cream flex items-center justify-between">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class="editorial-badge text-[10px] text-wine font-bold">TJF GALLERY ASSET CMS</span>
+                    <span class="text-[9px] font-bold px-2 py-0.5 border ${statusBadgeClass} rounded">
+                      ${statusText}
+                    </span>
+                  </div>
+                  <h3 class="font-instrument text-2xl text-charcoal leading-none mt-1">Session: <span class="text-wine font-mono font-bold">${code}</span></h3>
+                </div>
+                <button onclick="closeGalleryAssetCms()" class="w-7 h-7 border-2 border-charcoal flex items-center justify-center font-bold text-charcoal hover:bg-wine hover:text-white transition-colors cursor-pointer">
+                  &times;
+                </button>
+              </div>
+
+              <!-- Body -->
+              <div class="p-4 gap-4 overflow-y-auto flex-1 flex flex-col text-xs">
+                <!-- 1. Frame Photo -->
+                <div class="border-2 border-charcoal bg-white p-3.5 flex flex-col gap-2">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-charcoal">📸 1. 4R Composite Frame Photo</span>
+                    <span class="text-[9px] font-bold px-2 py-0.5 border ${hasFrame ? 'bg-emerald-50 text-emerald-800 border-emerald-400' : 'bg-rose-50 text-rose-800 border-rose-400'} rounded">
+                      ${hasFrame ? '✅ READY IN CLOUD' : '❌ MISSING'}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-3 bg-cream/40 p-2 border border-charcoal/20">
+                    ${hasFrame ? `
+                      <img src="${frameResult.url}" class="w-14 h-20 object-cover border border-charcoal shrink-0 bg-white" />
+                    ` : `
+                      <div class="w-14 h-20 border border-dashed border-charcoal/40 bg-cream/60 flex items-center justify-center text-[9px] text-charcoal/40 shrink-0">
+                        NO PHOTO
+                      </div>
+                    `}
+                    <div class="flex-1 space-y-1">
+                      <div class="text-charcoal/80 truncate font-mono text-[10px]">
+                        ${frameResult ? frameResult.url : '<span class="italic text-charcoal/40">No photo uploaded yet</span>'}
+                      </div>
+                      <label class="px-2.5 py-1 bg-wine hover:bg-wine-dark text-white text-[10px] font-bold uppercase border border-charcoal cursor-pointer shadow-sm transition-all inline-flex items-center gap-1">
+                        <span>📤 ${hasFrame ? 'Replace 4R Photo' : 'Upload 4R Photo'}</span>
+                        <input type="file" accept="image/jpeg,image/png" class="hidden" onchange="galleryUploadAsset('${code}', 'frame', this.files[0])" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. Motion Video -->
+                <div class="border-2 border-charcoal bg-white p-3.5 flex flex-col gap-2">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-charcoal">🎞️ 2. Frame Video Animation (Motion Clip)</span>
+                    <span class="text-[9px] font-bold px-2 py-0.5 border ${hasVideo ? 'bg-emerald-50 text-emerald-800 border-emerald-400' : 'bg-rose-50 text-rose-800 border-rose-400'} rounded">
+                      ${hasVideo ? '✅ READY IN CLOUD' : '❌ MISSING'}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-3 bg-cream/40 p-2 border border-charcoal/20">
+                    ${hasVideo ? `
+                      <video src="${frameVideo.url}" autoplay loop muted playsinline class="w-14 h-20 object-cover border border-charcoal shrink-0 bg-black"></video>
+                    ` : `
+                      <div class="w-14 h-20 border border-dashed border-charcoal/40 bg-cream/60 flex items-center justify-center text-[9px] text-charcoal/40 shrink-0">
+                        NO VIDEO
+                      </div>
+                    `}
+                    <div class="flex-1 space-y-1">
+                      <div class="text-charcoal/80 truncate font-mono text-[10px]">
+                        ${frameVideo ? frameVideo.url : '<span class="italic text-charcoal/40">No video animation uploaded yet</span>'}
+                      </div>
+                      <label class="px-2.5 py-1 bg-wine hover:bg-wine-dark text-white text-[10px] font-bold uppercase border border-charcoal cursor-pointer shadow-sm transition-all inline-flex items-center gap-1">
+                        <span>📤 ${hasVideo ? 'Replace Motion Video' : 'Upload Motion Video'}</span>
+                        <input type="file" accept="video/mp4,video/webm" class="hidden" onchange="galleryUploadAsset('${code}', 'video', this.files[0])" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 3. Video Message -->
+                <div class="border-2 border-charcoal bg-white p-3.5 flex flex-col gap-2">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-charcoal">🎬 3. Videobox Message (Visitor Greeting)</span>
+                    <span class="text-[9px] font-bold px-2 py-0.5 border ${hasMsg ? 'bg-purple-100 text-purple-900 border-purple-400' : (isVbox ? 'bg-rose-50 text-rose-800 border-rose-400' : 'bg-gray-100 text-gray-500 border-gray-200')} rounded">
+                      ${hasMsg ? '✅ READY IN CLOUD' : (isVbox ? '❌ MISSING (REQUIRED FOR VIDEOBOX)' : '⚪ N/A (PHOTOBOX ONLY)')}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-3 bg-cream/40 p-2 border border-charcoal/20">
+                    ${hasMsg ? `
+                      <video src="${videoMessage.url}" controls playsinline class="w-14 h-20 object-contain border border-charcoal shrink-0 bg-black"></video>
+                    ` : `
+                      <div class="w-14 h-20 border border-dashed border-charcoal/40 bg-cream/60 flex items-center justify-center text-[9px] text-charcoal/40 shrink-0">
+                        NO MESSAGE
+                      </div>
+                    `}
+                    <div class="flex-1 space-y-1">
+                      <div class="text-charcoal/80 truncate font-mono text-[10px]">
+                        ${videoMessage ? videoMessage.url : '<span class="italic text-charcoal/40">No message video uploaded</span>'}
+                      </div>
+                      <label class="px-2.5 py-1 bg-purple-700 hover:bg-purple-800 text-white text-[10px] font-bold uppercase border border-charcoal cursor-pointer shadow-sm transition-all inline-flex items-center gap-1">
+                        <span>📤 ${hasMsg ? 'Replace Video Message' : 'Upload Video Message'}</span>
+                        <input type="file" accept="video/mp4,video/webm" class="hidden" onchange="galleryUploadAsset('${code}', 'message', this.files[0])" />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 4. Raw Photos -->
+                <div class="border-2 border-charcoal bg-white p-3.5 flex flex-col gap-2">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-charcoal">📷 4. Raw Filtered Photos (${rawCount} in Cloud)</span>
+                    <label class="px-2.5 py-1 bg-wine hover:bg-wine-dark text-white text-[10px] font-bold uppercase border border-charcoal cursor-pointer shadow-sm transition-all inline-flex items-center gap-1">
+                      <span>+ ADD RAW PHOTOS</span>
+                      <input type="file" accept="image/jpeg,image/png" multiple class="hidden" onchange="galleryUploadRawBatch('${code}', this.files)" />
+                    </label>
+                  </div>
+                  ${rawCount > 0 ? `
+                    <div class="grid grid-cols-4 sm:grid-cols-6 gap-2 bg-cream/40 p-2 border border-charcoal/20">
+                      ${rawPhotos.map((r, i) => `
+                        <div class="border border-charcoal/30 bg-white p-1 flex flex-col items-center">
+                          <img src="${r.url}" class="w-full h-14 object-cover border border-charcoal/20 mb-1" />
+                          <div class="text-[8px] font-bold text-charcoal/70 truncate w-full text-center">Shot ${i + 1}</div>
+                          <a href="${r.url}" download="${r.name}" target="_blank" class="text-[8px] font-bold text-wine hover:underline uppercase mt-0.5">DL</a>
+                        </div>
+                      `).join("")}
+                    </div>
+                  ` : `
+                    <div class="bg-cream/40 p-3 text-center border border-dashed border-charcoal/30 text-xs text-charcoal/50 font-serif italic">
+                      No raw photos found in cloud. Click "+ ADD RAW PHOTOS" to upload them.
+                    </div>
+                  `}
+                </div>
+              </div>
+
+              <!-- Footer -->
+              <div class="p-4 border-t-2 border-charcoal bg-cream flex items-center justify-between">
+                <a href="softfile.html?code=${encodeURIComponent(code)}" target="_blank" class="px-3 py-1.5 bg-wine hover:bg-wine-dark text-white text-[10px] font-bold tracking-widest uppercase border border-charcoal shadow-sm transition-all">
+                  VIEW SOFTFILE GALLERY &rarr;
+                </a>
+                <div class="flex items-center gap-2">
+                  <button onclick="openGalleryAssetCms('${code}')" class="px-3 py-1.5 bg-white hover:bg-cream text-charcoal text-[10px] font-bold tracking-widest uppercase border border-charcoal transition-colors cursor-pointer">
+                    🔄 REFRESH
+                  </button>
+                  <button onclick="closeGalleryAssetCms()" class="px-3 py-1.5 bg-charcoal hover:bg-charcoal/90 text-white text-[10px] font-bold tracking-widest uppercase border border-charcoal transition-colors cursor-pointer">
+                    CLOSE
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+
+          overlay.addEventListener("click", (e) => {
+            if (e.target === overlay) closeGalleryAssetCms();
+          });
+
+        } catch (err) {
+          console.error("Gallery CMS error:", err);
+          showToast("Error inspecting assets: " + err.message);
+        }
+      }
+
+      function closeGalleryAssetCms() {
+        const modal = document.getElementById("galleryAssetCmsModal");
+        if (modal) modal.remove();
+      }
+
+      async function galleryUploadAsset(code, assetType, file) {
+        if (!file || !supabaseClient) return;
+        showToast(`Uploading ${assetType} for ${code}...`);
+        const origName = file.name || "file";
+        const ext = origName.split('.').pop() || (assetType === "frame" || assetType === "raw" ? "jpg" : "mp4");
+        let subfolder = "";
+        let saveName = "";
+        let dbField = "";
+
+        if (assetType === "frame") {
+          subfolder = `photos/${code}/frame`;
+          saveName = `TJF_${code}_frame.${ext}`;
+          dbField = "storage_url";
+        } else if (assetType === "video") {
+          subfolder = `photos/${code}/video animation`;
+          saveName = `TJF_${code}_video.${ext}`;
+          dbField = "frame_video_url";
+        } else if (assetType === "message") {
+          subfolder = `photos/${code}/videobox message`;
+          saveName = `TJF_${code}_message.${ext}`;
+          dbField = "video_message_url";
+        } else if (assetType === "raw") {
+          subfolder = `photos/${code}/raw`;
+          const ts = Date.now().toString().slice(-4);
+          saveName = `TJF_${code}_raw_${ts}.${ext}`;
+        }
+
+        const fullStoragePath = `${subfolder}/${saveName}`;
+        try {
+          const { error } = await supabaseClient.storage
+            .from("tjf_photos")
+            .upload(fullStoragePath, file, { upsert: true });
+
+          if (error) {
+            showToast(`Upload error: ${error.message}`);
+            return;
+          }
+
+          const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/tjf_photos/${fullStoragePath}`;
+
+          if (dbField) {
+            await supabaseClient.from("tjf_sessions").upsert({
+              code: code,
+              booth_id: "gallery_cms",
+              is_printed: true,
+              is_synced: true,
+              [dbField]: publicUrl,
+              ...(assetType === "frame" ? { local_filename: saveName } : {})
+            }, { onConflict: "code" });
+          } else {
+            await supabaseClient.from("tjf_sessions").upsert({
+              code: code,
+              booth_id: "gallery_cms",
+              is_printed: true,
+              is_synced: true,
+            }, { onConflict: "code" });
+          }
+
+          showToast(`✅ ${assetType.toUpperCase()} uploaded successfully!`);
+          openGalleryAssetCms(code);
+          loadSessions();
+        } catch (e) {
+          showToast(`Upload error: ${e.message}`);
+        }
+      }
+
+      async function galleryUploadRawBatch(code, fileList) {
+        if (!fileList || fileList.length === 0) return;
+        showToast(`Uploading ${fileList.length} raw photos...`);
+        for (let i = 0; i < fileList.length; i++) {
+          await galleryUploadAsset(code, "raw", fileList[i]);
+        }
+        showToast(`✅ All raw photos uploaded!`);
+        openGalleryAssetCms(code);
+        loadSessions();
       }
 
       function syncAllData() {
