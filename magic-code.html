@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tiket Anda - The Jakarta Floss</title>
+    <link rel="icon" type="image/svg+xml" href="tjf-logo.svg" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              cream: "#F9F6F0",
+              "cream-dark": "#F0EAE1",
+              wine: "#801A20",
+              forest: "#323B33",
+              charcoal: "#1F201E",
+              gold: "#C49A45",
+            },
+            fontFamily: {
+              serif: ['"Instrument Serif"', "serif"],
+              sans: ['"Plus Jakarta Sans"', "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background-color: #F9F6F0;
+        color: #1F201E;
+      }
+      .font-instrument { font-family: "Instrument Serif", serif; }
+      .vintage-box {
+        background: #ffffff;
+        border: 2px solid #1F201E;
+        box-shadow: 4px 4px 0px rgba(31, 32, 30, 0.08);
+      }
+      .editorial-badge {
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        font-weight: 700;
+      }
+      
+      .spinner {
+        border: 3px solid rgba(128, 26, 32, 0.2);
+        border-top-color: #801A20;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin { 100% { transform: rotate(360deg); } }
+    </style>
+  </head>
+
+  <body class="bg-cream text-charcoal min-h-screen flex flex-col items-center py-6 px-4">
+    
+    <div class="w-full max-w-[360px]">
+      <!-- Header -->
+      <div class="flex flex-col items-center justify-center mb-4 text-center">
+        <img src="tjf-logo.svg" alt="The Jakarta Floss" class="w-[50svw] max-w-[140px] h-auto object-contain drop-shadow-md mb-2" />
+        <p class="font-sans text-[10px] font-semibold tracking-[0.2em] uppercase text-forest/70">Sistem Tiket Photobox</p>
+      </div>
+
+      <!-- Main Ticket Card -->
+      <div class="vintage-box p-6 bg-white border-2 border-charcoal text-center shadow-[4px_4px_0px_#801A20]">
+        
+        <div id="loadingState" class="flex flex-col items-center py-8">
+          <div class="spinner mb-4"></div>
+          <p class="text-sm font-bold tracking-widest text-charcoal/60 uppercase">Memuat Tiket...</p>
+        </div>
+
+        <div id="errorState" class="hidden flex flex-col items-center py-8">
+          <svg class="w-10 h-10 text-wine mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+          </svg>
+          <p id="errorMsg" class="font-bold text-wine tracking-wide text-sm">Tiket Tidak Ditemukan</p>
+        </div>
+
+        <div id="ticketState" class="hidden">
+          <div class="border-b-2 border-charcoal/10 pb-3 mb-3 border-dashed">
+            <span class="editorial-badge text-[10px] text-charcoal/60 block mb-1">NOMOR ANTREAN</span>
+            <div id="displayQueueNumber" class="font-instrument text-5xl text-wine font-bold tracking-wider mb-2">-</div>
+          </div>
+          
+          <div class="mb-4">
+            <span class="editorial-badge text-[10px] text-charcoal/60 block mb-1">BOOTH ANDA</span>
+            <div id="displayBooth" class="text-2xl font-black text-wine tracking-widest uppercase">BOOTH-X</div>
+          </div>
+
+          <div class="bg-cream-dark/40 py-4 px-2 border-2 border-charcoal mb-2 relative">
+            <span class="editorial-badge text-[10px] text-charcoal/60 block mb-2">STATUS SAAT INI</span>
+            <div id="displayStatus" class="inline-block px-4 py-1 border-2 border-charcoal bg-gold text-white font-bold tracking-[0.2em] uppercase text-sm">
+              MENGANTRE
+            </div>
+            
+            <div id="queuePositionBox" class="hidden mt-4 pt-3 border-t border-charcoal/20">
+              <p id="queuePositionText" class="text-sm font-bold text-wine tracking-wide"></p>
+              <p id="queueAheadDetails" class="text-xs text-charcoal/70 mt-1 italic font-serif"></p>
+            </div>
+            
+            <p id="statusHint" class="text-xs text-charcoal/70 mt-3 px-2 italic font-serif">Harap tunggu giliran Anda. Kami akan segera memanggil Anda.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ===== JAVASCRIPT LOGIC ===== -->
+    <script>
+      const SUPABASE_URL = "https://fowdecmskhvfgmdwwnxg.supabase.co";
+      const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDE1MTk2MjUsImV4cCI6MjAxNzA5NTYyNX0.icC5QydnHRC-qu4Vf0Ik0_BxpaU39TCaU8bXijdqv9Y";
+      
+      let supabaseClient = null;
+      if (window.supabase) {
+        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      }
+
+      const urlParams = new URLSearchParams(window.location.search);
+      const ticketCode = urlParams.get('code');
+
+      const elLoading = document.getElementById('loadingState');
+      const elError = document.getElementById('errorState');
+      const elTicket = document.getElementById('ticketState');
+      const errorMsg = document.getElementById('errorMsg');
+      
+      const displayQueueNumber = document.getElementById('displayQueueNumber');
+      const displayBooth = document.getElementById('displayBooth');
+      const displayStatus = document.getElementById('displayStatus');
+      const statusHint = document.getElementById('statusHint');
+
+      function showError(msg) {
+        elLoading.classList.add('hidden');
+        elTicket.classList.add('hidden');
+        elError.classList.remove('hidden');
+        errorMsg.innerText = msg;
+      }
+
+      function updateUI(queueData, aheadData = []) {
+        elLoading.classList.add('hidden');
+        elError.classList.add('hidden');
+        elTicket.classList.remove('hidden');
+
+        displayQueueNumber.innerText = queueData.queue_number || "-";
+        displayBooth.innerText = queueData.booth_id || "SILAKAN HUBUNGI STAFF";
+        
+        const qPosBox = document.getElementById('queuePositionBox');
+        const qPosText = document.getElementById('queuePositionText');
+        const qPosDetails = document.getElementById('queueAheadDetails');
+
+        const status = queueData.status.toLowerCase();
+        
+        if (status === 'queueing') {
+          if (queueData.booth_id && aheadData.length === 0) {
+            displayStatus.innerText = "GILIRAN ANDA";
+            displayStatus.className = "inline-block px-4 py-1 border-2 border-charcoal bg-forest text-white font-bold tracking-[0.2em] uppercase text-sm";
+            statusHint.innerText = "Silakan masuk ke booth sekarang.";
+            statusHint.className = "text-sm font-bold text-forest mt-3 px-2 uppercase tracking-wider";
+            qPosBox.classList.add('hidden');
+          } else if (queueData.booth_id && aheadData.length > 0) {
+            displayStatus.innerText = "MENGANTRE";
+            displayStatus.className = "inline-block px-4 py-1 border-2 border-charcoal bg-gold text-white font-bold tracking-[0.2em] uppercase text-sm";
+            
+            qPosBox.classList.remove('hidden');
+            statusHint.classList.add('hidden');
+            qPosText.innerText = `Ada ${aheadData.length} antrean di depan Anda`;
+            
+            const inProgress = aheadData.filter(q => q.status === 'scanned').length;
+            const waiting = aheadData.filter(q => q.status === 'queueing').length;
+            
+            let details = [];
+            if (inProgress > 0) details.push(`${inProgress} sedang foto`);
+            if (waiting > 0) details.push(`${waiting} menunggu`);
+            
+            qPosDetails.innerText = details.join(' • ');
+          } else {
+            displayStatus.innerText = "MENGANTRE";
+            displayStatus.className = "inline-block px-4 py-1 border-2 border-charcoal bg-gold text-white font-bold tracking-[0.2em] uppercase text-sm";
+            statusHint.innerText = "Harap tunggu giliran Anda. Kami akan segera memanggil Anda.";
+            statusHint.className = "text-xs text-charcoal/70 mt-3 px-2 italic font-serif";
+            qPosBox.classList.add('hidden');
+          }
+          
+          
+        } else if (status === 'scanned' || status === 'completed') {
+          displayStatus.innerText = "MENGALIHKAN...";
+          displayStatus.className = "inline-block px-4 py-1 border-2 border-charcoal bg-forest text-white font-bold tracking-[0.2em] uppercase text-sm";
+          statusHint.innerText = "Membuka halaman foto dan video Anda...";
+          statusHint.className = "text-xs text-charcoal/70 mt-3 px-2 italic font-serif";
+          statusHint.classList.remove('hidden');
+          qPosBox.classList.add('hidden');
+          
+          // Redirect to the existing softfile page
+          window.location.href = "softfile.html?code=" + queueData.code;
+        }
+      }
+
+      async function fetchTicket() {
+        if (!ticketCode) {
+          showError("Kode voucher tidak ditemukan di URL.");
+          return;
+        }
+
+        if (!supabaseClient) {
+          showError("Koneksi database gagal.");
+          return;
+        }
+
+        try {
+          const { data, error } = await supabaseClient
+            .from("tjf_queue")
+            .select("*")
+            .eq("code", ticketCode)
+            .single();
+
+          if (error || !data) {
+            showError("Tiket tidak ditemukan atau sudah dihapus.");
+            return;
+          }
+
+          let aheadData = [];
+          if (data.status === 'queueing' && data.booth_id) {
+            const { data: aData } = await supabaseClient
+              .from("tjf_queue")
+              .select("status, id, queue_number")
+              .eq("booth_id", data.booth_id)
+              .neq("status", "completed");
+              
+            if (aData) {
+              // Filter to only those with a smaller queue_number (string comparison)
+              aheadData = aData.filter(q => (q.queue_number || "") < (data.queue_number || ""));
+            }
+          }
+
+          updateUI(data, aheadData);
+
+        } catch (e) {
+          console.error(e);
+          showError("Gangguan jaringan. Mencoba ulang...");
+        }
+      }
+
+      // Initial Fetch
+      fetchTicket();
+
+      // Poll every 3 seconds to get live status updates
+      setInterval(fetchTicket, 3000);
+
+    </script>
+  </body>
+</html>
