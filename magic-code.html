@@ -182,10 +182,11 @@
 
       function updateUI(queueData, aheadData = []) {
         const status = (queueData.status || '').toLowerCase();
+        const finishedStatuses = ['scanned', 'completed', 'done', 'finished', 'finish', 'used', 'success'];
 
         // If completed or scanned, redirect directly without rendering queue UI
-        if (status === 'scanned' || status === 'completed') {
-          redirectToSoftfile(queueData.code);
+        if (finishedStatuses.includes(status)) {
+          redirectToSoftfile(queueData.code || ticketCode);
           return;
         }
 
@@ -194,7 +195,7 @@
         elTicket.classList.remove('hidden');
 
         displayQueueNumber.innerText = queueData.queue_number || "-";
-        displayBooth.innerText = queueData.booth_id || "SILAKAN HUBUNGI STAFF";
+        displayBooth.innerText = queueData.booth_id || "MENUNGGU BOOTH";
         
         const qPosBox = document.getElementById('queuePositionBox');
         const qPosText = document.getElementById('queuePositionText');
@@ -272,7 +273,47 @@
         isFetching = true;
 
         try {
-          // 1. Check active queue in tjf_queue
+          const finishedStatuses = ['scanned', 'completed', 'done', 'finished', 'finish', 'used', 'success'];
+
+          // 1. PRIORITIZED CHECK: Check tjf_sessions table for finished session softfile
+          const { data: sessionData } = await client
+            .from("tjf_sessions")
+            .select("code")
+            .or(`code.eq.${ticketCode},code.ilike.%${ticketCode}%`)
+            .maybeSingle();
+
+          if (sessionData) {
+            redirectToSoftfile(ticketCode);
+            return;
+          }
+
+          // 2. PRIORITIZED CHECK: Check Supabase storage tjf_photos bucket
+          try {
+            const [res1, res2] = await Promise.all([
+              client.storage.from("tjf_photos").list("photos", { limit: 10, search: `TJF_${ticketCode}` }),
+              client.storage.from("tjf_photos").list("photos", { limit: 10, search: ticketCode }),
+            ]);
+            const files = [...(res1.data || []), ...(res2.data || [])];
+            if (files.length > 0) {
+              redirectToSoftfile(ticketCode);
+              return;
+            }
+          } catch (storageErr) {
+            console.warn("Storage search error:", storageErr);
+          }
+
+          // 3. PRIORITIZED CHECK: Check subfolder photos/{code} in storage
+          try {
+            const { data: subFiles } = await client.storage.from("tjf_photos").list(`photos/${ticketCode}`, { limit: 5 });
+            if (subFiles && subFiles.length > 0) {
+              redirectToSoftfile(ticketCode);
+              return;
+            }
+          } catch (subErr) {
+            console.warn("Subfolder search error:", subErr);
+          }
+
+          // 4. Check active queue in tjf_queue ONLY if softfile does not exist yet
           const { data, error } = await client
             .from("tjf_queue")
             .select("*")
@@ -281,8 +322,8 @@
 
           if (data) {
             const status = (data.status || '').toLowerCase();
-            if (status === 'scanned' || status === 'completed') {
-              redirectToSoftfile(data.code);
+            if (finishedStatuses.includes(status)) {
+              redirectToSoftfile(data.code || ticketCode);
               return;
             }
 
@@ -303,45 +344,7 @@
             return;
           }
 
-          // 2. Fallback: Check tjf_sessions table for finished session
-          const { data: sessionData } = await client
-            .from("tjf_sessions")
-            .select("code")
-            .or(`code.eq.${ticketCode},code.ilike.%${ticketCode}%`)
-            .maybeSingle();
-
-          if (sessionData) {
-            redirectToSoftfile(ticketCode);
-            return;
-          }
-
-          // 3. Fallback: Check Supabase storage tjf_photos bucket
-          try {
-            const [res1, res2] = await Promise.all([
-              client.storage.from("tjf_photos").list("photos", { limit: 10, search: `TJF_${ticketCode}` }),
-              client.storage.from("tjf_photos").list("photos", { limit: 10, search: ticketCode }),
-            ]);
-            const files = [...(res1.data || []), ...(res2.data || [])];
-            if (files.length > 0) {
-              redirectToSoftfile(ticketCode);
-              return;
-            }
-          } catch (storageErr) {
-            console.warn("Storage search error:", storageErr);
-          }
-
-          // 4. Fallback: Check subfolder photos/{code} in storage
-          try {
-            const { data: subFiles } = await client.storage.from("tjf_photos").list(`photos/${ticketCode}`, { limit: 5 });
-            if (subFiles && subFiles.length > 0) {
-              redirectToSoftfile(ticketCode);
-              return;
-            }
-          } catch (subErr) {
-            console.warn("Subfolder search error:", subErr);
-          }
-
-          // Not found in queue, sessions, or storage
+          // Not found in sessions, storage, or queue
           showError("Tiket atau Softfile tidak ditemukan untuk kode ini.");
 
         } catch (e) {
