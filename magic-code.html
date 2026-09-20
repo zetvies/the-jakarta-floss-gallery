@@ -154,6 +154,14 @@
 
       const elSoftfileBtn = document.getElementById('softfileFallbackBtn');
 
+      function redirectToSoftfile(code) {
+        if (isRedirecting) return;
+        isRedirecting = true;
+        const loadingText = elLoading.querySelector('p');
+        if (loadingText) loadingText.innerText = "Mengalihkan ke Softfile...";
+        window.location.replace("softfile.html?code=" + encodeURIComponent(code));
+      }
+
       function showError(msg, showFallback = true) {
         elLoading.classList.add('hidden');
         elTicket.classList.add('hidden');
@@ -173,6 +181,14 @@
       }
 
       function updateUI(queueData, aheadData = []) {
+        const status = (queueData.status || '').toLowerCase();
+
+        // If completed or scanned, redirect directly without rendering queue UI
+        if (status === 'scanned' || status === 'completed') {
+          redirectToSoftfile(queueData.code);
+          return;
+        }
+
         elLoading.classList.add('hidden');
         elError.classList.add('hidden');
         elTicket.classList.remove('hidden');
@@ -183,8 +199,6 @@
         const qPosBox = document.getElementById('queuePositionBox');
         const qPosText = document.getElementById('queuePositionText');
         const qPosDetails = document.getElementById('queueAheadDetails');
-
-        const status = (queueData.status || '').toLowerCase();
         
         if (status === 'queueing' || status === 'waiting') {
           if (queueData.booth_id && aheadData.length === 0) {
@@ -225,18 +239,6 @@
           statusHint.className = "text-sm font-bold text-forest mt-3 px-2 uppercase tracking-wider";
           statusHint.classList.remove('hidden');
           qPosBox.classList.add('hidden');
-        } else if (status === 'scanned' || status === 'completed') {
-          displayStatus.innerText = "MENGALIHKAN...";
-          displayStatus.className = "inline-block px-4 py-1 border-2 border-charcoal bg-forest text-white font-bold tracking-[0.2em] uppercase text-sm";
-          statusHint.innerText = "Membuka halaman foto dan video Anda...";
-          statusHint.className = "text-xs text-charcoal/70 mt-3 px-2 italic font-serif";
-          statusHint.classList.remove('hidden');
-          qPosBox.classList.add('hidden');
-          
-          if (!isRedirecting) {
-            isRedirecting = true;
-            window.location.href = "softfile.html?code=" + encodeURIComponent(queueData.code);
-          }
         } else if (status === 'cancelled' || status === 'canceled' || status === 'expired') {
           displayStatus.innerText = status.toUpperCase();
           displayStatus.className = "inline-block px-4 py-1 border-2 border-charcoal bg-wine text-white font-bold tracking-[0.2em] uppercase text-sm";
@@ -278,9 +280,13 @@
             .maybeSingle();
 
           if (data) {
-            let aheadData = [];
             const status = (data.status || '').toLowerCase();
+            if (status === 'scanned' || status === 'completed') {
+              redirectToSoftfile(data.code);
+              return;
+            }
 
+            let aheadData = [];
             if ((status === 'queueing' || status === 'waiting') && data.booth_id) {
               const { data: aData } = await client
                 .from("tjf_queue")
@@ -305,7 +311,7 @@
             .maybeSingle();
 
           if (sessionData) {
-            updateUI({ code: ticketCode, status: 'completed' });
+            redirectToSoftfile(ticketCode);
             return;
           }
 
@@ -317,7 +323,7 @@
             ]);
             const files = [...(res1.data || []), ...(res2.data || [])];
             if (files.length > 0) {
-              updateUI({ code: ticketCode, status: 'completed' });
+              redirectToSoftfile(ticketCode);
               return;
             }
           } catch (storageErr) {
@@ -328,7 +334,7 @@
           try {
             const { data: subFiles } = await client.storage.from("tjf_photos").list(`photos/${ticketCode}`, { limit: 5 });
             if (subFiles && subFiles.length > 0) {
-              updateUI({ code: ticketCode, status: 'completed' });
+              redirectToSoftfile(ticketCode);
               return;
             }
           } catch (subErr) {
