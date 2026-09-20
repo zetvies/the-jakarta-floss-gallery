@@ -116,6 +116,54 @@
         cursor: crosshair;
         touch-action: none;
       }
+      /* ----- FILTERS CMS STYLES ----- */
+      .toggle-switch { position: relative; width: 36px; height: 20px; display: inline-block;}
+      .toggle-switch input { opacity: 0; width: 0; height: 0; }
+      .toggle-track {
+        position: absolute; inset: 0; border-radius: 10px;
+        background: #ccc; transition: background 0.25s;
+        cursor: pointer; border: 2px solid #1F201E;
+      }
+      .toggle-track::after {
+        content: ''; position: absolute;
+        left: 2px; top: 2px; width: 12px; height: 12px;
+        border-radius: 50%; background: #1F201E;
+        transition: transform 0.25s;
+      }
+      .toggle-switch input:checked + .toggle-track { background: #801A20; }
+      .toggle-switch input:checked + .toggle-track::after {
+        transform: translateX(16px); background: #F9F6F0;
+      }
+
+      input.hide-arrows::-webkit-outer-spin-button,
+      input.hide-arrows::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+      input.hide-arrows[type=number] { -moz-appearance: textfield; }
+
+      input[type="range"] {
+        -webkit-appearance: none; appearance: none;
+        width: 100%; height: 4px;
+        background: #e0dcd3; border-radius: 2px;
+        outline: none; cursor: pointer;
+        border: 1px solid #1F201E;
+      }
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none; appearance: none;
+        width: 14px; height: 14px; border-radius: 50%;
+        background: #C49A45; cursor: pointer;
+        border: 2px solid #1F201E;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        transition: transform 0.15s ease;
+      }
+      input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.25); }
+      
+      .section-header { cursor: pointer; user-select: none; transition: background 0.2s; }
+      .section-header:hover { background: rgba(196,154,69,0.1); }
+      .section-body { overflow: hidden; transition: max-height 0.35s ease, opacity 0.3s; }
+      .section-body.collapsed { max-height: 0 !important; opacity: 0; padding-top: 0; padding-bottom: 0; border-bottom: none; }
+      
+      .controls-panel::-webkit-scrollbar { width: 5px; }
+      .controls-panel::-webkit-scrollbar-track { background: transparent; }
+      .controls-panel::-webkit-scrollbar-thumb { background: #1F201E; border-radius: 3px; }
     </style>
   </head>
 
@@ -260,7 +308,7 @@
             <span>🖨️ BOOTHS &amp; CLOUD SYNC</span>
           </button>
 
-          <!-- 5. AR CMS TAB (LAST TAB) -->
+          <!-- 5. AR CMS TAB -->
           <button
             id="tabBtnArCms"
             onclick="switchTab('arcms')"
@@ -268,6 +316,15 @@
           >
             <span>✦ AR CMS (MARKERS)</span>
             <span id="markersCountBadge" class="bg-wine/10 text-wine px-1.5 py-0.2 text-[10px] font-bold rounded">0</span>
+          </button>
+          
+          <!-- 6. FILTERS CMS TAB -->
+          <button
+            id="tabBtnFilters"
+            onclick="switchTab('filters')"
+            class="px-4 py-2 text-xs font-bold tracking-widest uppercase border-t-2 border-l-2 border-r-2 border-transparent text-charcoal/60 hover:text-charcoal -mb-[2px] transition-all flex items-center gap-1.5 shrink-0 cursor-pointer"
+          >
+            <span>🎨 FILTERS CMS</span>
           </button>
         </div>
       </div>
@@ -826,6 +883,108 @@
         </div>
       </div>
     </div>
+    
+    <!-- ======================================================== -->
+    <!-- ===== TAB 6: FILTERS CMS =============================== -->
+    <!-- ======================================================== -->
+    <div id="tabContentFilters" class="hidden h-full flex flex-col relative" style="height: calc(100vh - 150px);">
+      <div class="flex-1 flex overflow-hidden">
+        <!-- LEFT: Live Preview -->
+        <div class="flex-1 bg-cream-dark p-6 flex flex-col items-center justify-center border-r-2 border-charcoal/10 relative">
+          <!-- Preview Container -->
+          <div class="w-full h-full max-h-[70vh] flex items-center justify-center vintage-box overflow-hidden bg-white">
+            <img id="previewImage" src="moonmuffin_logo.png" alt="Preview" class="max-w-full max-h-full object-contain transition-all duration-75" />
+          </div>
+          
+          <!-- Upload Controls -->
+          <div class="mt-4 flex items-center gap-4 bg-white px-4 py-2 border-2 border-charcoal shadow-[2px_2px_0px_#1F201E]">
+            <label class="text-xs font-bold tracking-widest uppercase text-wine cursor-pointer hover:text-charcoal transition-colors">
+              Upload Test Image
+              <input type="file" id="imageUpload" accept="image/*" class="hidden" onchange="handleImageUpload(event)" />
+            </label>
+            <div class="w-px h-4 bg-charcoal/20"></div>
+            <span id="uploadFileName" class="text-xs text-charcoal/60 truncate max-w-[200px]">default</span>
+          </div>
+        </div>
+
+        <!-- RIGHT: Controls Panel -->
+        <div class="controls-panel w-[400px] bg-cream overflow-y-auto flex-shrink-0">
+          
+          <!-- SECTION: MANAGE FILTERS -->
+          <div class="border-b-2 border-charcoal/10 bg-white">
+            <div class="section-header flex items-center justify-between px-6 py-4" onclick="toggleFilterSection('manage-filters')">
+              <span class="text-xs font-bold tracking-widest uppercase text-charcoal">Manage Filters</span>
+              <span id="chevron-manage-filters" class="text-charcoal transition-transform">▼</span>
+            </div>
+            <div class="section-body px-6 pb-6" id="section-manage-filters" style="max-height: 1000px;">
+              <div class="overflow-x-auto vintage-box">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="border-b-2 border-charcoal/20 text-[10px] tracking-widest uppercase text-charcoal/60">
+                      <th class="p-2 w-8 text-center">#</th>
+                      <th class="p-2">Label</th>
+                      <th class="p-2 text-center">On</th>
+                      <th class="p-2 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="filtersTableBody">
+                    <tr><td colspan="4" class="text-center p-4 text-xs">Loading...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              
+              <button onclick="startAddNewFilter()" class="w-full mt-4 bg-cream-dark text-charcoal font-bold tracking-widest uppercase p-2 border-2 border-charcoal hover:bg-gold transition-colors text-xs shadow-[2px_2px_0px_#1F201E]">
+                + Add New Filter
+              </button>
+            </div>
+          </div>
+
+          <!-- SECTION: CSS EDITOR -->
+          <div class="border-b-2 border-charcoal/10 bg-white relative">
+            <div class="section-header flex items-center justify-between px-6 py-4" onclick="toggleFilterSection('css-editor')">
+              <span class="text-xs font-bold tracking-widest uppercase text-wine" id="filterEditorTitle">Editor: Select a filter</span>
+              <span id="chevron-css-editor" class="text-wine transition-transform transform rotate-[-90deg]">▼</span>
+            </div>
+            
+            <div id="filterEditorOverlay" class="absolute inset-0 bg-white/80 z-10 flex items-center justify-center pt-[60px] pb-6">
+              <p class="text-xs font-bold tracking-widest uppercase text-charcoal/50">Click EDIT on a filter to modify</p>
+            </div>
+
+            <div class="section-body px-6 pb-6 collapsed" id="section-css-editor">
+              
+              <input type="hidden" id="editFilterId" />
+              <div class="grid grid-cols-2 gap-4 mb-6">
+                <div>
+                  <label class="text-[10px] uppercase font-bold tracking-widest text-charcoal/60 block mb-1">Filter ID</label>
+                  <input type="text" id="editFilterCode" class="w-full p-1.5 border-2 border-charcoal outline-none text-xs uppercase" placeholder="e.g. warm" />
+                </div>
+                <div>
+                  <label class="text-[10px] uppercase font-bold tracking-widest text-charcoal/60 block mb-1">Label</label>
+                  <input type="text" id="editFilterLabel" class="w-full p-1.5 border-2 border-charcoal outline-none text-xs uppercase" placeholder="e.g. WARM" />
+                </div>
+                <div>
+                  <label class="text-[10px] uppercase font-bold tracking-widest text-charcoal/60 block mb-1">Sort Order</label>
+                  <input type="number" id="editSortOrder" class="w-full p-1.5 border-2 border-charcoal outline-none text-xs" />
+                </div>
+              </div>
+              
+              <div class="w-full h-[2px] bg-charcoal/10 mb-6"></div>
+              
+              <div class="flex flex-col gap-5 mb-6" id="filterSlidersContainer"></div>
+
+              <div class="mb-6">
+                <label class="text-[10px] uppercase font-bold tracking-widest text-charcoal/60 block mb-1">Generated CSS String (Editable)</label>
+                <textarea id="cssOutputText" oninput="handleManualCss()" class="w-full p-2 border-2 border-charcoal outline-none text-[10px] font-mono h-16 bg-cream-dark/50 resize-none text-charcoal transition-colors focus:bg-white"></textarea>
+              </div>
+              
+              <button onclick="saveFilter()" class="w-full bg-wine text-white font-bold tracking-widest uppercase py-2.5 border-2 border-charcoal hover:bg-charcoal transition-colors text-xs shadow-[4px_4px_0px_#1F201E]">
+                Save Filter Configuration
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- ======================================================== -->
     <!-- ===== JAVASCRIPT LOGIC & SUPABASE INTEGRATION ========== -->
@@ -911,7 +1070,7 @@
       // 3. Tab Switching
       function switchTab(tabId) {
         currentTab = tabId;
-        const tabs = ["analytics", "vouchers", "sessions", "booths", "arcms"];
+        const tabs = ["analytics", "vouchers", "sessions", "booths", "arcms", "filters"];
         tabs.forEach(t => {
           const btn = document.getElementById("tabBtn" + capitalize(t));
           const content = document.getElementById("tabContent" + capitalize(t));
@@ -928,6 +1087,9 @@
 
         if (tabId === "analytics") {
           applyAnalyticsFilters();
+        }
+        if (tabId === "filters") {
+          if (typeof allFilters !== 'undefined' && allFilters.length === 0) loadFilters();
         }
       }
 
@@ -2421,6 +2583,306 @@
         loadCodes();
         loadSessions();
         showToast("Synchronized data with Supabase & server");
+      }
+      // ========================
+      // FILTERS CMS
+      // ========================
+      let allFilters = [];
+      let currentFilterEditMode = 'none';
+
+      const filterSliderDefs = [
+        { key: 'brightness', label: 'Brightness', min: 0, max: 200, default: 100, unit: '%' },
+        { key: 'contrast', label: 'Contrast', min: 0, max: 200, default: 100, unit: '%' },
+        { key: 'saturate', label: 'Saturation', min: 0, max: 200, default: 100, unit: '%' },
+        { key: 'grayscale', label: 'Grayscale', min: 0, max: 100, default: 0, unit: '%' },
+        { key: 'sepia', label: 'Sepia', min: 0, max: 100, default: 0, unit: '%' },
+        { key: 'hueRotate', label: 'Hue Rotate', min: -180, max: 180, default: 0, unit: 'deg' },
+        { key: 'blur', label: 'Blur', min: 0, max: 10, default: 0, unit: 'px' }
+      ];
+
+      function initFilterSliders() {
+        const container = document.getElementById('filterSlidersContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        filterSliderDefs.forEach(def => {
+          const wrap = document.createElement('div');
+          wrap.className = 'flex items-center gap-3';
+          wrap.innerHTML = `
+            <span class="text-xs font-bold tracking-wide uppercase text-charcoal w-24 flex-shrink-0">${def.label}</span>
+            <input type="range" id="slider_${def.key}" min="${def.min}" max="${def.max}" value="${def.default}" class="flex-1" oninput="updatePreviewFromInput('${def.key}', 'slider')" />
+            <div class="flex items-center gap-1 w-14 flex-shrink-0 justify-end">
+              <input type="number" id="num_${def.key}" min="${def.min}" max="${def.max}" value="${def.default}" class="w-9 p-0.5 border border-charcoal/50 text-[10px] font-mono text-center outline-none hide-arrows bg-cream" oninput="updatePreviewFromInput('${def.key}', 'num')" />
+              <span class="text-[10px] text-charcoal/60 font-mono">${def.unit}</span>
+            </div>
+          `;
+          container.appendChild(wrap);
+        });
+      }
+      
+      initFilterSliders();
+
+      function toggleFilterSection(id) {
+        const body = document.getElementById('section-' + id);
+        const chevron = document.getElementById('chevron-' + id);
+        if (body.classList.contains('collapsed')) {
+          body.classList.remove('collapsed');
+          chevron.style.transform = 'rotate(0deg)';
+        } else {
+          body.classList.add('collapsed');
+          chevron.style.transform = 'rotate(-90deg)';
+        }
+      }
+
+      function openFilterEditorSection() {
+        document.getElementById('section-manage-filters').classList.add('collapsed');
+        document.getElementById('chevron-manage-filters').style.transform = 'rotate(-90deg)';
+        
+        document.getElementById('section-css-editor').classList.remove('collapsed');
+        document.getElementById('chevron-css-editor').style.transform = 'rotate(0deg)';
+        
+        document.getElementById('filterEditorOverlay').classList.add('hidden');
+      }
+
+      async function loadFilters() {
+        if (!window.supabaseClient && typeof supabaseClient !== 'undefined') window.supabaseClient = supabaseClient;
+        if (!window.supabaseClient) return;
+        const { data, error } = await window.supabaseClient
+          .from('tjf_filters')
+          .select('*')
+          .order('sort_order', { ascending: true });
+          
+        if (error) {
+          showToast("Error loading filters: " + error.message);
+          return;
+        }
+        allFilters = data;
+        renderFiltersTable();
+      }
+
+      function renderFiltersTable() {
+        const tbody = document.getElementById('filtersTableBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        if (allFilters.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="4" class="text-center p-4 text-xs">No filters found.</td></tr>';
+          return;
+        }
+
+        allFilters.forEach((f) => {
+          const tr = document.createElement('tr');
+          tr.className = "border-b border-charcoal/5 hover:bg-cream-dark transition-colors";
+          tr.innerHTML = `
+            <td class="p-2 text-[10px] font-mono text-center">${f.sort_order}</td>
+            <td class="p-2">
+              <div class="text-xs font-bold uppercase text-wine">${f.label}</div>
+              <div class="text-[10px] text-charcoal/50 uppercase">${f.filter_id}</div>
+            </td>
+            <td class="p-2 text-center">
+              <label class="toggle-switch transform scale-75 origin-center">
+                <input type="checkbox" onchange="toggleFilterActive(${f.id}, this.checked)" ${f.is_active ? 'checked' : ''} />
+                <span class="toggle-track"></span>
+              </label>
+            </td>
+            <td class="p-2">
+              <div class="flex items-center justify-end gap-1.5">
+                <button onclick="startEditFilter(${f.id})" class="text-[9px] font-bold tracking-widest uppercase bg-gold text-white px-2 py-1 border border-charcoal hover:bg-charcoal transition-colors shadow-sm">EDIT</button>
+                <button onclick="deleteFilter(${f.id}, '${f.filter_id}')" class="text-[9px] font-bold tracking-widest uppercase bg-wine text-white px-2 py-1 border border-charcoal hover:bg-charcoal transition-colors shadow-sm">DEL</button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      async function toggleFilterActive(id, isActive) {
+        if (!window.supabaseClient) return;
+        await window.supabaseClient.from('tjf_filters').update({ is_active: isActive }).eq('id', id);
+        loadFilters();
+      }
+
+      async function deleteFilter(id, filterId) {
+        if (!window.supabaseClient) return;
+        if (confirm("Delete filter '" + filterId + "'?")) {
+          await window.supabaseClient.from('tjf_filters').delete().eq('id', id);
+          loadFilters();
+        }
+      }
+
+      function startAddNewFilter() {
+        currentFilterEditMode = 'add';
+        document.getElementById('filterEditorTitle').innerText = 'Editor: New Filter';
+        
+        document.getElementById('editFilterId').value = '';
+        document.getElementById('editFilterCode').value = '';
+        document.getElementById('editFilterCode').readOnly = false;
+        document.getElementById('editFilterLabel').value = '';
+        
+        const nextSort = allFilters.length > 0 ? Math.max(...allFilters.map(f => f.sort_order)) + 1 : 1;
+        document.getElementById('editSortOrder').value = nextSort;
+
+        filterSliderDefs.forEach(def => {
+          document.getElementById('slider_' + def.key).value = def.default;
+          document.getElementById('num_' + def.key).value = def.default;
+        });
+        
+        updatePreviewFromSliders();
+        openFilterEditorSection();
+      }
+
+      function startEditFilter(id) {
+        currentFilterEditMode = 'edit';
+        const filter = allFilters.find(f => f.id === id);
+        if (!filter) return;
+
+        document.getElementById('filterEditorTitle').innerText = 'Editor: ' + filter.label;
+        document.getElementById('editFilterId').value = filter.id;
+        document.getElementById('editFilterCode').value = filter.filter_id;
+        document.getElementById('editFilterCode').readOnly = true; 
+        document.getElementById('editFilterLabel').value = filter.label;
+        document.getElementById('editSortOrder').value = filter.sort_order;
+
+        parseCssToSliders(filter.css_code || "");
+        updatePreviewFromSliders();
+        openFilterEditorSection();
+      }
+
+      function parseCssToSliders(cssString) {
+        filterSliderDefs.forEach(def => { 
+          document.getElementById('slider_' + def.key).value = def.default; 
+          document.getElementById('num_' + def.key).value = def.default;
+        });
+        
+        if (!cssString || cssString === 'none' || cssString === 'none !important') return;
+
+        const extract = (regex, defaultVal) => {
+          const match = cssString.match(regex);
+          return match ? parseFloat(match[1]) : defaultVal;
+        };
+
+        const parsed = {
+          brightness: extract(/brightness\(([\d.]+)%\)/, 100),
+          contrast: extract(/contrast\(([\d.]+)%\)/, 100),
+          saturate: extract(/saturate\(([\d.]+)%\)/, 100),
+          grayscale: extract(/grayscale\(([\d.]+)%\)/, 0),
+          sepia: extract(/sepia\(([\d.]+)%\)/, 0),
+          hueRotate: extract(/hue-rotate\(([\d.-]+)deg\)/, 0),
+          blur: extract(/blur\(([\d.]+)px\)/, 0)
+        };
+
+        filterSliderDefs.forEach(def => {
+          const val = parsed[def.key];
+          if (val !== undefined) {
+            document.getElementById('slider_' + def.key).value = val;
+            document.getElementById('num_' + def.key).value = val;
+          }
+        });
+      }
+
+      function updatePreviewFromInput(key, source) {
+        if (source === 'slider') {
+          document.getElementById('num_' + key).value = document.getElementById('slider_' + key).value;
+        } else if (source === 'num') {
+          let val = document.getElementById('num_' + key).value;
+          if (val === '') val = 0; 
+          document.getElementById('slider_' + key).value = val;
+        }
+        updatePreviewFromSliders();
+      }
+
+      function updatePreviewFromSliders() {
+        let cssParts = [];
+        
+        filterSliderDefs.forEach(def => {
+          const val = document.getElementById('slider_' + def.key).value;
+          
+          if (val != def.default) {
+            if (def.key === 'hueRotate') {
+              cssParts.push(`hue-rotate(${val}deg)`);
+            } else if (def.key === 'blur') {
+              cssParts.push(`blur(${val}px)`);
+            } else {
+              cssParts.push(`${def.key}(${val}%)`);
+            }
+          }
+        });
+
+        const cssString = cssParts.length > 0 ? cssParts.join(' ') + ' !important' : 'none !important';
+        document.getElementById('cssOutputText').value = cssString;
+        
+        document.getElementById('previewImage').style.filter = cssParts.length > 0 ? cssParts.join(' ') : 'none';
+      }
+
+      function handleManualCss() {
+        const cssString = document.getElementById('cssOutputText').value;
+        const rawCss = cssString.replace(/!important/g, '').trim();
+        document.getElementById('previewImage').style.filter = rawCss ? rawCss : 'none';
+        
+        const extract = (regex, defaultVal) => {
+          const match = cssString.match(regex);
+          return match ? parseFloat(match[1]) : defaultVal;
+        };
+
+        const parsed = {
+          brightness: extract(/brightness\(([\d.]+)%\)/, 100),
+          contrast: extract(/contrast\(([\d.]+)%\)/, 100),
+          saturate: extract(/saturate\(([\d.]+)%\)/, 100),
+          grayscale: extract(/grayscale\(([\d.]+)%\)/, 0),
+          sepia: extract(/sepia\(([\d.]+)%\)/, 0),
+          hueRotate: extract(/hue-rotate\(([\d.-]+)deg\)/, 0),
+          blur: extract(/blur\(([\d.]+)px\)/, 0)
+        };
+
+        filterSliderDefs.forEach(def => {
+          const val = parsed[def.key];
+          if (val !== undefined) {
+            document.getElementById('slider_' + def.key).value = val;
+            document.getElementById('num_' + def.key).value = val;
+          }
+        });
+      }
+
+      async function saveFilter() {
+        if (!window.supabaseClient) {
+          showToast("Supabase not initialized");
+          return;
+        }
+        
+        const filterId = document.getElementById('editFilterCode').value.trim().toLowerCase();
+        const label = document.getElementById('editFilterLabel').value.trim().toUpperCase();
+        const sortOrder = parseInt(document.getElementById('editSortOrder').value, 10);
+        const cssCode = document.getElementById('cssOutputText').value;
+
+        if (!filterId || !label) { alert("Missing ID or Label"); return; }
+
+        let payload = { filter_id: filterId, label: label, sort_order: sortOrder, css_code: cssCode };
+
+        let result;
+        if (currentFilterEditMode === 'add') {
+          payload.is_active = true;
+          result = await window.supabaseClient.from('tjf_filters').insert([payload]);
+        } else {
+          const dbId = document.getElementById('editFilterId').value;
+          result = await window.supabaseClient.from('tjf_filters').update(payload).eq('id', dbId);
+        }
+
+        if (result.error) {
+          alert("Save Failed: " + result.error.message);
+        } else {
+          document.getElementById('filterEditorOverlay').classList.remove('hidden');
+          document.getElementById('filterEditorTitle').innerText = 'Editor: Select a filter';
+          toggleFilterSection('css-editor'); 
+          toggleFilterSection('manage-filters'); 
+          loadFilters();
+          showToast("Filter saved successfully!");
+        }
+      }
+
+      function handleImageUpload(e) {
+        const file = e.target.files[0];
+        if (file) {
+          document.getElementById('uploadFileName').innerText = file.name;
+          document.getElementById('previewImage').src = URL.createObjectURL(file);
+        }
       }
     </script>
   </body>
