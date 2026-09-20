@@ -88,7 +88,10 @@
           <svg class="w-10 h-10 text-wine mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
           </svg>
-          <p id="errorMsg" class="font-bold text-wine tracking-wide text-sm">Tiket Tidak Ditemukan</p>
+          <p id="errorMsg" class="font-bold text-wine tracking-wide text-sm mb-4">Tiket Tidak Ditemukan</p>
+          <a id="softfileFallbackBtn" href="#" class="hidden px-4 py-2 border-2 border-charcoal bg-forest text-white font-bold text-xs uppercase tracking-wider shadow-[2px_2px_0px_#1F201E] hover:opacity-90 transition-opacity">
+            Buka Halaman Softfile
+          </a>
         </div>
 
         <div id="ticketState" class="hidden">
@@ -126,12 +129,15 @@
       const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZvd2RlY21za2h2ZmdtZHd3bnhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDE1MTk2MjUsImV4cCI6MjAxNzA5NTYyNX0.icC5QydnHRC-qu4Vf0Ik0_BxpaU39TCaU8bXijdqv9Y";
       
       let supabaseClient = null;
-      if (window.supabase) {
-        supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      function getSupabase() {
+        if (!supabaseClient && window.supabase) {
+          supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+        return supabaseClient;
       }
 
       const urlParams = new URLSearchParams(window.location.search);
-      const ticketCode = urlParams.get('code');
+      const ticketCode = (urlParams.get('code') || '').trim();
 
       const elLoading = document.getElementById('loadingState');
       const elError = document.getElementById('errorState');
@@ -142,12 +148,28 @@
       const displayBooth = document.getElementById('displayBooth');
       const displayStatus = document.getElementById('displayStatus');
       const statusHint = document.getElementById('statusHint');
+      
+      let isRedirecting = false;
+      let isFetching = false;
 
-      function showError(msg) {
+      const elSoftfileBtn = document.getElementById('softfileFallbackBtn');
+
+      function showError(msg, showFallback = true) {
         elLoading.classList.add('hidden');
         elTicket.classList.add('hidden');
         elError.classList.remove('hidden');
         errorMsg.innerText = msg;
+        if (showFallback && ticketCode && elSoftfileBtn) {
+          elSoftfileBtn.href = "softfile.html?code=" + encodeURIComponent(ticketCode);
+          elSoftfileBtn.classList.remove('hidden');
+        } else if (elSoftfileBtn) {
+          elSoftfileBtn.classList.add('hidden');
+        }
+      }
+
+      function compareQueueNumbers(qNumA, qNumB) {
+        if (!qNumA || !qNumB) return 0;
+        return qNumA.localeCompare(qNumB, undefined, { numeric: true, sensitivity: 'base' });
       }
 
       function updateUI(queueData, aheadData = []) {
@@ -162,14 +184,15 @@
         const qPosText = document.getElementById('queuePositionText');
         const qPosDetails = document.getElementById('queueAheadDetails');
 
-        const status = queueData.status.toLowerCase();
+        const status = (queueData.status || '').toLowerCase();
         
-        if (status === 'queueing') {
+        if (status === 'queueing' || status === 'waiting') {
           if (queueData.booth_id && aheadData.length === 0) {
             displayStatus.innerText = "GILIRAN ANDA";
             displayStatus.className = "inline-block px-4 py-1 border-2 border-charcoal bg-forest text-white font-bold tracking-[0.2em] uppercase text-sm";
             statusHint.innerText = "Silakan masuk ke booth sekarang.";
             statusHint.className = "text-sm font-bold text-forest mt-3 px-2 uppercase tracking-wider";
+            statusHint.classList.remove('hidden');
             qPosBox.classList.add('hidden');
           } else if (queueData.booth_id && aheadData.length > 0) {
             displayStatus.innerText = "MENGANTRE";
@@ -179,8 +202,8 @@
             statusHint.classList.add('hidden');
             qPosText.innerText = `Ada ${aheadData.length} antrean di depan Anda`;
             
-            const inProgress = aheadData.filter(q => q.status === 'scanned').length;
-            const waiting = aheadData.filter(q => q.status === 'queueing').length;
+            const inProgress = aheadData.filter(q => q.status === 'scanned' || q.status === 'called').length;
+            const waiting = aheadData.filter(q => q.status === 'queueing' || q.status === 'waiting').length;
             
             let details = [];
             if (inProgress > 0) details.push(`${inProgress} sedang foto`);
@@ -192,10 +215,16 @@
             displayStatus.className = "inline-block px-4 py-1 border-2 border-charcoal bg-gold text-white font-bold tracking-[0.2em] uppercase text-sm";
             statusHint.innerText = "Harap tunggu giliran Anda. Kami akan segera memanggil Anda.";
             statusHint.className = "text-xs text-charcoal/70 mt-3 px-2 italic font-serif";
+            statusHint.classList.remove('hidden');
             qPosBox.classList.add('hidden');
           }
-          
-          
+        } else if (status === 'called') {
+          displayStatus.innerText = "DIPANGGIL";
+          displayStatus.className = "inline-block px-4 py-1 border-2 border-charcoal bg-forest text-white font-bold tracking-[0.2em] uppercase text-sm animate-pulse";
+          statusHint.innerText = "Giliran Anda telah dipanggil! Silakan segera menuju booth.";
+          statusHint.className = "text-sm font-bold text-forest mt-3 px-2 uppercase tracking-wider";
+          statusHint.classList.remove('hidden');
+          qPosBox.classList.add('hidden');
         } else if (status === 'scanned' || status === 'completed') {
           displayStatus.innerText = "MENGALIHKAN...";
           displayStatus.className = "inline-block px-4 py-1 border-2 border-charcoal bg-forest text-white font-bold tracking-[0.2em] uppercase text-sm";
@@ -204,53 +233,116 @@
           statusHint.classList.remove('hidden');
           qPosBox.classList.add('hidden');
           
-          // Redirect to the existing softfile page
-          window.location.href = "softfile.html?code=" + queueData.code;
+          if (!isRedirecting) {
+            isRedirecting = true;
+            window.location.href = "softfile.html?code=" + encodeURIComponent(queueData.code);
+          }
+        } else if (status === 'cancelled' || status === 'canceled' || status === 'expired') {
+          displayStatus.innerText = status.toUpperCase();
+          displayStatus.className = "inline-block px-4 py-1 border-2 border-charcoal bg-wine text-white font-bold tracking-[0.2em] uppercase text-sm";
+          statusHint.innerText = "Tiket ini sudah tidak berlaku atau dibatalkan. Silakan hubungi staff.";
+          statusHint.className = "text-xs text-wine mt-3 px-2 font-semibold";
+          statusHint.classList.remove('hidden');
+          qPosBox.classList.add('hidden');
+        } else {
+          displayStatus.innerText = status.toUpperCase() || "TIDAK DIKETAHUI";
+          displayStatus.className = "inline-block px-4 py-1 border-2 border-charcoal bg-charcoal text-white font-bold tracking-[0.2em] uppercase text-sm";
+          statusHint.innerText = "Status antrean saat ini: " + queueData.status;
+          statusHint.className = "text-xs text-charcoal/70 mt-3 px-2 italic font-serif";
+          statusHint.classList.remove('hidden');
+          qPosBox.classList.add('hidden');
         }
       }
 
       async function fetchTicket() {
         if (!ticketCode) {
-          showError("Kode voucher tidak ditemukan di URL.");
+          showError("Kode voucher tidak ditemukan di URL.", false);
           return;
         }
 
-        if (!supabaseClient) {
+        const client = getSupabase();
+        if (!client) {
           showError("Koneksi database gagal.");
           return;
         }
 
+        if (isFetching || isRedirecting) return;
+        isFetching = true;
+
         try {
-          const { data, error } = await supabaseClient
+          // 1. Check active queue in tjf_queue
+          const { data, error } = await client
             .from("tjf_queue")
             .select("*")
             .eq("code", ticketCode)
-            .single();
+            .maybeSingle();
 
-          if (error || !data) {
-            showError("Tiket tidak ditemukan atau sudah dihapus.");
+          if (data) {
+            let aheadData = [];
+            const status = (data.status || '').toLowerCase();
+
+            if ((status === 'queueing' || status === 'waiting') && data.booth_id) {
+              const { data: aData } = await client
+                .from("tjf_queue")
+                .select("status, id, queue_number")
+                .eq("booth_id", data.booth_id)
+                .in("status", ["queueing", "waiting", "scanned", "called"]);
+                
+              if (aData) {
+                aheadData = aData.filter(q => compareQueueNumbers(q.queue_number, data.queue_number) < 0);
+              }
+            }
+
+            updateUI(data, aheadData);
             return;
           }
 
-          let aheadData = [];
-          if (data.status === 'queueing' && data.booth_id) {
-            const { data: aData } = await supabaseClient
-              .from("tjf_queue")
-              .select("status, id, queue_number")
-              .eq("booth_id", data.booth_id)
-              .neq("status", "completed");
-              
-            if (aData) {
-              // Filter to only those with a smaller queue_number (string comparison)
-              aheadData = aData.filter(q => (q.queue_number || "") < (data.queue_number || ""));
-            }
+          // 2. Fallback: Check tjf_sessions table for finished session
+          const { data: sessionData } = await client
+            .from("tjf_sessions")
+            .select("code")
+            .or(`code.eq.${ticketCode},code.ilike.%${ticketCode}%`)
+            .maybeSingle();
+
+          if (sessionData) {
+            updateUI({ code: ticketCode, status: 'completed' });
+            return;
           }
 
-          updateUI(data, aheadData);
+          // 3. Fallback: Check Supabase storage tjf_photos bucket
+          try {
+            const [res1, res2] = await Promise.all([
+              client.storage.from("tjf_photos").list("photos", { limit: 10, search: `TJF_${ticketCode}` }),
+              client.storage.from("tjf_photos").list("photos", { limit: 10, search: ticketCode }),
+            ]);
+            const files = [...(res1.data || []), ...(res2.data || [])];
+            if (files.length > 0) {
+              updateUI({ code: ticketCode, status: 'completed' });
+              return;
+            }
+          } catch (storageErr) {
+            console.warn("Storage search error:", storageErr);
+          }
+
+          // 4. Fallback: Check subfolder photos/{code} in storage
+          try {
+            const { data: subFiles } = await client.storage.from("tjf_photos").list(`photos/${ticketCode}`, { limit: 5 });
+            if (subFiles && subFiles.length > 0) {
+              updateUI({ code: ticketCode, status: 'completed' });
+              return;
+            }
+          } catch (subErr) {
+            console.warn("Subfolder search error:", subErr);
+          }
+
+          // Not found in queue, sessions, or storage
+          showError("Tiket atau Softfile tidak ditemukan untuk kode ini.");
 
         } catch (e) {
           console.error(e);
           showError("Gangguan jaringan. Mencoba ulang...");
+        } finally {
+          isFetching = false;
         }
       }
 
@@ -259,7 +351,6 @@
 
       // Poll every 3 seconds to get live status updates
       setInterval(fetchTicket, 3000);
-
     </script>
   </body>
 </html>
